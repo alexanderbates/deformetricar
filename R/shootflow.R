@@ -38,13 +38,16 @@ make_params_file<-function(outfile="paramsObject1.xml", data.sigma=1, kernel.wid
 }
 
 ShootAndFlow3<-function(...){
-  # make a temp dir for output
-#   td=tempfile()
-#   dir.create(td)
-#   owd=setwd(td)
-#   on.exit(setwd(owd))
-  
-  app="/Applications/deformetrica-2.1/deformetrica/bin/ShootAndFlow3"
+  # we need to find the deformetrica executable
+  # is it in the path?
+  app=Sys.which('ShootAndFlow3')
+  if(nchar(app)==0){
+    # is it in a standard location?
+    app="/Applications/deformetrica-2.1/deformetrica/bin/ShootAndFlow3"
+    if(!file.exists(app))
+      stop("Sorry I can't find the deformetrica ShootAndFlow3 executable!",
+           "Please add it to your PATH or put it in ", dirname(app))
+  }
   args=paste(..., collapse=" ")
   system(paste(app, args))
 }
