@@ -10,3 +10,4 @@ Description: Wraps deformetrica command line tools to allow 3d coordinates
 License: GPL-3
 LazyData: TRUE
 RoxygenNote: 5.0.1
+Suggests: testthat
