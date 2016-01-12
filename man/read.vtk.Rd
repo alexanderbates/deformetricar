@@ -4,12 +4,12 @@
 \alias{read.vtk}
 \title{Read a VTK format file}
 \usage{
-read.vtk(filename, item = "points")
+read.vtk(filename, item = c("points", "triangles", "normals"))
 }
 \arguments{
 \item{filename}{The path to the file on disk}
 
-\item{item}{The element(s) within the file to read}
+\item{item}{The element(s) within the file to read (defaults to points)}
 }
 \value{
 A matrix of points, indices (polygons) or normals

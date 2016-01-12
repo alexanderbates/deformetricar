@@ -1,11 +1,13 @@
 #' Read a VTK format file
 #'
 #' @param filename The path to the file on disk
-#' @param item The element(s) within the file to read
+#' @param item The element(s) within the file to read (defaults to points)
 #'
 #' @return A matrix of points, indices (polygons) or normals
 #' @export
-read.vtk<-function(filename, item = "points"){
+read.vtk<-function(filename, item = c("points","triangles", "normals")){
+  item=match.arg(item)
+
   if(!file.exists(filename)) stop("Cannot read: ",filename)
   con=file(filename,open='rb',encoding='ASCII')
   on.exit(close(con))
