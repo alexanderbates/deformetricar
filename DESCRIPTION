@@ -5,7 +5,8 @@ Version: 0.1
 Author: Alex Bates and Gregory Jefferis
 Maintainer: Alex Bates <abates@mrc-lmb.cam.ac.uk>
 Description: Wraps deformetrica command line tools to allow 3d coordinates
-to be transformed using deformetrica registrations. Also provides functions
-to read and write VTK object formats.
+    to be transformed using deformetrica registrations. Also provides functions
+    to read and write VTK object formats.
 License: GPL-3
 LazyData: TRUE
+RoxygenNote: 5.0.1
