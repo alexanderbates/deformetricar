@@ -5,3 +5,9 @@ test_that("we can run shoot and flow on a matrix",{
   regdir=system.file("extdata/reg_output", package = 'deformetricar')
   expect_is(deform.m<-shootflow(m, regdir), 'matrix')
 })
+
+test_that("we can run shoot and flow on a neuonlist",{
+  n3=nat::Cell07PNs[1:3]
+  regdir=system.file("extdata/reg_output", package = 'deformetricar')
+  expect_is(deform.n3<-shootflow(n3, regdir), 'neuronlist')
+})
