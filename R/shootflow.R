@@ -6,7 +6,22 @@
 
 # first thing to achieve support for bare vertices (3d coordinates)
 
-shootflow<-function(xyz, regdir = getwd(), data.sigma = 1, kernel.width=5, object.type = "NonOrientedPolyLine"){
+
+
+#' Apply deformetrica registration to a set of 3D points (ShootAndFlow3)
+#'
+#' @inheritParams write.vtk
+#' @param regdir Path to directory containing deformetrica registration
+#' @param data.sigma See deformetrica docs
+#' @param kernel.width See deformetrica docs
+#' @param object.type Type of object to be deformed
+#'
+#' @return Matrix of the same dimensions as \code{points}
+#' @export
+#' @references See \url{http://www.deformetrica.org/?page_id=232} for
+#' details of the \bold{ShootAndFlow3} command line tool.
+shootflow<-function(points, regdir = getwd(), data.sigma = 1, kernel.width=5,
+                    object.type = "NonOrientedPolyLine"){
   # we need to make a command line like this
   # ShootAndFlow3 paramsDiffeos.xml Direction CP.txt Mom.txt paramsObject1.xml object1 paramsObject2.xml object2 …
   # make a temp dir
@@ -27,9 +42,9 @@ shootflow<-function(xyz, regdir = getwd(), data.sigma = 1, kernel.width=5, objec
   setwd(td)
   params_file=make_params_file(data.sigma = data.sigma, kernel.width = kernel.width, object.type = object.type)
   steps=read.paramdiffeos("paramDiffeos.xml")$steps
-  write.vtk(xyz, "xyz.vtk")
-  ShootAndFlow3("paramDiffeos.xml", 1, "CP_final.txt", "Mom_final.txt", params_file, "xyz.vtk")
-  output.file = paste("xyz_flow__t_", steps, ".vtk", sep = "")
+  write.vtk(points, "points.vtk")
+  ShootAndFlow3("paramDiffeos.xml", 1, "CP_final.txt", "Mom_final.txt", params_file, "points.vtk")
+  output.file = paste("points_flow__t_", steps, ".vtk", sep = "")
   read.vtk(output.file)
 }
 
