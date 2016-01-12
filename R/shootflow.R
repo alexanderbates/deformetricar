@@ -23,7 +23,7 @@ shootflow.neuron<-function(x, ...) {
 #' @export
 #' @rdname shootflow
 shootflow.neuronlist<-function(x, ...){
-  nlapply(x, shootflow, ...)
+  nat::nlapply(x, shootflow, ...)
 }
 
 #' @param x object to be transformed (for \code{shootflow.default} method an Nx3
