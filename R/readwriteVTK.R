@@ -1,9 +1,16 @@
-ReadVTKLandmarks<-function(filename, item = "points"){
+#' Read a VTK format file
+#'
+#' @param filename The path to the file on disk
+#' @param item The element(s) within the file to read
+#'
+#' @return A matrix of points, indices (polygons) or normals
+#' @export
+read.vtk<-function(filename, item = "points"){
   if(!file.exists(filename)) stop("Cannot read: ",filename)
   con=file(filename,open='rb',encoding='ASCII')
   on.exit(close(con))
   magic=readLines(con,n=1)
-  if(regexpr("# vtk DataFile Version [23]",magic,ignore=T)<0)
+  if(regexpr("# vtk DataFile Version [234]",magic,ignore.case =T)<0)
     stop("Bad header line in file: ",filename)
 
   title=readLines(con,1)
@@ -53,7 +60,6 @@ ReadVTKLandmarks<-function(filename, item = "points"){
   if (item != "points"){
     triangLine=toupper(readLines(con,1))
     if(length(triangLine)==0){
-      print("yo")
       warning("No data on polygons found")
       return(NULL)
     }
@@ -61,10 +67,10 @@ ReadVTKLandmarks<-function(filename, item = "points"){
       stop("Missing POLYGONS definition line")
     lninfo=unlist(strsplit(triangLine,"\\s+",perl=TRUE))
     if(length(lninfo)!=3)
-      stop("Unable to extract connection information from POLYGONS line",linesLine)
+      stop("Unable to extract connection information from POLYGONS line:",triangLine)
     nummconns=as.integer(lninfo[2])
     if(is.na(nummconns))
-      stop("Unable to extract number of connections from POLYGONS line:",linesLine)
+      stop("Unable to extract number of connections from POLYGONS line:",triangLine)
     datatype=lninfo[3]
     triang=scan(con,what=1.0,n=4*nummconns,quiet=TRUE)
   }
@@ -84,7 +90,7 @@ ReadVTKLandmarks<-function(filename, item = "points"){
       stop("Missing NORMALS definition line")
     ninfo=unlist(strsplit(normalsLine,"\\s+",perl=TRUE))
     if(length(ninfo)!=3)
-      stop("Unable to extract connection information from POLYGONS line",linesLine)
+      stop("Unable to extract connection information from POLYGONS line",triangLine)
     datatype=ninfo[3]
     if(!datatype%in%toupper(c("unsigned_char", "char", "unsigned_short", "short", "unsigned_int", "int",
                               "unsigned_long", "long", "float", "double")))
