@@ -4,21 +4,21 @@
 \alias{write.vtk}
 \title{Write VTK file}
 \usage{
-write.vtk(filename, title = filename, points, polygons = NULL,
-  normals = NULL, datatype = c("float", "double"))
+write.vtk(points, filename, polygons = NULL, normals = NULL,
+  datatype = c("float", "double"), title = filename)
 }
 \arguments{
-\item{filename}{Path to output file}
-
-\item{title}{Title of the .vtk file (defaults to filename)}
-
 \item{points}{3D coordinates (Nx3 matrix)}
+
+\item{filename}{Path to output file}
 
 \item{polygons}{Triangle indices (Mx3 matrix)}
 
 \item{normals}{Normals (Nx3 matrix)}
 
 \item{datatype}{.vtk datatype (defaults to float)}
+
+\item{title}{Title of the .vtk file (defaults to filename)}
 }
 \description{
 Write VTK file

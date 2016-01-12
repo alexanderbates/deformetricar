@@ -150,17 +150,17 @@ WriteVTKmesh3d <-function(filename, title = filename, datatype=c("float","double
 
 #' Write VTK file
 #'
-#' @param filename  Path to output file
-#' @param title Title of the .vtk file (defaults to filename)
 #' @param points 3D coordinates (Nx3 matrix)
+#' @param filename  Path to output file
 #' @param polygons Triangle indices (Mx3 matrix)
 #' @param normals Normals (Nx3 matrix)
 #' @param datatype .vtk datatype (defaults to float)
+#' @param title Title of the .vtk file (defaults to filename)
 #'
 #' @export
 #'
-write.vtk <-function(filename, title = filename, points, polygons = NULL,
-                     normals = NULL, datatype=c("float","double")){
+write.vtk <-function(points, filename, polygons = NULL, normals = NULL,
+                     datatype=c("float","double"), title = filename){
   file.create(filename)
   if(ncol(points)!=3) stop("Expect N rows x 3 cols of 3d points")
   nummarkers=nrow(points)
