@@ -2,13 +2,26 @@
 % Please edit documentation in R/shootflow.R
 \name{shootflow}
 \alias{shootflow}
+\alias{shootflow.default}
+\alias{shootflow.neuron}
+\alias{shootflow.neuronlist}
 \title{Apply deformetrica registration to a set of 3D points (ShootAndFlow3)}
 \usage{
-shootflow(points, regdir = getwd(), data.sigma = 1, kernel.width = 5,
-  object.type = "NonOrientedPolyLine")
+shootflow(x, ...)
+
+\method{shootflow}{neuron}(x, ...)
+
+\method{shootflow}{neuronlist}(x, ...)
+
+\method{shootflow}{default}(x, regdir = getwd(), data.sigma = 1,
+  kernel.width = 5, object.type = "NonOrientedPolyLine", ...)
 }
 \arguments{
-\item{points}{3D coordinates (Nx3 matrix)}
+\item{x}{object to be transformed (for \code{shootflow.default} method an Nx3
+matrix of 3D coordinates)}
+
+\item{...}{Additional arguments eventually passed by methods to
+\code{shootflow.default}}
 
 \item{regdir}{Path to directory containing deformetrica registration}
 
@@ -19,13 +32,13 @@ shootflow(points, regdir = getwd(), data.sigma = 1, kernel.width = 5,
 \item{object.type}{Type of object to be deformed}
 }
 \value{
-Matrix of the same dimensions as \code{points}
+Matrix of the same dimensions as \code{x}
 }
 \description{
 Apply deformetrica registration to a set of 3D points (ShootAndFlow3)
 }
 \references{
-See \url{http://www.deformetrica.org/?page_id=232} for
-details of the \bold{ShootAndFlow3} command line tool.
+See \url{http://www.deformetrica.org/?page_id=232} for details of
+  the \bold{ShootAndFlow3} command line tool.
 }
 

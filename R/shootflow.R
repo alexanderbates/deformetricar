@@ -6,22 +6,42 @@
 
 # first thing to achieve support for bare vertices (3d coordinates)
 
-
-
 #' Apply deformetrica registration to a set of 3D points (ShootAndFlow3)
 #'
-#' @inheritParams write.vtk
+#' @export
+#' @rdname shootflow
+shootflow<-function(x, ...) UseMethod("shootflow")
+
+#' @export
+#' @rdname shootflow
+shootflow.neuron<-function(x, ...) {
+  points=nat::xyzmatrix(x)
+  deform.points<-shootflow(x=points, ...)
+  nat::xyzmatrix(x)=deform.points
+}
+
+#' @export
+#' @rdname shootflow
+shootflow.neuronlist<-function(x, ...){
+  nlapply(x, shootflow, ...)
+}
+
+#' @param x object to be transformed (for \code{shootflow.default} method an Nx3
+#'   matrix of 3D coordinates)
 #' @param regdir Path to directory containing deformetrica registration
 #' @param data.sigma See deformetrica docs
 #' @param kernel.width See deformetrica docs
 #' @param object.type Type of object to be deformed
+#' @param ... Additional arguments eventually passed by methods to
+#'   \code{shootflow.default}
 #'
-#' @return Matrix of the same dimensions as \code{points}
+#' @return Matrix of the same dimensions as \code{x}
 #' @export
-#' @references See \url{http://www.deformetrica.org/?page_id=232} for
-#' details of the \bold{ShootAndFlow3} command line tool.
-shootflow<-function(points, regdir = getwd(), data.sigma = 1, kernel.width=5,
-                    object.type = "NonOrientedPolyLine"){
+#' @rdname shootflow
+#' @references See \url{http://www.deformetrica.org/?page_id=232} for details of
+#'   the \bold{ShootAndFlow3} command line tool.
+shootflow.default<-function(x, regdir = getwd(), data.sigma = 1, kernel.width=5,
+                    object.type = "NonOrientedPolyLine", ...){
   # we need to make a command line like this
   # ShootAndFlow3 paramsDiffeos.xml Direction CP.txt Mom.txt paramsObject1.xml object1 paramsObject2.xml object2 …
   # make a temp dir
@@ -42,7 +62,7 @@ shootflow<-function(points, regdir = getwd(), data.sigma = 1, kernel.width=5,
   setwd(td)
   params_file=make_params_file(data.sigma = data.sigma, kernel.width = kernel.width, object.type = object.type)
   steps=read.paramdiffeos("paramDiffeos.xml")$steps
-  write.vtk(points, "points.vtk")
+  write.vtk(x, "points.vtk")
   ShootAndFlow3("paramDiffeos.xml", 1, "CP_final.txt", "Mom_final.txt", params_file, "points.vtk")
   output.file = paste("points_flow__t_", steps, ".vtk", sep = "")
   read.vtk(output.file)
