@@ -37,6 +37,7 @@ make_params_file<-function(outfile="paramsObject1.xml", data.sigma=1, kernel.wid
   return(outfile)
 }
 
+# Call the ShootAndFlow3 with optional arguments
 ShootAndFlow3<-function(...){
   # we need to find the deformetrica executable
   # is it in the path?
