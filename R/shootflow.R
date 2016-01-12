@@ -100,5 +100,5 @@ ShootAndFlow3<-function(...){
            "Please add it to your PATH or put it in ", dirname(app))
   }
   args=paste(..., collapse=" ")
-  system(paste(app, args))
+  system(paste(app, args), ignore.stdout=TRUE)
 }
