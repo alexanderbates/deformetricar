@@ -147,7 +147,8 @@ WriteVTKmesh3d <-function(filename, title = filename, datatype=c("float","double
   }
 }
 
-WriteVTK <-function(filename, title = filename, points, polygons = NULL, normals = NULL, datatype=c("float","double")){
+write.vtk <-function(filename, title = filename, points, polygons = NULL,
+                     normals = NULL, datatype=c("float","double")){
   file.create(filename)
   if(ncol(points)!=3) stop("Expect N rows x 3 cols of 3d points")
   nummarkers=nrow(points)
