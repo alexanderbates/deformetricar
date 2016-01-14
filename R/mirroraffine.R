@@ -6,9 +6,34 @@
 # the most prominent neuropils observable at a light level and within the EM data, namely the mushroom bodies (with their
 #calyxes generated separately) the antennal lobes, and the entire neuropil as would be seen in an Nc82 (bruchpilot) stain.
 
+#' @export
+#' @rdname shootflow
+apply.mirror.affine<-function(x, ...) UseMethod("apply.mirror.affine")
 
-mirror.affine <- function (){
+#' @export
+#' @rdname shootflow
+apply.mirror.affine.neuron<-function(x, ...) {
+  moved.points<-apply.mirror.affine.default(x, ...)
+  x$d$X <- moved.points[,1]
+  x$d$Y <- moved.points[,2]
+  x$d$Z <- moved.points[,3]
+  x
+}
 
+#' @export
+#' @rdname shootflow
+apply.mirror.affine.neuronlist<-function(x, ...){
+  nat::nlapply(x, apply.mirror.affine, ...)
+}
+
+apply.mirror.affine.default <- function (x, calculatetransform = F, ...){
+  require(nat)
+  xyz = xyzmatrix(x)
+  if (calculatetransform)
+    fullmirror = calculate.full.transformation()
+  else
+    fullmirror = readRDS("inst/extdata/fullmirror.rds")
+  transform.points(xyz, fullmirror)
 }
 
 
