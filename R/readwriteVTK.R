@@ -106,47 +106,6 @@ read.vtk<-function(filename, item = c("points","triangles", "normals")){
   m
 }
 
-WriteVTKLandmarks<-function(filename,d,title,datatype=c("float","double")){
-  if(ncol(d)!=3) stop("Expect N rows x 3 cols of 3d points")
-  nummarkers=nrow(d)
-  datatype=match.arg(datatype)
-  if(missing(title)) title=paste("Data written from R by WriteVTKLandmarks at",Sys.time())
-
-  cat("# vtk DataFile Version 2.0",
-      title,
-      "ASCII",
-      "DATASET POLYDATA",
-      paste("POINTS",nummarkers,datatype),sep="\n",file=filename)
-
-  write.table(d,col.names=F,row.names=F,file=filename,append=TRUE)
-}
-
-WriteVTKmesh3d <-function(filename, title = filename, datatype=c("float","double"), mesh3d){
-  d = t(mesh3d$vb)[,-4]
-  if(ncol(d)!=3) stop("Expect N rows x 3 cols of 3d points")
-  nummarkers=nrow(d)
-  datatype=match.arg(datatype)
-  if(missing(title)) title=paste("Data written from R by WriteVTKLandmarks at",Sys.time())
-
-  cat("# vtk DataFile Version 2.0",
-      title,
-      "ASCII",
-      "DATASET POLYDATA",
-      paste("POINTS",nummarkers,datatype),sep="\n",file=filename)
-
-  write.table(d,col.names=F,row.names=F,file=filename,append=TRUE)
-  mx = t(mesh3d$it)-1 # VTK files are 0 indexed
-  numpoints = rep(3, nrow(mx))
-  mx = cbind(numpoints, mx)
-  cat(paste("POLYGONS",nrow(mx),nrow(mx)*4),sep="\n",file=filename, append = TRUE)
-  write.table(mx,col.names=F,row.names=F,file=filename,append=TRUE)
-  if (!is.null(mesh3d$normals)){
-    cat(paste("NORMALS","clean",datatype),sep="\n",file=filename, append = TRUE)
-    normals = t(mesh3d$normals)[,-4]
-    write.table(normals,col.names=F,row.names=F,file=filename,append=TRUE)
-  }
-}
-
 
 #' Write VTK file
 #'

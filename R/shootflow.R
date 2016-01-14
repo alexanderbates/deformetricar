@@ -25,7 +25,7 @@ shootflow.neuron<-function(x, ...) {
 #' @export
 #' @rdname shootflow
 shootflow.neuronlist<-function(x, ...){
-  if (mean(xyzmatrix(x)) > 1000)
+  if (mean(xyzmatrix(x)[,3]) > 1000)
     warning("Object appears to be in nanometers")
   nat::nlapply(x, shootflow, ...)
 }
@@ -33,10 +33,11 @@ shootflow.neuronlist<-function(x, ...){
 #' @param x object to be transformed (for \code{shootflow.default} method an Nx3
 #'   matrix of 3D coordinates)
 #' @param regdir Path to directory containing deformetrica registration
-#' @param data.sigma See deformetrica docs
-#' @param kernel.width See deformetrica docs
-#' @param object.type Type of object to be deformed
-#' @param ... Additional arguments eventually passed by methods to
+#' @param kernel.width the width of the deformation kernel. The larger the more “rigid”
+#' the deformation. The smaller, the more local variations of the space is allowed.
+#' @param object.type type of object to be deformed. PointCloud, OrientedPolyLine, NonOrientedPolyLine,
+#' OrientedSurfaceMesh and NonOrientedSurfaceMesh
+#' @param ... additional arguments eventually passed by methods
 #'   \code{shootflow.default}
 #'
 #' @return Matrix of the same dimensions as \code{x}
@@ -44,7 +45,7 @@ shootflow.neuronlist<-function(x, ...){
 #' @rdname shootflow
 #' @references See \url{http://www.deformetrica.org/?page_id=232} for details of
 #'   the \bold{ShootAndFlow3} command line tool.
-shootflow.default<-function(x, regdir = "inst/extdata/reg_output", data.sigma = 1, kernel.width=5,
+shootflow.default<-function(x, regdir = "inst/extdata/reg_output", kernel.width=5,
                     object.type = "NonOrientedPolyLine", ...){
   # we need to make a command line like this
   # ShootAndFlow3 paramsDiffeos.xml Direction CP.txt Mom.txt paramsObject1.xml object1 paramsObject2.xml object2 …
@@ -63,7 +64,7 @@ shootflow.default<-function(x, regdir = "inst/extdata/reg_output", data.sigma = 
 
   # now change to our temporary directory
   setwd(td)
-  params_file=make_params_file(data.sigma = data.sigma, kernel.width = kernel.width, object.type = object.type)
+  params_file=make_params_file(kernel.width = kernel.width, object.type = object.type)
   steps=read.paramdiffeos("paramDiffeos.xml")$steps
   write.vtk(x, "points.vtk")
   ShootAndFlow3("paramDiffeos.xml", 1, "CP_final.txt", "Mom_final.txt", params_file, "points.vtk")
@@ -71,6 +72,13 @@ shootflow.default<-function(x, regdir = "inst/extdata/reg_output", data.sigma = 
   read.vtk(output.file)
 }
 
+#' Read and write deformation parameter files
+#'
+#' @param infile
+#'
+#' @return
+#' @export
+#' @rdname read
 read.paramdiffeos<-function(infile){
   ll=readLines(infile)
   rl=list()
@@ -78,7 +86,8 @@ read.paramdiffeos<-function(infile){
   rl
 }
 
-make_params_file<-function(outfile="paramsObject1.xml", data.sigma=1, kernel.width=5, object.type = "NonOrientedPolyLine"){
+make_params_file<-function(outfile="paramsObject1.xml", kernel.width=5, object.type = c("PointCloud, OrientedPolyLine, NonOrientedPolyLine, OrientedSurfaceMesh, NonOrientedSurfaceMesh")){
+  data.sigma=1
   lines=c("<?xml version=\"1.0\"?>", "<deformable-object-parameters>",
     "", "    <!-- Type of the deformable object (See DeformableObject::DeformableObjectType for details) -->",
     sprintf("\t<deformable-object-type>%s</deformable-object-type>", object.type),
@@ -90,6 +99,8 @@ make_params_file<-function(outfile="paramsObject1.xml", data.sigma=1, kernel.wid
   return(outfile)
 }
 
+#' @export
+#' @rdname shootflow
 # Call the ShootAndFlow3 with optional arguments
 ShootAndFlow3<-function(...){
   # we need to find the deformetrica executable

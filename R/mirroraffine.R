@@ -7,11 +7,11 @@
 #calyxes generated separately) the antennal lobes, and the entire neuropil as would be seen in an Nc82 (bruchpilot) stain.
 
 #' @export
-#' @rdname shootflow
+#' @rdname apply.mirror.affine
 apply.mirror.affine<-function(x, ...) UseMethod("apply.mirror.affine")
 
 #' @export
-#' @rdname shootflow
+#' @rdname apply.mirror.affine
 apply.mirror.affine.neuron<-function(x, ...) {
   moved.points<-apply.mirror.affine.default(x, ...)
   x$d$X <- moved.points[,1]
@@ -21,7 +21,7 @@ apply.mirror.affine.neuron<-function(x, ...) {
 }
 
 #' @export
-#' @rdname shootflow
+#' @rdname apply.mirror.affine
 apply.mirror.affine.neuronlist<-function(x, ...){
   nat::nlapply(x, apply.mirror.affine, ...)
 }
