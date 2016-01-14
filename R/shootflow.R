@@ -4,7 +4,6 @@
 
 # see http://www.deformetrica.org/?page_id=232
 
-# first thing to achieve support for bare vertices (3d coordinates)
 
 #' Apply deformetrica registration to a set of 3D points (ShootAndFlow3)
 #'
