@@ -49,6 +49,7 @@ shootflow.default<-function(x, regdir = system.file("inst/extdata/reg_output", p
   # we need to make a command line like this
   # ShootAndFlow3 paramsDiffeos.xml Direction CP.txt Mom.txt paramsObject1.xml object1 paramsObject2.xml object2 …
   # make a temp dir
+  print(regdir)
   td=tempfile()
   dir.create(td)
   # clean up when done
@@ -60,7 +61,6 @@ shootflow.default<-function(x, regdir = system.file("inst/extdata/reg_output", p
     stop("cannot find some of the registration input files:", reg_files_we_want)
   }
   file.copy(reg_files_we_want, td)
-
   # now change to our temporary directory
   setwd(td)
   params_file=make_params_file(kernel.width = kernel.width, object.type = object.type)
