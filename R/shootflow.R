@@ -49,7 +49,6 @@ shootflow.default<-function(x, regdir = system.file("extdata/reg_output/", packa
   # we need to make a command line like this
   # ShootAndFlow3 paramsDiffeos.xml Direction CP.txt Mom.txt paramsObject1.xml object1 paramsObject2.xml object2 …
   # make a temp dir
-  print(regdir)
   td=tempfile()
   dir.create(td)
   # clean up when done
