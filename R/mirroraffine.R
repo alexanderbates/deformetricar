@@ -42,12 +42,11 @@ apply.mirror.affine.neuronlist<-function(x, ...){
 #' \code{\link{trafoicpmat}}
 #' @rdname apply.mirror.affine
 apply.mirror.affine.default <- function (x, calculatetransform = NULL, ...){
-  require(nat)
-  xyz = xyzmatrix(x)
+  xyz = nat::xyzmatrix(x)
   if (is.null(calculatetransform))
-    fullmirror = calculate.full.transformation()
-  else
     fullmirror = readRDS("inst/extdata/fullmirror.rds")
+  else
+    fullmirror = calculate.full.transformation()
   transform.points(xyz, fullmirror)
 }
 
@@ -65,12 +64,12 @@ apply.mirror.affine.default <- function (x, calculatetransform = NULL, ...){
 
 calculate.full.transformation <- function (objs = "inst/extdata/point_objects/", pattern = ".rds$", ...){
   if (is.character(objs)){
-    filelist = list.files(dir, pattern = pattern)
+    filelist = list.files(objs, pattern = pattern)
     all.structures = matrix(ncol=3)
     for(i in 1:length(filelist))
     {
       oname = paste(gsub(pattern,".d",filelist[i]) )
-      all.structures = rbind(all.structures, assign(oname, readRDS(paste(dir,filelist[i], sep = ""))))
+      all.structures = rbind(all.structures, assign(oname, readRDS(paste(objs,filelist[i], sep = ""))))
     }
     all.structures = all.structures[-1,]
   } else
@@ -96,10 +95,9 @@ calculate.full.transformation <- function (objs = "inst/extdata/point_objects/",
 #' @export
 mirrormat <- function (x, mirrorAxis = c("X", "Y", "Z"), mirrorAxisSize = NULL, ...)
 {
-  x = xyzmatrix(x)
   if (is.null(mirrorAxisSize))
     bb = apply(x, 2, range, na.rm = T)
-    mirrorAxisSize = boundingbox(bb)
+    mirrorAxisSize = nat::boundingbox(bb)
   if (is.character(mirrorAxis)) {
     mirrorAxis = match.arg(mirrorAxis)
     mirrorAxis = match(mirrorAxis, c("X", "Y", "Z"))
@@ -138,8 +136,7 @@ mirrormat <- function (x, mirrorAxis = c("X", "Y", "Z"), mirrorAxisSize = NULL, 
 #' @export
 trafoicpmat <- function (x, y, iterations, mindist = 1e+15, subsample = NULL,
                       type = c("rigid", "similarity", "affine"), ...) {
-  require(Morpho)
-  m <- ncol(x)
+   m <- ncol(x)
   if (m == 2) {
     x <- cbind(x, 0)
     y <- cbind(y, 0)
@@ -181,9 +178,8 @@ trafoicpmat <- function (x, y, iterations, mindist = 1e+15, subsample = NULL,
 #' @return the transformed 3D coordinates
 #' @export
 transform.points = function (positions, transformations, ...){
-  require(nat)
   if (is.list(transformations) == F){
-    positions = xform(positions, transformations)
+    positions = nat::xform(positions, transformations)
   }
   if (is.list(transformations) == T){
     for (transformation in transformations){

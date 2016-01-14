@@ -21,4 +21,7 @@ registering of a set of flipped, large neuroanatomical regions unto their un-fli
 \description{
 Apply a list of mirroring, affine and warping registrations to an object in 3D space
 }
+\seealso{
+\code{\link{shotflow}} \code{\link{apply.mirror.affine}}
+}
 

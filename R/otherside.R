@@ -8,7 +8,8 @@
 #' affine and warping (via Deformetrica, see http://www.deformetrica.org/?page_id=232) transformations. The default is to flip points in
 #' the l1 larval central nervous system from one side to the other, and apply a previousy generated Deformetrica deformation based on the
 #' registering of a set of flipped, large neuroanatomical regions unto their un-flipped counterparts.
-#' @export \code{\link{shotflow}} \code{\link{apply.mirror.affine}}
+#' @export
+#' @seealso \code{\link{shotflow}} \code{\link{apply.mirror.affine}}
 
 otherside <- function (x, ...){
   x = apply.mirror.affine(x, ...)
