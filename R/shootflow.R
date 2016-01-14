@@ -45,7 +45,7 @@ shootflow.neuronlist<-function(x, ...){
 #' @references See \url{http://www.deformetrica.org/?page_id=232} for details of
 #'   the \bold{ShootAndFlow3} command line tool.
 shootflow.default<-function(x, regdir = system.file("extdata/reg_output/", package = 'deformetricar'), kernel.width=5,
-                    object.type = c("PointCloud, OrientedPolyLine, NonOrientedPolyLine, OrientedSurfaceMesh, NonOrientedSurfaceMesh"), ...){
+                    object.type = c("PointCloud", "OrientedPolyLine", "NonOrientedPolyLine", "OrientedSurfaceMesh", "NonOrientedSurfaceMesh"), ...){
   # we need to make a command line like this
   # ShootAndFlow3 paramsDiffeos.xml Direction CP.txt Mom.txt paramsObject1.xml object1 paramsObject2.xml object2 …
   # make a temp dir
@@ -82,7 +82,7 @@ read.paramdiffeos<-function(infile){
 
 
 make_params_file<-function(outfile="paramsObject1.xml", kernel.width=5,
-                           object.type = c("PointCloud, OrientedPolyLine, NonOrientedPolyLine, OrientedSurfaceMesh, NonOrientedSurfaceMesh")){
+                           object.type = c("PointCloud", "OrientedPolyLine", "NonOrientedPolyLine", "OrientedSurfaceMesh", "NonOrientedSurfaceMesh")){
   data.sigma=1
   lines=c("<?xml version=\"1.0\"?>", "<deformable-object-parameters>",
     "", "    <!-- Type of the deformable object (See DeformableObject::DeformableObjectType for details) -->",

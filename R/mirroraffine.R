@@ -66,7 +66,7 @@ apply.mirror.affine.default <- function (x, calculatetransform = NULL, pathtomat
 #' @return a list of transformation matrices
 #' @export
 
-calculate.full.transformation <- function (objs = system.file("inst/extdata/point_objects/", package = 'deformetricar'), pattern = ".rds$", ...){
+calculate.full.transformation <- function (objs = system.file("extdata/point_objects/", package = 'deformetricar'), pattern = ".rds$", ...){
   if (is.character(objs)){
     filelist = list.files(objs, pattern = pattern)
     all.structures = matrix(ncol=3)
