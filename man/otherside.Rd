@@ -10,7 +10,7 @@ otherside(x, ...)
 \item{x}{a set of 3D coordinates (Nx3 matrix), a neuron, neuronlist, dotprops, hxsurf, igraph or mesh3d object.
 currently point replacement is only supported for neuron and neuronlist objects.}
 
-\item{...}{additional arguments passed to: \code{\link{shotflow}} \code{\link{apply.mirror.affine}}}
+\item{...}{additional arguments passed to: \code{\link{shootflow}} \code{\link{apply.mirror.affine}}}
 }
 \value{
 a set of 3D cordinates (or a neuron/neuronlist object if that was given as input), that has undergone sequential mirroring
@@ -22,6 +22,6 @@ registering of a set of flipped, large neuroanatomical regions unto their un-fli
 Apply a list of mirroring, affine and warping registrations to an object in 3D space
 }
 \seealso{
-\code{\link{shotflow}} \code{\link{apply.mirror.affine}}
+\code{\link{shootflow}} \code{\link{apply.mirror.affine}}
 }
 

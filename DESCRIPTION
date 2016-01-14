@@ -1,6 +1,6 @@
 Package: deformetricar
 Type: Package
-Title: R wrapper for deformetrica registration tool
+Title: R wrapper for elements of the Deformetrica registration tool
 Version: 0.1
 Author: Alex Bates and Gregory Jefferis
 Maintainer: Alex Bates <abates@mrc-lmb.cam.ac.uk>
@@ -11,4 +11,4 @@ License: GPL-3
 LazyData: TRUE
 RoxygenNote: 5.0.1
 Suggests: testthat
-Imports: nat, Morpho
+Imports: nat, Morpho, Rvcg

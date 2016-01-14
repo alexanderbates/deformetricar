@@ -13,17 +13,20 @@ apply.mirror.affine(x, ...)
 
 \method{apply.mirror.affine}{neuronlist}(x, ...)
 
-\method{apply.mirror.affine}{default}(x, calculatetransform = NULL, ...)
+\method{apply.mirror.affine}{default}(x, calculatetransform = NULL,
+  pathtomatrix = NULL, ...)
 }
 \arguments{
 \item{x}{a set of 3D coordinates (Nx3 matrix), a neuron, neuronlist, dotprops, hxsurf, igraph or mesh3d object.
 currently point replacement is only supported for neuron and neuronlist objects.}
 
-\item{...}{additional arguments eventually passed to: \code{\link{calculate.full.transformation}} \code{\link{mirrormat}} \code{\link{transform.points}}}
+\item{...}{additional arguments eventually passed to: \code{\link{calculate.full.transformation}} \code{\link{mirrormat}} \code{\link{transform3dpoints}}}
 
 \item{calculatetransform}{whether or not to re-calculate the mirorring transformation, and the affine transformation for
 the mirrored object onto the original ones. Null defaults to a list of transformation matrices generated from flipping a set
 of neuroanatomical structures in the L1 larval central nervous system, then performing an affine transformation. Otherwise,}
+
+\item{pathtomatrix}{path to a saved transformation matrix, or list of matrices, that you want to use}
 }
 \value{
 a set of 3D cordinates (or a neuron/neuronlist object if that was given as input), that has undergone sequential mirroring
@@ -34,7 +37,7 @@ other.
 Apply a mirroring and affine transformation to an object in 3D space
 }
 \seealso{
-\code{\link{calculate.full.transformation}} \code{\link{mirrormat}} \code{\link{transform.points}}
+\code{\link{calculate.full.transformation}} \code{\link{mirrormat}} \code{\link{transform3dpoints}}
 \code{\link{trafoicpmat}}
 }
 

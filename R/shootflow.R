@@ -26,22 +26,20 @@ shootflow.neuron<-function(x, ...) {
 #' @export
 #' @rdname shootflow
 shootflow.neuronlist<-function(x, ...){
-  if (mean(xyzmatrix(x)[,3]) > 1000)
-    warning("Object appears to be in nanometers")
   nat::nlapply(x, shootflow, ...)
 }
 
 #' @param x object to be transformed (for \code{shootflow.default} method an Nx3
 #'   matrix of 3D coordinates)
 #' @param regdir Path to directory containing deformetrica registration
-#' @param kernel.width the width of the deformation kernel. The larger the more “rigid”
+#' @param kernel.width the width of the deformation kernel. The larger the more rigid
 #' the deformation. The smaller, the more local variations of the space is allowed.
 #' @param object.type type of object to be deformed. PointCloud, OrientedPolyLine, NonOrientedPolyLine,
 #' OrientedSurfaceMesh and NonOrientedSurfaceMesh
 #' @param ... additional arguments eventually passed by methods
 #'   \code{shootflow.default}
 #'
-#' @return Matrix of the same dimensions as \code{x}
+#' @return matrix of the same dimensions as \code{x}
 #' @export
 #' @rdname shootflow
 #' @references See \url{http://www.deformetrica.org/?page_id=232} for details of
@@ -73,8 +71,8 @@ shootflow.default<-function(x, regdir = "inst/extdata/reg_output", kernel.width=
   read.vtk(output.file)
 }
 
+# Hidden functions:
 
-#' @rdname shootflow
 read.paramdiffeos<-function(infile){
   ll=readLines(infile)
   rl=list()
@@ -82,8 +80,9 @@ read.paramdiffeos<-function(infile){
   rl
 }
 
-#' @rdname shootflow
-make_params_file<-function(outfile="paramsObject1.xml", kernel.width=5, object.type = c("PointCloud, OrientedPolyLine, NonOrientedPolyLine, OrientedSurfaceMesh, NonOrientedSurfaceMesh")){
+
+make_params_file<-function(outfile="paramsObject1.xml", kernel.width=5,
+                           object.type = c("PointCloud, OrientedPolyLine, NonOrientedPolyLine, OrientedSurfaceMesh, NonOrientedSurfaceMesh")){
   data.sigma=1
   lines=c("<?xml version=\"1.0\"?>", "<deformable-object-parameters>",
     "", "    <!-- Type of the deformable object (See DeformableObject::DeformableObjectType for details) -->",
@@ -97,7 +96,7 @@ make_params_file<-function(outfile="paramsObject1.xml", kernel.width=5, object.t
 }
 
 
-#' @rdname shootflow
+
 # Call the ShootAndFlow3 with optional arguments
 ShootAndFlow3<-function(...){
   # we need to find the deformetrica executable

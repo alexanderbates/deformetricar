@@ -33,21 +33,25 @@ apply.mirror.affine.neuronlist<-function(x, ...){
 #' @param calculatetransform whether or not to re-calculate the mirorring transformation, and the affine transformation for
 #' the mirrored object onto the original ones. Null defaults to a list of transformation matrices generated from flipping a set
 #' of neuroanatomical structures in the L1 larval central nervous system, then performing an affine transformation. Otherwise,
-#' @param ... additional arguments eventually passed to: \code{\link{calculate.full.transformation}} \code{\link{mirrormat}} \code{\link{transform.points}}
+#' @param ... additional arguments eventually passed to: \code{\link{calculate.full.transformation}} \code{\link{mirrormat}} \code{\link{transform3dpoints}}
+#' @param pathtomatrix path to a saved transformation matrix, or list of matrices, that you want to use
 #' @return a set of 3D cordinates (or a neuron/neuronlist object if that was given as input), that has undergone sequential mirroring
 #' and affine transformations. The default is to flip points in the l1 larval central nervous system from one side to the
 #' other.
 #' @export
-#' @seealso \code{\link{calculate.full.transformation}} \code{\link{mirrormat}} \code{\link{transform.points}}
+#' @seealso \code{\link{calculate.full.transformation}} \code{\link{mirrormat}} \code{\link{transform3dpoints}}
 #' \code{\link{trafoicpmat}}
 #' @rdname apply.mirror.affine
-apply.mirror.affine.default <- function (x, calculatetransform = NULL, ...){
+apply.mirror.affine.default <- function (x, calculatetransform = NULL, pathtomatrix = NULL, ...){
   xyz = nat::xyzmatrix(x)
   if (is.null(calculatetransform))
-    fullmirror = readRDS("inst/extdata/fullmirror.rds")
+    if (!is.null(pathtomatrix)){
+      fullmirror = readRDS(pathtomatrix)
+    } else
+      fullmirror = readRDS("inst/extdata/fullmirror.rds")
   else
     fullmirror = calculate.full.transformation()
-  transform.points(xyz, fullmirror)
+  transform3dpoints(xyz, fullmirror)
 }
 
 
@@ -73,10 +77,10 @@ calculate.full.transformation <- function (objs = "inst/extdata/point_objects/",
     }
     all.structures = all.structures[-1,]
   } else
-      all.structures = xyzmatrix(objs)
+      all.structures = nat::xyzmatrix(objs)
   # Generate transformation matrices
   flipmatrix = mirrormat(all.structures)
-  all.structures.flipped = nat::mirror(all.structures, boundingbox(apply(all.structures, 2, range, na.rm = T)))
+  all.structures.flipped = nat::mirror(all.structures, nat::boundingbox(apply(all.structures, 2, range, na.rm = T)))
   t.rigid =trafoicpmat(all.structures.flipped, all.structures, 100, subsample = NULL, type='rigid')
   t.affine =trafoicpmat(t.rigid$xt, all.structures, 100, subsample = NULL, type='affine')
   # This is the matrix for the full, global transformation
@@ -177,13 +181,13 @@ trafoicpmat <- function (x, y, iterations, mindist = 1e+15, subsample = NULL,
 #'
 #' @return the transformed 3D coordinates
 #' @export
-transform.points = function (positions, transformations, ...){
+transform3dpoints = function (positions, transformations, ...){
   if (is.list(transformations) == F){
     positions = nat::xform(positions, transformations)
   }
   if (is.list(transformations) == T){
     for (transformation in transformations){
-      positions <- xform(positions, transformation)
+      positions <- nat::xform(positions, transformation)
     }
   }
   return (positions)

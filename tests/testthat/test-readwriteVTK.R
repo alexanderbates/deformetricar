@@ -4,7 +4,7 @@ test_that("we can read vtk files",{
   expect_is(m<-read.vtk(vtkfile), 'matrix')
   expect_equal(ncol(m), 3)
   expect_equal(colnames(m), c("X", "Y", "Z"))
-  expect_equal(nrow(m), 3088)
+  expect_equal(nrow(m), 6630)
 })
 
 test_that("we can write vtk files",{
