@@ -11,7 +11,7 @@ test_that("we can run shoot and flow on a matrix",{
   expect_equal(deform.m[1:3,], first3_baseline)
 })
 
-test_that("we can run shoot and flow on a neuonlist",{
+test_that("we can run shoot and flow on a neuronlist",{
   n3=nat::Cell07PNs[1:3]
   regdir=system.file("extdata/reg_output", package = 'deformetricar')
   expect_is(deform.n3<-shootflow(n3, regdir), 'neuronlist')
