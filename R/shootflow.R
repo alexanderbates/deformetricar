@@ -15,16 +15,18 @@ shootflow<-function(x, ...) UseMethod("shootflow")
 #' @rdname shootflow
 shootflow.neuron<-function(x, ...) {
   points=nat::xyzmatrix(x)
-  deform.points<-shootflow(x=points, ...)
-  x$d$X <- moved.points[,1]
-  x$d$Y <- moved.points[,2]
-  x$d$Z <- moved.points[,3]
+  deform.points<-shootflow.default(x=points, ...)
+  x$d$X <- deform.points[,1]
+  x$d$Y <- deform.points[,2]
+  x$d$Z <- deform.points[,3]
   x
 }
 
 #' @export
 #' @rdname shootflow
 shootflow.neuronlist<-function(x, ...){
+  if (mean(xyzmatrix(x)) > 1000)
+    warning("Object appears to be in nanometers")
   nat::nlapply(x, shootflow, ...)
 }
 
@@ -51,7 +53,6 @@ shootflow.default<-function(x, regdir = "inst/extdata/reg_output", data.sigma = 
   dir.create(td)
   # clean up when done
   on.exit(unlink(td, recursive = TRUE))
-
   reg_files_we_want=c("paramDiffeos.xml", "CP_final.txt", "Mom_final.txt")
   owd=setwd(regdir)
   on.exit(setwd(owd), add = T)
