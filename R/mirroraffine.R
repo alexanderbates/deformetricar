@@ -125,7 +125,7 @@ mirrormat <- function (x, mirrorAxis = c("X", "Y", "Z"), mirrorAxisSize = NULL, 
 #' Get affine transformation matrices
 #' @description A modification of the icpmat function from the package Morpho. This function matches
 #' two landmark configurations using iteratively closest point search.
-#' @param x moving landmakrs
+#' @param x moving landmarks
 #' @param y target landmarks
 #' @param iterations integer number of iterations
 #' @param mindist restrict valid points to be within this distance
@@ -136,8 +136,6 @@ mirrormat <- function (x, mirrorAxis = c("X", "Y", "Z"), mirrorAxisSize = NULL, 
 #' @return a data frame containing the transformed object, and the transformation matrices describing the performed
 #' transformation
 #' @export
-#'
-#' @examples
 trafoicpmat <- function (x, y, iterations, mindist = 1e+15, subsample = NULL,
                       type = c("rigid", "similarity", "affine"), ...) {
   require(Morpho)
@@ -174,6 +172,14 @@ trafoicpmat <- function (x, y, iterations, mindist = 1e+15, subsample = NULL,
 }
 
 
+#' Transform 3D coordinates using a list of transformation matrices
+#'
+#' @param positions 3D coodinates
+#' @param transformations list of transformation matrices
+#' @param ... additional arguments eventually passed to methods
+#'
+#' @return the transformed 3D coordinates
+#' @export
 transform.points = function (positions, transformations, ...){
   require(nat)
   if (is.list(transformations) == F){
