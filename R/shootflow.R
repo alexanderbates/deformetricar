@@ -6,7 +6,8 @@
 
 
 #' Apply deformetrica registration to a set of 3D points (ShootAndFlow3)
-#'
+#' @description Apply a Deformetrica deformation using calculated momentum vectors and control points (in files MOM_final.txt
+#' and CP_final.txt respectively), by calling the executable ShootAndFlow3. This requires installation of Deformetrica version 2.1 or later (preferably in Applications).
 #' @export
 #' @rdname shootflow
 shootflow<-function(x, ...) UseMethod("shootflow")
@@ -72,13 +73,8 @@ shootflow.default<-function(x, regdir = "inst/extdata/reg_output", kernel.width=
   read.vtk(output.file)
 }
 
-#' Read and write deformation parameter files
-#'
-#' @param infile
-#'
-#' @return
-#' @export
-#' @rdname read
+
+#' @rdname shootflow
 read.paramdiffeos<-function(infile){
   ll=readLines(infile)
   rl=list()
@@ -86,6 +82,7 @@ read.paramdiffeos<-function(infile){
   rl
 }
 
+#' @rdname shootflow
 make_params_file<-function(outfile="paramsObject1.xml", kernel.width=5, object.type = c("PointCloud, OrientedPolyLine, NonOrientedPolyLine, OrientedSurfaceMesh, NonOrientedSurfaceMesh")){
   data.sigma=1
   lines=c("<?xml version=\"1.0\"?>", "<deformable-object-parameters>",
@@ -99,7 +96,7 @@ make_params_file<-function(outfile="paramsObject1.xml", kernel.width=5, object.t
   return(outfile)
 }
 
-#' @export
+
 #' @rdname shootflow
 # Call the ShootAndFlow3 with optional arguments
 ShootAndFlow3<-function(...){
@@ -116,3 +113,5 @@ ShootAndFlow3<-function(...){
   args=paste(..., collapse=" ")
   system(paste(app, args), ignore.stdout=TRUE)
 }
+
+

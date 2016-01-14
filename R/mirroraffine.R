@@ -26,10 +26,25 @@ apply.mirror.affine.neuronlist<-function(x, ...){
   nat::nlapply(x, apply.mirror.affine, ...)
 }
 
-apply.mirror.affine.default <- function (x, calculatetransform = F, ...){
+#' Apply a mirroring and affine transformation to an object in 3D space
+#'
+#' @param x a set of 3D coordinates (Nx3 matrix), a neuron, neuronlist, dotprops, hxsurf, igraph or mesh3d object.
+#' currently point replacement is only supported for neuron and neuronlist objects.
+#' @param calculatetransform whether or not to re-calculate the mirorring transformation, and the affine transformation for
+#' the mirrored object onto the original ones. Null defaults to a list of transformation matrices generated from flipping a set
+#' of neuroanatomical structures in the L1 larval central nervous system, then performing an affine transformation. Otherwise,
+#' @param ... additional arguments eventually passed to: \code{\link{calculate.full.transformation}} \code{\link{mirrormat}} \code{\link{transform.points}}
+#' @return a set of 3D cordinates (or a neuron/neuronlist object if that was given as input), that has undergone sequential mirroring
+#' and affine transformations. The default is to flip points in the l1 larval central nervous system from one side to the
+#' other.
+#' @export
+#' @seealso \code{\link{calculate.full.transformation}} \code{\link{mirrormat}} \code{\link{transform.points}}
+#' \code{\link{trafoicpmat}}
+#' @rdname apply.mirror.affine
+apply.mirror.affine.default <- function (x, calculatetransform = NULL, ...){
   require(nat)
   xyz = xyzmatrix(x)
-  if (calculatetransform)
+  if (is.null(calculatetransform))
     fullmirror = calculate.full.transformation()
   else
     fullmirror = readRDS("inst/extdata/fullmirror.rds")
@@ -37,27 +52,51 @@ apply.mirror.affine.default <- function (x, calculatetransform = F, ...){
 }
 
 
-calculate.full.transformation <- function (dir = "inst/extdata/point_objects/", pattern = ".rds$", ...){
-  filelist = list.files(dir, pattern = pattern)
-  all.structures = matrix(ncol=3)
-  for(i in 1:length(filelist))
-  {
-    oname = paste(gsub(".rds",".d",filelist[i]) )
-    all.structures = rbind(all.structures, assign(oname, readRDS(paste(dir,filelist[i], sep = ""))))
-  }
-  all.structures = all.structures[-1,]
+#' Calculate a mirroring, then a pair of affine transformations
+#' @description Calculates a mirroring transformation, then a rigid, then a non-rigid affine transformation on a given 3D R object, or
+#' one(s) saved as RDS files By default, the mirroring occurs across the X axis of the provided data.
+#' @param objs An R object () or the location of (an) R object(s) for the basis of calculating the transformation matrices.
+#' Defaults to a set of files describing key neuroanatomical structures of the L1 larval central nervous system.
+#' @param pattern search term for RDS files to read in the given location.
+#' @param ... additional arguments eventually passed to: \code{\link{trafoicpmat}} \code{\link{mirrormat}}
+#'
+#' @return a list of transformation matrices
+#' @export
+
+calculate.full.transformation <- function (objs = "inst/extdata/point_objects/", pattern = ".rds$", ...){
+  if (is.character(objs)){
+    filelist = list.files(dir, pattern = pattern)
+    all.structures = matrix(ncol=3)
+    for(i in 1:length(filelist))
+    {
+      oname = paste(gsub(pattern,".d",filelist[i]) )
+      all.structures = rbind(all.structures, assign(oname, readRDS(paste(dir,filelist[i], sep = ""))))
+    }
+    all.structures = all.structures[-1,]
+  } else
+      all.structures = xyzmatrix(objs)
   # Generate transformation matrices
   flipmatrix = mirrormat(all.structures)
   all.structures.flipped = nat::mirror(all.structures, boundingbox(apply(all.structures, 2, range, na.rm = T)))
   t.rigid =trafoicpmat(all.structures.flipped, all.structures, 100, subsample = NULL, type='rigid')
   t.affine =trafoicpmat(t.rigid$xt, all.structures, 100, subsample = NULL, type='affine')
   # This is the matrix for the full, global transformation
-  list(flipmatrix, t.rigid$trafo2, t.affine$trafo2)
+  list(flipmatrix, t.rigid$trafo, t.affine$trafo)
 }
 
 
+#' Generate a transformation matrix for a mirroring registration
+#' @description Generates
+#' @param x a set of 3D coordinates (Nx3 matrix), a neuron, neuronlist, dotprops, hxsurf, igraph or mesh3d object.
+#' @param mirrorAxis the axis along which to mirror the data. Defaults to the X axis.
+#' @param mirrorAxisSize this defaults to the bounding box for x.
+#' @param ... additional arguments eventually passed to methods
+#'
+#' @return A transformation matrix
+#' @export
 mirrormat <- function (x, mirrorAxis = c("X", "Y", "Z"), mirrorAxisSize = NULL, ...)
 {
+  x = xyzmatrix(x)
   if (is.null(mirrorAxisSize))
     bb = apply(x, 2, range, na.rm = T)
     mirrorAxisSize = boundingbox(bb)
@@ -83,6 +122,22 @@ mirrormat <- function (x, mirrorAxis = c("X", "Y", "Z"), mirrorAxisSize = NULL, 
 }
 
 
+#' Get affine transformation matrices
+#' @description A modification of the icpmat function from the package Morpho. This function matches
+#' two landmark configurations using iteratively closest point search.
+#' @param x moving landmakrs
+#' @param y target landmarks
+#' @param iterations integer number of iterations
+#' @param mindist restrict valid points to be within this distance
+#' @param subsample use a subsample determined by kmean clusters to speed up computation
+#' @param type character: select the transform to be applied, can be "rigid","similarity" or "affine"
+#' @param ... additional arguments eventually passed to methods
+#'
+#' @return a data frame containing the transformed object, and the transformation matrices describing the performed
+#' transformation
+#' @export
+#'
+#' @examples
 trafoicpmat <- function (x, y, iterations, mindist = 1e+15, subsample = NULL,
                       type = c("rigid", "similarity", "affine"), ...) {
   require(Morpho)
@@ -115,7 +170,7 @@ trafoicpmat <- function (x, y, iterations, mindist = 1e+15, subsample = NULL,
     xtmp <- xtmp[, 1:2]
   # compute transform of original floating points onto final floating points
   trafo2= Morpho::computeTransform(xtmp, x, type=type)
-  return(list(xt=xtmp, trafo=trafo, trafo2=trafo2))
+  return(list(xt=xtmp, trafo=trafo2))
 }
 
 
