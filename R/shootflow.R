@@ -44,7 +44,7 @@ shootflow.neuronlist<-function(x, ...){
 #' @rdname shootflow
 #' @references See \url{http://www.deformetrica.org/?page_id=232} for details of
 #'   the \bold{ShootAndFlow3} command line tool.
-shootflow.default<-function(x, regdir = "inst/extdata/reg_output", kernel.width=5,
+shootflow.default<-function(x, regdir = system.file("inst/extdata/reg_output", package = 'deformetricar'), kernel.width=5,
                     object.type = "NonOrientedPolyLine", ...){
   # we need to make a command line like this
   # ShootAndFlow3 paramsDiffeos.xml Direction CP.txt Mom.txt paramsObject1.xml object1 paramsObject2.xml object2 …
