@@ -104,9 +104,9 @@ ShootAndFlow3<-function(...){
 }
 
 find_app<-function(app){
-  deformetricar.bindir=path.expand(getOption("deformetricar.bindir"))
+  deformetricar.bindir=getOption("deformetricar.bindir")
   if(!is.null(deformetricar.bindir)) {
-    app=file.path(deformetricar.bindir, app)
+    app=file.path(path.expand(deformetricar.bindir), app)
   } else {
     # is it in the path?
     app=Sys.which('ShootAndFlow3')
