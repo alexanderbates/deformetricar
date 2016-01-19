@@ -98,18 +98,27 @@ make_params_file<-function(outfile="paramsObject1.xml", kernel.width=5,
 
 # Call the ShootAndFlow3 with optional arguments
 ShootAndFlow3<-function(...){
-  # we need to find the deformetrica executable
-  # is it in the path?
-  app=Sys.which('ShootAndFlow3')
-  if(nchar(app)==0){
-    # is it in a standard location?
-    app="/Applications/deformetrica-2.1/deformetrica/bin/ShootAndFlow3"
-    if(!file.exists(app))
-      stop("Sorry I can't find the deformetrica ShootAndFlow3 executable!",
-           "Please add it to your PATH or put it in ", dirname(app))
-  }
+  app=find_app("ShootAndFlow3")
   args=paste(..., collapse=" ")
   system(paste(app, args), ignore.stdout=TRUE)
 }
 
-
+find_app<-function(app){
+  deformetricar.bindir=path.expand(getOption("deformetricar.bindir"))
+  if(!is.null(deformetricar.bindir)) {
+    app=file.path(deformetricar.bindir, app)
+  } else {
+    # is it in the path?
+    app=Sys.which('ShootAndFlow3')
+    if(nchar(app)==0){
+      # is it in a standard location?
+      app="/Applications/deformetrica-2.1/deformetrica/bin/ShootAndFlow3"
+      if(!file.exists(app))
+        stop("Sorry I can't find the deformetrica ",basename(app)," executable! ",
+             'Please add it to your PATH or set ',
+             'options(deformetricar.bindir="/path/to/deformetrica/apps")')
+    }
+    options(deformetricar.bindir=dirname(app))
+  }
+  app
+}
