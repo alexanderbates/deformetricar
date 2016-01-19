@@ -4,8 +4,8 @@
 \alias{calculate.full.transformation}
 \title{Calculate a mirroring, then a pair of affine transformations}
 \usage{
-calculate.full.transformation(objs = "inst/extdata/point_objects/",
-  pattern = ".rds$", ...)
+calculate.full.transformation(objs = system.file("extdata/point_objects/",
+  package = "deformetricar"), pattern = ".rds$", ...)
 }
 \arguments{
 \item{objs}{An R object () or the location of (an) R object(s) for the basis of calculating the transformation matrices.

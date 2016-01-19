@@ -13,8 +13,10 @@ shootflow(x, ...)
 
 \method{shootflow}{neuronlist}(x, ...)
 
-\method{shootflow}{default}(x, regdir = "inst/extdata/reg_output",
-  kernel.width = 5, object.type = "NonOrientedPolyLine", ...)
+\method{shootflow}{default}(x, regdir = system.file("extdata/reg_output/",
+  package = "deformetricar"), kernel.width = 5,
+  object.type = c("PointCloud", "OrientedPolyLine", "NonOrientedPolyLine",
+  "OrientedSurfaceMesh", "NonOrientedSurfaceMesh"), ...)
 }
 \arguments{
 \item{x}{object to be transformed (for \code{shootflow.default} method an Nx3
