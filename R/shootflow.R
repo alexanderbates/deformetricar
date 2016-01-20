@@ -63,10 +63,13 @@ shootflow.default<-function(x, regdir = system.file("extdata/reg_output/", packa
   # now change to our temporary directory
   setwd(td)
   params_file=make_params_file(kernel.width = kernel.width, object.type = object.type)
-  steps=read.paramdiffeos("paramDiffeos.xml")$number.of.timepoints
+  steps=as.integer(read.paramdiffeos("paramDiffeos.xml")$number.of.timepoints)
   write.vtk(x, "points.vtk")
   ShootAndFlow3("paramDiffeos.xml", 1, "CP_final.txt", "Mom_final.txt", params_file, "points.vtk")
   output.file = paste("points_flow__t_", steps, ".vtk", sep = "")
+  if(!file.exists(output.file)){
+    output.file = paste("points_flow__t_", steps-1, ".vtk", sep = "")
+  }
   read.vtk(output.file)
 }
 
