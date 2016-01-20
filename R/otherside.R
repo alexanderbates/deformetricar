@@ -9,8 +9,8 @@
 #' the l1 larval central nervous system from one side to the other, and apply a previousy generated Deformetrica deformation based on the
 #' registering of a set of flipped, large neuroanatomical regions unto their un-flipped counterparts.
 #' @export
+#' @rdname otherside
 #' @seealso \code{\link{shootflow}} \code{\link{apply.mirror.affine}}
-
 otherside.default <- function (x, ...){
   x = apply.mirror.affine(x, ...)
   x = shootflow(x, ...)
