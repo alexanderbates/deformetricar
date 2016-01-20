@@ -63,7 +63,7 @@ shootflow.default<-function(x, regdir = system.file("extdata/reg_output/", packa
   # now change to our temporary directory
   setwd(td)
   params_file=make_params_file(kernel.width = kernel.width, object.type = object.type)
-  steps=read.paramdiffeos("paramDiffeos.xml")$steps
+  steps=read.paramdiffeos("paramDiffeos.xml")$number.of.timepoints
   write.vtk(x, "points.vtk")
   ShootAndFlow3("paramDiffeos.xml", 1, "CP_final.txt", "Mom_final.txt", params_file, "points.vtk")
   output.file = paste("points_flow__t_", steps, ".vtk", sep = "")
@@ -73,9 +73,10 @@ shootflow.default<-function(x, regdir = system.file("extdata/reg_output/", packa
 # Hidden functions:
 
 read.paramdiffeos<-function(infile){
-  ll=readLines(infile)
-  rl=list()
-  rl$steps = as.integer(unlist(strsplit(gsub("[^0-9]", "", ll[25]), "")))-1
+  x=xml2::read_xml(infile)
+  xx=xml2::xml_children(x)
+  rl=as.list(xml2::xml_text(xx))
+  names(rl)=make.names(xml2::xml_name(xx))
   rl
 }
 
