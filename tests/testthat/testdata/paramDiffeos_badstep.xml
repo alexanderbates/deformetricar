@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<sparse-diffeo-parameters>
+    <kernel-width>5</kernel-width>
+    <kernel-type>Exact</kernel-type>
+    <number-of-timepoints>-1</number-of-timepoints>
+</sparse-diffeo-parameters>

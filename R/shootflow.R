@@ -64,6 +64,8 @@ shootflow.default<-function(x, regdir = system.file("extdata/reg_output/", packa
   setwd(td)
   params_file=make_params_file(kernel.width = kernel.width, object.type = object.type)
   steps=as.integer(read.paramdiffeos("paramDiffeos.xml")$number.of.timepoints)
+  if(!identical(length(steps), 1L) || steps<1)
+    stop("Invalid number-of-timepoints: ", steps, " in paramDiffeos.xml!")
   write.vtk(x, "points.vtk")
   ShootAndFlow3("paramDiffeos.xml", 1, "CP_final.txt", "Mom_final.txt", params_file, "points.vtk")
   output.file = paste("points_flow__t_", steps, ".vtk", sep = "")
