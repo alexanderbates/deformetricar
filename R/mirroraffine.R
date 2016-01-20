@@ -23,7 +23,14 @@ apply.mirror.affine.neuron<-function(x, ...) {
 #' @export
 #' @rdname apply.mirror.affine
 apply.mirror.affine.neuronlist<-function(x, ...){
-  nat::nlapply(x, apply.mirror.affine, ...)
+  moved.points<-apply.mirror.affine.default(x, ...)
+  count = 1
+  for (neuron in 1:length(x)){
+    n = count + nrow(xyzmatrix(x[[neuron]])) -1
+    nat::xyzmatrix(x[[neuron]]) <- moved.points[count:n,]
+    count = count + nrow(nat::xyzmatrix(x[[neuron]]))
+  }
+  return(x)
 }
 
 #' Apply a mirroring and affine transformation to an object in 3D space

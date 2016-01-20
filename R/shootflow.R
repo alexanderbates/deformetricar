@@ -26,7 +26,15 @@ shootflow.neuron<-function(x, ...) {
 #' @export
 #' @rdname shootflow
 shootflow.neuronlist<-function(x, ...){
-  nat::nlapply(x, shootflow, ...)
+  points=nat::xyzmatrix(x)
+  deform.points<-shootflow.default(x=points, ...)
+  count = 1
+  for (neuron in 1:length(x)){
+    n = count + nrow(xyzmatrix(x[[neuron]])) -1
+    nat::xyzmatrix(x[[neuron]]) <- deform.points[count:n,]
+    count = count + nrow(nat::xyzmatrix(x[[neuron]]))
+  }
+  return(x)
 }
 
 #' @param x object to be transformed (for \code{shootflow.default} method an Nx3
@@ -77,7 +85,8 @@ shootflow.default<-function(x, regdir = system.file("extdata/reg_output/", packa
   if(!file.exists(output.file)){
     output.file = paste("points_flow__t_", steps-1, ".vtk", sep = "")
   }
-  read.vtk(output.file)
+  def.points = read.vtk(output.file)
+  return(def.points)
 }
 
 # Hidden functions:
