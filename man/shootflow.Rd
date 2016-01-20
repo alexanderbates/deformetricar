@@ -16,7 +16,7 @@ shootflow(x, ...)
 \method{shootflow}{default}(x, regdir = system.file("extdata/reg_output/",
   package = "deformetricar"), kernel.width = 5,
   object.type = c("PointCloud", "OrientedPolyLine", "NonOrientedPolyLine",
-  "OrientedSurfaceMesh", "NonOrientedSurfaceMesh"), ...)
+  "OrientedSurfaceMesh", "NonOrientedSurfaceMesh"), verbose = FALSE)
 }
 \arguments{
 \item{x}{object to be transformed (for \code{shootflow.default} method an Nx3
@@ -27,11 +27,16 @@ matrix of 3D coordinates)}
 
 \item{regdir}{Path to directory containing deformetrica registration}
 
-\item{kernel.width}{the width of the deformation kernel. The larger the more rigid
-the deformation. The smaller, the more local variations of the space is allowed.}
+\item{kernel.width}{the width of the deformation kernel. The larger the more
+rigid the deformation. The smaller, the more local variations of the space
+is allowed.}
 
-\item{object.type}{type of object to be deformed. PointCloud, OrientedPolyLine, NonOrientedPolyLine,
-OrientedSurfaceMesh and NonOrientedSurfaceMesh}
+\item{object.type}{type of object to be deformed. PointCloud,
+OrientedPolyLine, NonOrientedPolyLine, OrientedSurfaceMesh and
+NonOrientedSurfaceMesh}
+
+\item{verbose}{Whether to show status messages from ShootAndFlow3 command
+line tool}
 }
 \value{
 matrix of the same dimensions as \code{x}

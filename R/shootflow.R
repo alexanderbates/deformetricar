@@ -32,10 +32,14 @@ shootflow.neuronlist<-function(x, ...){
 #' @param x object to be transformed (for \code{shootflow.default} method an Nx3
 #'   matrix of 3D coordinates)
 #' @param regdir Path to directory containing deformetrica registration
-#' @param kernel.width the width of the deformation kernel. The larger the more rigid
-#' the deformation. The smaller, the more local variations of the space is allowed.
-#' @param object.type type of object to be deformed. PointCloud, OrientedPolyLine, NonOrientedPolyLine,
-#' OrientedSurfaceMesh and NonOrientedSurfaceMesh
+#' @param kernel.width the width of the deformation kernel. The larger the more
+#'   rigid the deformation. The smaller, the more local variations of the space
+#'   is allowed.
+#' @param object.type type of object to be deformed. PointCloud,
+#'   OrientedPolyLine, NonOrientedPolyLine, OrientedSurfaceMesh and
+#'   NonOrientedSurfaceMesh
+#' @param verbose Whether to show status messages from ShootAndFlow3 command
+#'   line tool
 #' @param ... additional arguments eventually passed by methods
 #'   \code{shootflow.default}
 #'
@@ -45,7 +49,8 @@ shootflow.neuronlist<-function(x, ...){
 #' @references See \url{http://www.deformetrica.org/?page_id=232} for details of
 #'   the \bold{ShootAndFlow3} command line tool.
 shootflow.default<-function(x, regdir = system.file("extdata/reg_output/", package = 'deformetricar'), kernel.width=5,
-                    object.type = c("PointCloud", "OrientedPolyLine", "NonOrientedPolyLine", "OrientedSurfaceMesh", "NonOrientedSurfaceMesh"), ...){
+                    object.type = c("PointCloud", "OrientedPolyLine", "NonOrientedPolyLine", "OrientedSurfaceMesh", "NonOrientedSurfaceMesh"),
+                    verbose=FALSE){
   # we need to make a command line like this
   # ShootAndFlow3 paramsDiffeos.xml Direction CP.txt Mom.txt paramsObject1.xml object1 paramsObject2.xml object2 …
   # make a temp dir
@@ -103,10 +108,10 @@ make_params_file<-function(outfile="paramsObject1.xml", kernel.width=5,
 
 
 # Call the ShootAndFlow3 with optional arguments
-ShootAndFlow3<-function(...){
+ShootAndFlow3<-function(..., verbose=FALSE){
   app=find_app("ShootAndFlow3")
   args=paste(..., collapse=" ")
-  system(paste(app, args), ignore.stdout=TRUE)
+  system(paste(app, args), ignore.stdout=!verbose)
 }
 
 find_app<-function(app){
