@@ -22,8 +22,6 @@ otherside.default <- function (x, ...){
 otherside.neuron<-function(x, ...) {
   points=xyzmatrix(x)
   morph.points<-otherside.default(x=points, ...)
-  x = apply.mirror.affine(x, ...)
-  x = shootflow(x, ...)
   x$d$X <- morph.points[,1]
   x$d$Y <- morph.points[,2]
   x$d$Z <- morph.points[,3]
