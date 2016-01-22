@@ -14,8 +14,9 @@ shootflow<-function(x, ...) UseMethod("shootflow")
 
 #' @export
 #' @rdname shootflow
+#' @importFrom nat xyzmatrix
 shootflow.neuron<-function(x, ...) {
-  points=nat::xyzmatrix(x)
+  points=xyzmatrix(x)
   deform.points<-shootflow.default(x=points, ...)
   x$d$X <- deform.points[,1]
   x$d$Y <- deform.points[,2]
@@ -25,14 +26,15 @@ shootflow.neuron<-function(x, ...) {
 
 #' @export
 #' @rdname shootflow
+#' @importFrom nat xyzmatrix<-
 shootflow.neuronlist<-function(x, ...){
-  points=nat::xyzmatrix(x)
+  points=xyzmatrix(x)
   deform.points<-shootflow.default(x=points, ...)
   count = 1
   for (neuron in 1:length(x)){
     n = count + nrow(xyzmatrix(x[[neuron]])) -1
-    nat::xyzmatrix(x[[neuron]]) <- deform.points[count:n,]
-    count = count + nrow(nat::xyzmatrix(x[[neuron]]))
+    xyzmatrix(x[[neuron]]) <- deform.points[count:n,]
+    count = count + nrow(xyzmatrix(x[[neuron]]))
   }
   return(x)
 }

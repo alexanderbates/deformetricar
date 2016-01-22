@@ -27,8 +27,8 @@ apply.mirror.affine.neuronlist<-function(x, ...){
   count = 1
   for (neuron in 1:length(x)){
     n = count + nrow(xyzmatrix(x[[neuron]])) -1
-    nat::xyzmatrix(x[[neuron]]) <- moved.points[count:n,]
-    count = count + nrow(nat::xyzmatrix(x[[neuron]]))
+    xyzmatrix(x[[neuron]]) <- moved.points[count:n,]
+    count = count + nrow(xyzmatrix(x[[neuron]]))
   }
   return(x)
 }
@@ -50,7 +50,7 @@ apply.mirror.affine.neuronlist<-function(x, ...){
 #' \code{\link{trafoicpmat}}
 #' @rdname apply.mirror.affine
 apply.mirror.affine.default <- function (x, calculatetransform = NULL, pathtomatrix = NULL, ...){
-  xyz = nat::xyzmatrix(x)
+  xyz = xyzmatrix(x)
   if (is.null(calculatetransform))
     if (!is.null(pathtomatrix)){
       fullmirror = readRDS(pathtomatrix)
@@ -84,7 +84,7 @@ calculate.full.transformation <- function (objs = system.file("extdata/point_obj
     }
     all.structures = all.structures[-1,]
   } else
-      all.structures = nat::xyzmatrix(objs)
+      all.structures = xyzmatrix(objs)
   # Generate transformation matrices
   flipmatrix = mirrormat(all.structures)
   all.structures.flipped = nat::mirror(all.structures, nat::boundingbox(apply(all.structures, 2, range, na.rm = T)))

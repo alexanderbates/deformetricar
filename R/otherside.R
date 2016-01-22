@@ -20,7 +20,7 @@ otherside.default <- function (x, ...){
 #' @export
 #' @rdname otherside
 otherside.neuron<-function(x, ...) {
-  points=nat::xyzmatrix(x)
+  points=xyzmatrix(x)
   morph.points<-otherside.default(x=points, ...)
   x = apply.mirror.affine(x, ...)
   x = shootflow(x, ...)
@@ -33,13 +33,13 @@ otherside.neuron<-function(x, ...) {
 #' @export
 #' @rdname otherside
 otherside.neuronlist<-function(x, ...){
-  points=nat::xyzmatrix(x)
+  points=xyzmatrix(x)
   morph.points<-otherside.default(x=points, ...)
   count = 1
   for (neuron in 1:length(x)){
     n = count + nrow(xyzmatrix(x[[neuron]])) -1
-    nat::xyzmatrix(x[[neuron]]) <- morph.points[count:n,]
-    count = count + nrow(nat::xyzmatrix(x[[neuron]]))
+    xyzmatrix(x[[neuron]]) <- morph.points[count:n,]
+    count = count + nrow(xyzmatrix(x[[neuron]]))
   }
   return(x)
 }
