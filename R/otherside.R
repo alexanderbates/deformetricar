@@ -22,9 +22,7 @@ otherside.default <- function (x, ...){
 otherside.neuron<-function(x, ...) {
   points=xyzmatrix(x)
   morph.points<-otherside.default(x=points, ...)
-  x$d$X <- morph.points[,1]
-  x$d$Y <- morph.points[,2]
-  x$d$Z <- morph.points[,3]
+  xyzmatrix(x)<-morph.points
   x
 }
 

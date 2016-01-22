@@ -14,9 +14,7 @@ apply.mirror.affine<-function(x, ...) UseMethod("apply.mirror.affine")
 #' @rdname apply.mirror.affine
 apply.mirror.affine.neuron<-function(x, ...) {
   moved.points<-apply.mirror.affine.default(x, ...)
-  x$d$X <- moved.points[,1]
-  x$d$Y <- moved.points[,2]
-  x$d$Z <- moved.points[,3]
+  xyzmatrix(x)<-moved.points
   x
 }
 

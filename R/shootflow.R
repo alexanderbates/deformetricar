@@ -18,9 +18,7 @@ shootflow<-function(x, ...) UseMethod("shootflow")
 shootflow.neuron<-function(x, ...) {
   points=xyzmatrix(x)
   deform.points<-shootflow.default(x=points, ...)
-  x$d$X <- deform.points[,1]
-  x$d$Y <- deform.points[,2]
-  x$d$Z <- deform.points[,3]
+  xyzmatrix(x)<-deform.points
   x
 }
 
