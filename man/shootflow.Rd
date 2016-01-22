@@ -16,7 +16,7 @@ shootflow(x, ...)
 \method{shootflow}{default}(x, regdir = system.file("extdata/reg_output/",
   package = "deformetricar"), kernel.width = 5,
   object.type = c("PointCloud", "OrientedPolyLine", "NonOrientedPolyLine",
-  "OrientedSurfaceMesh", "NonOrientedSurfaceMesh"), verbose = FALSE)
+  "OrientedSurfaceMesh", "NonOrientedSurfaceMesh"), verbose = FALSE, ...)
 }
 \arguments{
 \item{x}{object to be transformed (for \code{shootflow.default} method an Nx3
