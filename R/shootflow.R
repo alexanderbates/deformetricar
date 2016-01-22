@@ -14,25 +14,25 @@ shootflow<-function(x, ...) UseMethod("shootflow")
 
 #' @export
 #' @rdname shootflow
+#' @importFrom nat xyzmatrix
 shootflow.neuron<-function(x, ...) {
-  points=nat::xyzmatrix(x)
+  points=xyzmatrix(x)
   deform.points<-shootflow.default(x=points, ...)
-  x$d$X <- deform.points[,1]
-  x$d$Y <- deform.points[,2]
-  x$d$Z <- deform.points[,3]
+  xyzmatrix(x)<-deform.points
   x
 }
 
 #' @export
 #' @rdname shootflow
+#' @importFrom nat xyzmatrix<-
 shootflow.neuronlist<-function(x, ...){
-  points=nat::xyzmatrix(x)
+  points=xyzmatrix(x)
   deform.points<-shootflow.default(x=points, ...)
   count = 1
   for (neuron in 1:length(x)){
     n = count + nrow(xyzmatrix(x[[neuron]])) -1
-    nat::xyzmatrix(x[[neuron]]) <- deform.points[count:n,]
-    count = count + nrow(nat::xyzmatrix(x[[neuron]]))
+    xyzmatrix(x[[neuron]]) <- deform.points[count:n,]
+    count = count + nrow(xyzmatrix(x[[neuron]]))
   }
   return(x)
 }
@@ -58,7 +58,7 @@ shootflow.neuronlist<-function(x, ...){
 #'   the \bold{ShootAndFlow3} command line tool.
 shootflow.default<-function(x, regdir = system.file("extdata/reg_output/", package = 'deformetricar'), kernel.width=5,
                     object.type = c("PointCloud", "OrientedPolyLine", "NonOrientedPolyLine", "OrientedSurfaceMesh", "NonOrientedSurfaceMesh"),
-                    verbose=FALSE){
+                    verbose=FALSE, ...){
   # we need to make a command line like this
   # ShootAndFlow3 paramsDiffeos.xml Direction CP.txt Mom.txt paramsObject1.xml object1 paramsObject2.xml object2 …
   # make a temp dir

@@ -14,9 +14,7 @@ apply.mirror.affine<-function(x, ...) UseMethod("apply.mirror.affine")
 #' @rdname apply.mirror.affine
 apply.mirror.affine.neuron<-function(x, ...) {
   moved.points<-apply.mirror.affine.default(x, ...)
-  x$d$X <- moved.points[,1]
-  x$d$Y <- moved.points[,2]
-  x$d$Z <- moved.points[,3]
+  xyzmatrix(x)<-moved.points
   x
 }
 
@@ -27,8 +25,8 @@ apply.mirror.affine.neuronlist<-function(x, ...){
   count = 1
   for (neuron in 1:length(x)){
     n = count + nrow(xyzmatrix(x[[neuron]])) -1
-    nat::xyzmatrix(x[[neuron]]) <- moved.points[count:n,]
-    count = count + nrow(nat::xyzmatrix(x[[neuron]]))
+    xyzmatrix(x[[neuron]]) <- moved.points[count:n,]
+    count = count + nrow(xyzmatrix(x[[neuron]]))
   }
   return(x)
 }
@@ -50,7 +48,7 @@ apply.mirror.affine.neuronlist<-function(x, ...){
 #' \code{\link{trafoicpmat}}
 #' @rdname apply.mirror.affine
 apply.mirror.affine.default <- function (x, calculatetransform = NULL, pathtomatrix = NULL, ...){
-  xyz = nat::xyzmatrix(x)
+  xyz = xyzmatrix(x)
   if (is.null(calculatetransform))
     if (!is.null(pathtomatrix)){
       fullmirror = readRDS(pathtomatrix)
@@ -72,19 +70,17 @@ apply.mirror.affine.default <- function (x, calculatetransform = NULL, pathtomat
 #'
 #' @return a list of transformation matrices
 #' @export
-
 calculate.full.transformation <- function (objs = system.file("extdata/point_objects/", package = 'deformetricar'), pattern = ".rds$", ...){
   if (is.character(objs)){
-    filelist = list.files(objs, pattern = pattern)
-    all.structures = matrix(ncol=3)
+    filelist = list.files(objs, pattern = pattern, full.names = TRUE)
+    all.structures = matrix(nrow=0, ncol=3)
     for(i in 1:length(filelist))
     {
-      oname = paste(gsub(pattern,".d",filelist[i]) )
-      all.structures = rbind(all.structures, assign(oname, readRDS(paste(objs,filelist[i], sep = ""))))
+      oname = paste(gsub(pattern,".d",basename(filelist[i])) )
+      all.structures = rbind(all.structures, assign(oname, readRDS(filelist[i])))
     }
-    all.structures = all.structures[-1,]
   } else
-      all.structures = nat::xyzmatrix(objs)
+      all.structures = xyzmatrix(objs)
   # Generate transformation matrices
   flipmatrix = mirrormat(all.structures)
   all.structures.flipped = nat::mirror(all.structures, nat::boundingbox(apply(all.structures, 2, range, na.rm = T)))
@@ -189,16 +185,11 @@ trafoicpmat <- function (x, y, iterations, mindist = 1e+15, subsample = NULL,
 #' @return the transformed 3D coordinates
 #' @export
 transform3dpoints = function (positions, transformations, ...){
-  if (is.list(transformations) == F){
-    positions = nat::xform(positions, transformations)
+  if (is.list(transformations)){
+    # compose transformations into single matrix
+    # note that this needs to be done in reverse order to match the order in
+    # which matrix multiplication would otherwise happen
+    transformations=Reduce("%*%", rev(transformations))
   }
-  if (is.list(transformations) == T){
-    for (transformation in transformations){
-      positions <- nat::xform(positions, transformation)
-    }
-  }
-  return (positions)
+  nat::xform(positions, transformations)
 }
-
-
-
