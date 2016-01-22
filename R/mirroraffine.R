@@ -185,16 +185,11 @@ trafoicpmat <- function (x, y, iterations, mindist = 1e+15, subsample = NULL,
 #' @return the transformed 3D coordinates
 #' @export
 transform3dpoints = function (positions, transformations, ...){
-  if (is.list(transformations) == F){
-    positions = nat::xform(positions, transformations)
+  if (is.list(transformations)){
+    # compose transformations into single matrix
+    # note that this needs to be done in reverse order to match the order in
+    # which matrix multiplication would otherwise happen
+    transformations=Reduce("%*%", rev(transformations))
   }
-  if (is.list(transformations) == T){
-    for (transformation in transformations){
-      positions <- nat::xform(positions, transformation)
-    }
-  }
-  return (positions)
+  nat::xform(positions, transformations)
 }
-
-
-
