@@ -11,6 +11,10 @@
 #' @export
 #' @rdname otherside
 #' @seealso \code{\link{shootflow}} \code{\link{apply.mirror.affine}}
+  otherside<-function(x, ...) UseMethod("otherside")
+
+#' @export
+#' @rdname otherside
 otherside.default <- function (x, ...){
   x = apply.mirror.affine(x, ...)
   x = shootflow(x, ...)
