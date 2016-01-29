@@ -5,7 +5,7 @@
     <!-- Compulsory parameters -->
     <!--=======================-->
     <!-- Size of the kernel (default : 0.0) -->
-    <kernel-width>5</kernel-width>
+    <kernel-width>10</kernel-width>
     
     <!--===================================-->
     <!-- Optional parameters (recommanded) -->
@@ -22,7 +22,7 @@
     <!-- Number of threads (default : 1) -->
     <!-- <number-of-threads>5</number-of-threads> -->
     <!-- Choice of the number of time points between 0 and 1 (default : 10) -->
-    <number-of-timepoints>10</number-of-timepoints>
+    <number-of-timepoints>2</number-of-timepoints>
 	
 	<!-- ratio between the smoothing kernel width used in the gradient of template gradient and kernel width (default: 1.0)  -->
 	<!-- <smoothing-kernel-width-ratio>1.0</smoothing-kernel-width-ratio> -->
@@ -43,7 +43,7 @@
     <!-- Optional parameters (avoid to change) -->
     <!--=======================================-->
     <!-- Maximum of descent iterations (default : 100) -->
-    <max-iterations>1000</max-iterations>
+    <max-iterations>500</max-iterations>
     <!-- Adaptive tolerance (default : 1e-04) -->
     <!-- <adaptive-tolerance>1e-4</adaptive-tolerance> -->
     <!-- Maximum number for the search of the optimal step on an iteration (default : 10) -->
