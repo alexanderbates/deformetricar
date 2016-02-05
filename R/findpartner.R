@@ -8,7 +8,7 @@
 #' neurons being identified by skid, or "neuronlist" - a neuronlist containing the neurons with the highest similarity scores.
 #' @export
 #' @rdname findpartner
-#' @seealso \code{\link{shootflow}} \code{\link{apply.mirror.affine} \code{\link{otherside}}
+#' @seealso \code{\link{shootflow}} \code{\link{apply.mirror.affine}} \code{\link{otherside}}
 findpartner<-function(x, ...) UseMethod("findpartner")
 
 #' @export
