@@ -18,10 +18,10 @@ findpartner.default <- function (x, db, output = c("scores","neuronlist"), ...){
   x.dps = nat::dotprops(x, resample=0.1, .progress = 'text')
   if (!nat::is.dotprops(db))
     cat("Converting database neurons into dotprops. This can slow things down if the neuronlist is large, better to provide a dotprops neuronlist.")
-  db = nlapply(db, dotprops, resample=0.1, .progress = 'text')
+    db = nlapply(db, dotprops, resample=0.1, .progress = 'text')
   l1_smat = readRDS(system.file("extdata/l1_smat.rds", package = 'deformetricar'))
   results = nat::nblast(x.dps, target = db, smat = l1_smat,  normalised = T, .progress = 'text', UseAlpha = T)
-  is (output == "neuronlist")
+  if (output == "neuronlist")
     partners = c()
     for (col in 1:length(x))
       c = results[col]

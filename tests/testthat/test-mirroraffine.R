@@ -11,10 +11,10 @@ test_that("we can perform a mirroring and affine transformation",{
 test_that("transform3d can apply multiple transforms",{
   m=matrix(101:115, nrow=5, ncol=3)
   fullmirror=readRDS(system.file("extdata/fullmirror.rds", package = 'deformetricar'))
-  baseline=matrix(c(12.5957462419454, 11.7470158497127, 10.89828545748,
-                    10.0495550652473, 9.20082467301456, 97.8315721943438, 98.6296324297916,
-                    99.4276926652394, 100.225752900687, 101.023813136135, 106.200027839867,
-                    107.070026731711, 107.940025623554, 108.810024515398, 109.680023407242),
-                  ncol=3)
+  baseline=structure(c(11.5662779431759, 10.702386783413, 9.83849562365012,
+                       8.97460446388725, 8.11071330412435, 98.6329065200601, 99.4694416625517,
+                       100.305976805043, 101.142511947535, 101.979047090026, 103.344312853856,
+                       104.185382590343, 105.026452326829, 105.867522063315, 106.708591799802
+  ), .Dim = c(5L, 3L))
   expect_equal(transform3dpoints(m, fullmirror), baseline)
 })
