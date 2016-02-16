@@ -22,7 +22,7 @@ otherside.default <- function (x, method = c("tps3d", "deformetrica"), ...){
     x = shootflow(x, ...)
   else if (method == "tps3d")
     finals = read.vtk(system.file("extdata/reg_output/finals.vtk", package = 'deformetricar'))
-    cps = read.points(system.file("extdata/reg_output/finals.vtk", package = 'deformetricar'))
+    cps = read.points(system.file("extdata/reg_output/CP_final.txt", package = 'deformetricar'))
     x = tps3d(x, cps, finals, lambda = 0)
   x
 }

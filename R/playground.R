@@ -106,7 +106,6 @@ points3d(x)
 x = apply.mirror.affine(x)
 x = tps3d(x, cps, finals, lambda = 0)
 points3d(x, col = 'red')
-x = xyzmatrix(fulln[1])/1000
 x = apply.mirror.affine(x)
 x = shootflow(x)
 points3d(x, col = 'orange')
