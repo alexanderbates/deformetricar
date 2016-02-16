@@ -43,6 +43,7 @@ shootflow.neuronlist<-function(x, ...){
 #' @param kernel.width the width of the deformation kernel. The larger the more
 #'   rigid the deformation. The smaller, the more local variations of the space
 #'   is allowed.
+#' @param data.sigma matching factor. The lower ir is, the tighter the matching.
 #' @param object.type type of object to be deformed. PointCloud,
 #'   OrientedPolyLine, NonOrientedPolyLine, OrientedSurfaceMesh and
 #'   NonOrientedSurfaceMesh
@@ -100,9 +101,8 @@ read.paramdiffeos<-function(infile){
 }
 
 
-make_params_file<-function(outfile="paramsObject1.xml", kernel.width=5,
+make_params_file<-function(outfile="paramsObject1.xml", kernel.width=5, data.sigma=1,
                            object.type = c("PointCloud", "OrientedPolyLine", "NonOrientedPolyLine", "OrientedSurfaceMesh", "NonOrientedSurfaceMesh")){
-  data.sigma=1
   lines=c("<?xml version=\"1.0\"?>", "<deformable-object-parameters>",
     "", "    <!-- Type of the deformable object (See DeformableObject::DeformableObjectType for details) -->",
     sprintf("\t<deformable-object-type>%s</deformable-object-type>", object.type),

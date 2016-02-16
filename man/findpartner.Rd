@@ -23,4 +23,7 @@ neurons being identified by skid, or "neuronlist" - a neuronlist containing the 
 \description{
 Find neuron cognates on other side of a structure
 }
+\seealso{
+\code{\link{shootflow}} \code{\link{apply.mirror.affine}} \code{\link{otherside}}
+}
 

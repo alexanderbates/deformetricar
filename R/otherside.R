@@ -2,6 +2,8 @@
 #'
 #' @param x a set of 3D coordinates (Nx3 matrix), a neuron, neuronlist, dotprops, hxsurf, igraph or mesh3d object.
 #' currently point replacement is only supported for neuron and neuronlist objects.
+#' @param method Whether to use the 3D thin plate spline mapping function from package Morpho, or, more accurately but much more slowly,
+#' Deformetrica (must be installed separately) in order to recapitulate a Deformetricar deformation.
 #' @param ... additional arguments passed to: \code{\link{shootflow}} \code{\link{apply.mirror.affine}}
 #'
 #' @return a set of 3D cordinates (or a neuron/neuronlist object if that was given as input), that has undergone sequential mirroring
@@ -18,12 +20,14 @@
 otherside.default <- function (x, method = c("tps3d", "deformetrica"), ...){
   x = apply.mirror.affine(x, ...)
   method = match.arg(method)
-  if (method == "deformetrica")
+  if (method == "deformetrica"){
     x = shootflow(x, ...)
-  else if (method == "tps3d")
+  }else if (method == "tps3d"){
     finals = read.vtk(system.file("extdata/reg_output/finals.vtk", package = 'deformetricar'))
     cps = read.points(system.file("extdata/reg_output/CP_final.txt", package = 'deformetricar'))
     x = tps3d(x, cps, finals, lambda = 0)
+    print("yo")
+  }
   x
 }
 

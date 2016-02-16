@@ -37,6 +37,8 @@ NonOrientedSurfaceMesh}
 
 \item{verbose}{Whether to show status messages from ShootAndFlow3 command
 line tool}
+
+\item{data.sigma}{matching factor. The lower ir is, the tighter the matching.}
 }
 \value{
 matrix of the same dimensions as \code{x}
