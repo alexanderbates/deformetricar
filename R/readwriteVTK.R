@@ -149,3 +149,23 @@ write.vtk <-function(points, filename, polygons = NULL, normals = NULL,
   }
   return("complete")
 }
+
+
+#' Read txt files
+#'
+#' @param filename read CPS or MOM .txt file
+#'
+#'
+read.points<-function(filename){
+  if(!file.exists(filename)) stop("Cannot read: ",filename)
+  con=file(filename,open='rb',encoding='txt')
+  on.exit(close(con))
+  magic=readLines(con,n=0)
+  points=scan(con,what=1.0,quiet=TRUE)
+  m=matrix(points,ncol=3,byrow=T)
+  colnames(m)=c("X","Y","Z")
+  attr(m,"file")=filename
+  attr(m,"title")=filename
+  m
+}
+
