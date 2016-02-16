@@ -11,19 +11,25 @@
 #' @export
 #' @rdname otherside
 #' @seealso \code{\link{shootflow}} \code{\link{apply.mirror.affine}}
-  otherside<-function(x, ...) UseMethod("otherside")
+  otherside<-function(x, method = c("tps3d", "deformetrica"),...) UseMethod("otherside")
 
 #' @export
 #' @rdname otherside
-otherside.default <- function (x, ...){
+otherside.default <- function (x, method = c("tps3d", "deformetrica"), ...){
   x = apply.mirror.affine(x, ...)
-  x = shootflow(x, ...)
+  method = match.arg(method)
+  if (method == "deformetrica")
+    x = shootflow(x, ...)
+  else if (method == "tps3d")
+    finals = read.vtk(system.file("extdata/reg_output/finals.vtk", package = 'deformetricar'))
+    cps = read.points(system.file("extdata/reg_output/finals.vtk", package = 'deformetricar'))
+    x = tps3d(x, cps, finals, lambda = 0)
   x
 }
 
 #' @export
 #' @rdname otherside
-otherside.neuron<-function(x, ...) {
+otherside.neuron<-function(x, object.type = "NonOrientedPolyLine", ...) {
   points=xyzmatrix(x)
   morph.points<-otherside.default(x=points, ...)
   xyzmatrix(x)<-morph.points
@@ -32,7 +38,7 @@ otherside.neuron<-function(x, ...) {
 
 #' @export
 #' @rdname otherside
-otherside.neuronlist<-function(x, ...){
+otherside.neuronlist<-function(x, method = c("tps3d", "deformetrica"), object.type = "NonOrientedPolyLine", ...){
   points=xyzmatrix(x)
   morph.points<-otherside.default(x=points, ...)
   count = 1
