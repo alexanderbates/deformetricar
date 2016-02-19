@@ -4,6 +4,7 @@
 #' currently point replacement is only supported for neuron and neuronlist objects.
 #' @param method Whether to use the 3D thin plate spline mapping function from package Morpho, or, more accurately but much more slowly,
 #' Deformetrica (must be installed separately) in order to recapitulate a Deformetricar deformation.
+#' @param regdir Path to directory containing deformetrica registration.
 #' @param ... additional arguments passed to: \code{\link{shootflow}} \code{\link{apply.mirror.affine}}
 #'
 #' @return a set of 3D cordinates (or a neuron/neuronlist object if that was given as input), that has undergone sequential mirroring
@@ -13,20 +14,23 @@
 #' @export
 #' @rdname otherside
 #' @seealso \code{\link{shootflow}} \code{\link{apply.mirror.affine}}
-  otherside<-function(x, method = c("tps3d", "deformetrica"),...) UseMethod("otherside")
+otherside<-function(x, method = c("tps3d", "deformetrica"),...) UseMethod("otherside")
 
 #' @export
 #' @rdname otherside
-otherside.default <- function (x, method = c("tps3d", "deformetrica"), ...){
+otherside.default <- function (x, method = c("tps3d", "deformetrica"), regdir = system.file("extdata/reg_output/", package = 'deformetricar'), ...){
   x = apply.mirror.affine(x, ...)
   method = match.arg(method)
   if (method == "deformetrica"){
     x = shootflow(x, ...)
   }else if (method == "tps3d"){
-    finals = read.vtk(system.file("extdata/reg_output/finals.vtk", package = 'deformetricar'))
-    cps = read.points(system.file("extdata/reg_output/CP_final.txt", package = 'deformetricar'))
-    x = tps3d(x, cps, finals, lambda = 0)
-    print("yo")
+    reg_files_we_want=c(paste(regdir,"CP_final.txt", sep = ""), paste(regdir,"finals.vtk", sep = ""))
+    if(!all(file.exists(reg_files_we_want))){
+      stop("cannot find some of the registration input files:", reg_files_we_want)
+    }
+    finals = read.vtk(reg_files_we_want[2])
+    cps = read.points(reg_files_we_want[1])
+    x =  Morpho::tps3d(x, cps, finals, lambda = 0)
   }
   x
 }
