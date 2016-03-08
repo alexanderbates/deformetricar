@@ -13,7 +13,7 @@ findpartner<-function(x, ...) UseMethod("findpartner")
 
 #' @export
 #' @rdname findpartner
-findpartner.default <- function (x, db, output = c("scores","neuronlist"), ...){
+findpartner.neuron <- function (x, db, output = c("scores","neuronlist"), ...){
   x = otherside(x)
   x.dps = nat::dotprops(x, resample=0.1, .progress = 'text')
   if (!nat::is.dotprops(db))
@@ -30,4 +30,15 @@ findpartner.default <- function (x, db, output = c("scores","neuronlist"), ...){
     require(catmaid)
     results = catmaid::read.neurons.catmaid(partners)
   results
+}
+
+#' @export
+#' @rdname findpartner
+findpartner.neuronlist <- function (x, db ...){
+  results = list()
+  for (someneuron in 1:length(x))
+    result = findpartner.neuron(x = x[[someneuron]], db = db, output = "scores")
+    results = list(results, list(result))
+    results[[length(results)+1]] <- result
+  result
 }

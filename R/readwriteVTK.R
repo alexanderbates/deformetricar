@@ -169,3 +169,18 @@ read.points<-function(filename){
   m
 }
 
+
+transform.vtk = function (vtk, transformations){
+  positions = xyzmatrix(ReadVTKLandmarks(vtk, item = "points"))
+  if (is.list(transformations) == F){
+    cat("Single transformation")
+    positions <- xform(positions, transformations)
+  }
+  if (is.list(transformations) == T){
+    for (transformation in transformations){
+      positions <- xform(positions, transformation)
+    }
+  }
+  return (positions)
+}
+
