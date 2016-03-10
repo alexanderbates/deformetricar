@@ -18,11 +18,11 @@ otherside<-function(x, method = c("tps3d", "deformetrica"),...) UseMethod("other
 
 #' @export
 #' @rdname otherside
-otherside.default <- function (x, method = c("tps3d", "deformetrica"), regdir = system.file("extdata/reg_output/", package = 'deformetricar'), ...){
+otherside.default <- function (x, method = c("tps3d", "deformetrica"), regdir = system.file("extdata/reg_output/", package = 'deformetricar'), object.type = "NonOrientedPolyLine", ...){
   x = apply.mirror.affine(x, ...)
   method = match.arg(method)
   if (method == "deformetrica"){
-    x = shootflow(x, ...)
+    x = shootflow(x, object.type = object.type, ...)
   }else if (method == "tps3d"){
     reg_files_we_want=c(paste(regdir,"CP_final.txt", sep = ""), paste(regdir,"finals.vtk", sep = ""))
     if(!all(file.exists(reg_files_we_want))){
@@ -37,9 +37,9 @@ otherside.default <- function (x, method = c("tps3d", "deformetrica"), regdir = 
 
 #' @export
 #' @rdname otherside
-otherside.neuron<-function(x, object.type = "NonOrientedPolyLine", ...) {
+otherside.neuron<-function(x, object.type = "NonOrientedPolyLine", method = c("tps3d", "deformetrica"), ...) {
   points=xyzmatrix(x)
-  morph.points<-otherside.default(x=points, ...)
+  morph.points<-otherside.default(x=points, method = method, object.type = object.type, ...)
   xyzmatrix(x)<-morph.points
   x
 }
@@ -48,7 +48,7 @@ otherside.neuron<-function(x, object.type = "NonOrientedPolyLine", ...) {
 #' @rdname otherside
 otherside.neuronlist<-function(x, method = c("tps3d", "deformetrica"), object.type = "NonOrientedPolyLine", ...){
   points=xyzmatrix(x)
-  morph.points<-otherside.default(x=points, ...)
+  morph.points<-otherside.default(x=points, method = method, object.type = object.type, ...)
   count = 1
   for (neuron in 1:length(x)){
     n = count + nrow(xyzmatrix(x[[neuron]])) -1
