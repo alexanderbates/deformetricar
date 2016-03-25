@@ -14,19 +14,27 @@
 #' @export
 #' @rdname otherside
 #' @seealso \code{\link{shootflow}} \code{\link{apply.mirror.affine}}
-otherside<-function(x, method = c("tps3d", "deformetrica"),...) UseMethod("otherside")
+otherside<-function(x, method = c("saved", "tps3d", "deformetrica"),...) UseMethod("otherside")
 
 #' @export
 #' @rdname otherside
-otherside.default <- function (x, method = c("tps3d", "deformetrica"), regdir = system.file("extdata/reg_output/", package = 'deformetricar'), object.type = "NonOrientedPolyLine", ...){
+otherside.default <- function (x, method = c("saved", "tps3d", "deformetrica"), regdir = system.file("extdata/reg_output/", package = 'deformetricar'), object.type = "NonOrientedPolyLine", ...){
   x = apply.mirror.affine(x, ...)
   method = match.arg(method)
-  if (method == "deformetrica"){
+  if (method == "saved"){
+    tps_transformation = readRDS(c(paste(regdir,"flipaffinewarp.rds", sep = "")))
+    x = Morpho::applyTransform(x, tps_transformation)
+  } else if (method == "deformetrica"){
     x = shootflow(x, object.type = object.type, ...)
   }else if (method == "tps3d"){
-    reg_files_we_want=c(paste(regdir,"CP_final.txt", sep = ""), paste(regdir,"finals.vtk", sep = ""))
-    if(!all(file.exists(reg_files_we_want))){
-      stop("cannot find some of the registration input files:", reg_files_we_want)
+    if (regdir = system.file("extdata/reg_output/", package = 'deformetricar')){
+      tps_transformation = readRDS(c(paste(regdir,"tps_transformation.rds", sep = "")))
+      x = Morpho::applyTransform(x, tps_transformation)
+    }else{
+      reg_files_we_want=c(paste(regdir,"CP_final.txt", sep = ""), paste(regdir,"finals.vtk", sep = ""))
+      if(!all(file.exists(reg_files_we_want))){
+        stop("cannot find some of the registration input files:", reg_files_we_want)
+      }
     }
     finals = read.vtk(reg_files_we_want[2])
     cps = read.points(reg_files_we_want[1])
@@ -37,7 +45,7 @@ otherside.default <- function (x, method = c("tps3d", "deformetrica"), regdir = 
 
 #' @export
 #' @rdname otherside
-otherside.neuron<-function(x, object.type = "NonOrientedPolyLine", method = c("tps3d", "deformetrica"), ...) {
+otherside.neuron<-function(x, object.type = "NonOrientedPolyLine", method = c("saved", "tps3d", "deformetrica"), ...) {
   points=xyzmatrix(x)
   morph.points<-otherside.default(x=points, method = method, object.type = object.type, ...)
   xyzmatrix(x)<-morph.points
@@ -46,7 +54,7 @@ otherside.neuron<-function(x, object.type = "NonOrientedPolyLine", method = c("t
 
 #' @export
 #' @rdname otherside
-otherside.neuronlist<-function(x, method = c("tps3d", "deformetrica"), object.type = "NonOrientedPolyLine", ...){
+otherside.neuronlist<-function(x, method = c("saved", "tps3d", "deformetrica"), object.type = "NonOrientedPolyLine", ...){
   points=xyzmatrix(x)
   morph.points<-otherside.default(x=points, method = method, object.type = object.type, ...)
   count = 1

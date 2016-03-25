@@ -169,7 +169,11 @@ read.points<-function(filename){
   m
 }
 
-
+#'  Transform a .vtk object
+#'
+#' @param vtk path to vtk object
+#' @param transformations transformation(s)
+#'
 transform.vtk = function (vtk, transformations){
   positions = xyzmatrix(ReadVTKLandmarks(vtk, item = "points"))
   if (is.list(transformations) == F){
