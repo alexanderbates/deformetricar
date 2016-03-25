@@ -27,7 +27,7 @@ otherside.default <- function (x, method = c("saved", "tps3d", "deformetrica"), 
   } else if (method == "deformetrica"){
     x = shootflow(x, object.type = object.type, ...)
   }else if (method == "tps3d"){
-    if (regdir = system.file("extdata/reg_output/", package = 'deformetricar')){
+    if (regdir == system.file("extdata/reg_output/", package = 'deformetricar')){
       tps_transformation = readRDS(c(paste(regdir,"tps_transformation.rds", sep = "")))
       x = Morpho::applyTransform(x, tps_transformation)
     }else{
