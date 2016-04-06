@@ -19,14 +19,15 @@ otherside<-function(x, method = c("saved", "tps3d", "deformetrica"),...) UseMeth
 #' @export
 #' @rdname otherside
 otherside.default <- function (x, method = c("saved", "tps3d", "deformetrica"), regdir = system.file("extdata/reg_output/", package = 'deformetricar'), object.type = "NonOrientedPolyLine", ...){
-  x = apply.mirror.affine(x, ...)
   method = match.arg(method)
   if (method == "saved"){
     tps_transformation = readRDS(c(paste(regdir,"flipaffinewarp.rds", sep = "")))
     x = Morpho::applyTransform(x, tps_transformation)
   } else if (method == "deformetrica"){
+    x = apply.mirror.affine(x, ...)
     x = shootflow(x, object.type = object.type, ...)
   }else if (method == "tps3d"){
+    x = apply.mirror.affine(x, ...)
     if (regdir == system.file("extdata/reg_output/", package = 'deformetricar')){
       tps_transformation = readRDS(c(paste(regdir,"tps_transformation.rds", sep = "")))
       x = Morpho::applyTransform(x, tps_transformation)
