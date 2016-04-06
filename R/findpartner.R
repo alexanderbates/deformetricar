@@ -55,7 +55,7 @@ findpartner.neuron <- function (x, db, output = c("scores","neuronlist"), ...){
 
 #' @export
 #' @rdname findpartner
-findpartner.neuronlist <- function (x, db ...){
+findpartner.neuronlist <- function (x, db, ...){
   results = list()
   for (someneuron in 1:length(x))
     result = findpartner.neuron(x = x[[someneuron]], db = db, output = "scores")
