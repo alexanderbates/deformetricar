@@ -19,7 +19,7 @@ otherside<-function(x, method = c("saved", "tps3d", "deformetrica"),...) UseMeth
 
 #' @export
 #' @rdname otherside
-otherside.default <- function (x, method = c("saved", "tps3d", "deformetrica", ...), regdir = system.file("extdata/reg_output/", package = 'deformetricar'), object.type = "NonOrientedPolyLine", ...){
+otherside.default <- function (x, method = c("saved", "tps3d", "deformetrica"), regdir = system.file("extdata/reg_output/", package = 'deformetricar'), object.type = "NonOrientedPolyLine", ...){
   method = match.arg(method)
   if (method == "saved"){
     tps_transformation = readRDS(c(paste(regdir,"flipaffinewarp.rds", sep = "")))
