@@ -15,7 +15,7 @@
 #' @export
 #' @rdname otherside
 #' @seealso \code{\link{shootflow}} \code{\link{apply.mirror.affine}}
-otherside<-function(x, method = c("saved", "tps3d", "deformetrica"),...) UseMethod("otherside")
+otherside<-function(x, method = c("saved", "tps3d", "deformetrica"),regdir = system.file("extdata/reg_output/", package = 'deformetricar'), object.type = "NonOrientedPolyLine",...) UseMethod("otherside")
 
 #' @export
 #' @rdname otherside
