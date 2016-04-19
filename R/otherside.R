@@ -47,7 +47,7 @@ otherside.default <- function (x, method = c("saved", "tps3d", "deformetrica", .
 
 #' @export
 #' @rdname otherside
-otherside.neuron<-function(x, object.type = "NonOrientedPolyLine", method = c("saved", "tps3d", "deformetrica"), ...) {
+otherside.neuron<-function(x, method = c("saved", "tps3d", "deformetrica"), object.type = "NonOrientedPolyLine", ...) {
   points=xyzmatrix(x)
   morph.points<-otherside.default(x=points, method = method, object.type = object.type, ...)
   xyzmatrix(x)<-morph.points

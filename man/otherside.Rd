@@ -7,16 +7,14 @@
 \alias{otherside.neuronlist}
 \title{Apply a list of mirroring, affine and warping registrations to an object in 3D space}
 \usage{
-otherside(x, method = c("saved", "tps3d", "deformetrica"),
-  regdir = system.file("extdata/reg_output/", package = "deformetricar"),
-  object.type = "NonOrientedPolyLine", ...)
+otherside(x, method = c("saved", "tps3d", "deformetrica"), ...)
 
-\method{otherside}{default}(x, method = c("saved", "tps3d", "deformetrica"),
-  regdir = system.file("extdata/reg_output/", package = "deformetricar"),
-  object.type = "NonOrientedPolyLine", ...)
+\method{otherside}{default}(x, method = c("saved", "tps3d", "deformetrica",
+  ...), regdir = system.file("extdata/reg_output/", package =
+  "deformetricar"), object.type = "NonOrientedPolyLine", ...)
 
-\method{otherside}{neuron}(x, object.type = "NonOrientedPolyLine",
-  method = c("saved", "tps3d", "deformetrica"), ...)
+\method{otherside}{neuron}(x, method = c("saved", "tps3d", "deformetrica"),
+  object.type = "NonOrientedPolyLine", ...)
 
 \method{otherside}{neuronlist}(x, method = c("saved", "tps3d",
   "deformetrica"), object.type = "NonOrientedPolyLine", ...)
@@ -28,11 +26,11 @@ currently point replacement is only supported for neuron and neuronlist objects.
 \item{method}{Whether to use the 3D thin plate spline mapping function from package Morpho, or, more accurately but much more slowly,
 Deformetrica (must be installed separately) in order to recapitulate a Deformetricar deformation.}
 
+\item{...}{additional arguments passed to: \code{\link{shootflow}} \code{\link{apply.mirror.affine}}}
+
 \item{regdir}{Path to directory containing deformetrica registration.}
 
 \item{object.type}{Type of object for Deformetrica deformation. See Deformetrica's documentation. Default is appropriate for neuron skeletons.}
-
-\item{...}{additional arguments passed to: \code{\link{shootflow}} \code{\link{apply.mirror.affine}}}
 }
 \value{
 a set of 3D cordinates (or a neuron/neuronlist object if that was given as input), that has undergone sequential mirroring
