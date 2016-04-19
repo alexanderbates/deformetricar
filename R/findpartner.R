@@ -15,7 +15,7 @@
 #' @export
 #' @rdname findcognate
 findcognate <- function (x, db, entries = 10, ...){
-  message("Remember, give all neuron in microns")
+  message("Remember, give all neurons in microns")
   cat("Transforming neuron into the other side of the brain")
   if (nat::is.neuronlist(x)||nat::is.neuron(x))
     x = otherside(x)
