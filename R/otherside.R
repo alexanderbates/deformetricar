@@ -15,11 +15,11 @@
 #' @export
 #' @rdname otherside
 #' @seealso \code{\link{shootflow}} \code{\link{apply.mirror.affine}}
-otherside<-function(x, method = c("saved", "tps3d", "deformetrica"),regdir = system.file("extdata/reg_output/", package = 'deformetricar'), object.type = "NonOrientedPolyLine",...) UseMethod("otherside")
+otherside<-function(x, method = c("saved", "tps3d", "deformetrica"),...) UseMethod("otherside")
 
 #' @export
 #' @rdname otherside
-otherside.default <- function (x, method = c("saved", "tps3d", "deformetrica"), regdir = system.file("extdata/reg_output/", package = 'deformetricar'), object.type = "NonOrientedPolyLine", ...){
+otherside.default <- function (x, method = c("saved", "tps3d", "deformetrica", ...), regdir = system.file("extdata/reg_output/", package = 'deformetricar'), object.type = "NonOrientedPolyLine", ...){
   method = match.arg(method)
   if (method == "saved"){
     tps_transformation = readRDS(c(paste(regdir,"flipaffinewarp.rds", sep = "")))
