@@ -175,14 +175,14 @@ read.points<-function(filename){
 #' @param transformations transformation(s)
 #'
 transform.vtk = function (vtk, transformations){
-  positions = xyzmatrix(ReadVTKLandmarks(vtk, item = "points"))
+  positions = xyzmatrix(read.vtk(vtk, item = "points"))
   if (is.list(transformations) == F){
     cat("Single transformation")
     positions <- xform(positions, transformations)
   }
   if (is.list(transformations) == T){
     for (transformation in transformations){
-      positions <- xform(positions, transformation)
+      positions <- nat::xform(positions, transformation)
     }
   }
   return (positions)

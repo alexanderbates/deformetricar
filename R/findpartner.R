@@ -17,17 +17,17 @@
 findcognate <- function (x, db, entries = 10, ...){
   message("Remember, give all neuron in microns")
   cat("Transforming neuron into the other side of the brain")
-  if (is.neuronlist(x)||is.neuron(x))
+  if (nat::is.neuronlist(x)||nat::is.neuron(x))
     x = otherside(x)
   if (is.character(x))
     x = otherside(db[x])
   cat("Making vector cloud objects from neurons")
-  if (!is.dotprops(x))
-    x.dps = nat::nlapply(x, dotprops, resample=0.1, .progress = 'text', OmitFailures = T)
+  if (!nat::is.dotprops(x))
+    x.dps = nat::nlapply(x, nat::dotprops, resample=0.1, .progress = 'text', OmitFailures = T)
   else{ x.dps = x }
   if (!nat::is.dotprops(db[[1]])){
     warning("Converting database neurons into dotprops. This can slow things down if the neuronlist is large, better to provide a dotprops neuronlist.")
-    db = nat::nlapply(db, dotprops, resample=0.1, .progress = 'text', OmitFailures = T)
+    db = nat::nlapply(db, nat::dotprops, resample=0.1, .progress = 'text', OmitFailures = T)
   }
   cat("Running NBlast")
   l1_smat = readRDS(system.file("extdata/l1_smat.rds", package = 'deformetricar'))
