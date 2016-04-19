@@ -44,7 +44,6 @@ findcognate <- function (x, db, entries = 10, ...){
   output
 }
 
-
 #' @export
 #' @rdname findcognate
 checkL1cognates <- function(possiblecognates, db, entries = 10, ...){
@@ -75,6 +74,7 @@ checkL1cognates <- function(possiblecognates, db, entries = 10, ...){
     number <- scan(n=1)
     message("Looking closer")
     e = 0
+    progress = 'forward'
     while(e < entries){
       if (progress == 'b'){e = e - 1; progress = 'forward'
       }else{e = e + 1}
