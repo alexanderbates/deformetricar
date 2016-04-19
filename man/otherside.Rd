@@ -7,15 +7,17 @@
 \alias{otherside.neuronlist}
 \title{Apply a list of mirroring, affine and warping registrations to an object in 3D space}
 \usage{
-otherside(x, method = c("tps3d", "deformetrica"), ...)
+otherside(x, method = c("saved", "tps3d", "deformetrica"), ...)
 
-\method{otherside}{default}(x, method = c("tps3d", "deformetrica"),
-  regdir = system.file("extdata/reg_output/", package = "deformetricar"), ...)
-
-\method{otherside}{neuron}(x, object.type = "NonOrientedPolyLine", ...)
-
-\method{otherside}{neuronlist}(x, method = c("tps3d", "deformetrica"),
+\method{otherside}{default}(x, method = c("saved", "tps3d", "deformetrica"),
+  regdir = system.file("extdata/reg_output/", package = "deformetricar"),
   object.type = "NonOrientedPolyLine", ...)
+
+\method{otherside}{neuron}(x, object.type = "NonOrientedPolyLine",
+  method = c("saved", "tps3d", "deformetrica"), ...)
+
+\method{otherside}{neuronlist}(x, method = c("saved", "tps3d",
+  "deformetrica"), object.type = "NonOrientedPolyLine", ...)
 }
 \arguments{
 \item{x}{a set of 3D coordinates (Nx3 matrix), a neuron, neuronlist, dotprops, hxsurf, igraph or mesh3d object.
@@ -27,6 +29,8 @@ Deformetrica (must be installed separately) in order to recapitulate a Deformetr
 \item{...}{additional arguments passed to: \code{\link{shootflow}} \code{\link{apply.mirror.affine}}}
 
 \item{regdir}{Path to directory containing deformetrica registration.}
+
+\item{object.type}{Type of object for Deformetrica deformation. See Deformetrica's documentation. Default is appropriate for neuron skeletons.}
 }
 \value{
 a set of 3D cordinates (or a neuron/neuronlist object if that was given as input), that has undergone sequential mirroring

@@ -5,6 +5,7 @@
 #' @param method Whether to use the 3D thin plate spline mapping function from package Morpho, or, more accurately but much more slowly,
 #' Deformetrica (must be installed separately) in order to recapitulate a Deformetricar deformation.
 #' @param regdir Path to directory containing deformetrica registration.
+#' @param object.type Type of object for Deformetrica deformation. See Deformetrica's documentation. Default is appropriate for neuron skeletons.
 #' @param ... additional arguments passed to: \code{\link{shootflow}} \code{\link{apply.mirror.affine}}
 #'
 #' @return a set of 3D cordinates (or a neuron/neuronlist object if that was given as input), that has undergone sequential mirroring
