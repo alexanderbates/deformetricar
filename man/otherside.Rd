@@ -9,9 +9,9 @@
 \usage{
 otherside(x, method = c("saved", "tps3d", "deformetrica"), ...)
 
-\method{otherside}{default}(x, method = c("saved", "tps3d", "deformetrica",
-  ...), regdir = system.file("extdata/reg_output/", package =
-  "deformetricar"), object.type = "NonOrientedPolyLine", ...)
+\method{otherside}{default}(x, method = c("saved", "tps3d", "deformetrica"),
+  regdir = system.file("extdata/reg_output/", package = "deformetricar"),
+  object.type = "NonOrientedPolyLine", ...)
 
 \method{otherside}{neuron}(x, method = c("saved", "tps3d", "deformetrica"),
   object.type = "NonOrientedPolyLine", ...)
