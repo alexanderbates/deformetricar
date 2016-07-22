@@ -37,10 +37,10 @@ otherside.default <- function (x, method = c("saved", "tps3d", "deformetrica"), 
       if(!all(file.exists(reg_files_we_want))){
         stop("cannot find some of the registration input files:", reg_files_we_want)
       }
+      finals = read.vtk(reg_files_we_want[2])
+      cps = read.points(reg_files_we_want[1])
+      x =  Morpho::tps3d(x, cps, finals, lambda = 0)
     }
-    finals = read.vtk(reg_files_we_want[2])
-    cps = read.points(reg_files_we_want[1])
-    x =  Morpho::tps3d(x, cps, finals, lambda = 0)
   }
   x
 }

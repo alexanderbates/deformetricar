@@ -55,7 +55,7 @@ apply.mirror.affine.default <- function (x, calculatetransform = NULL, pathtomat
     } else
       fullmirror = readRDS(system.file("extdata/fullmirror.rds", package = 'deformetricar'))
   else
-    fullmirror = calculate.full.transformation()
+    fullmirror = calculate.full.transformation(xyz)
   transform3dpoints(xyz, fullmirror)
 }
 
