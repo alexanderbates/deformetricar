@@ -115,7 +115,7 @@ read.vtk<-function(filename, item = c("points","triangles", "normals")){
 #' @param normals Normals (Nx3 matrix)
 #' @param datatype .vtk datatype (defaults to float)
 #' @param title Title of the .vtk file (defaults to filename)
-#'
+#' @param mesh mesh3d or surf object
 #' @export
 #'
 write.vtk <-function(points, filename, polygons = NULL, normals = NULL,
@@ -150,6 +150,15 @@ write.vtk <-function(points, filename, polygons = NULL, normals = NULL,
   return("complete")
 }
 
+#' @export
+write.vtk.mesh3d <- function(mesh, filename){
+  write.vtk(nat::xyzmatrix(mesh), filename = filename, polygons = t(mesh$it)-1)
+}
+
+#' @export
+write.vtk.surf<- function(mesh, filename){
+  write.vtk(nat::xyzmatrix(mesh$Vertices), filename = filename, polygons = mesh$Regions[[1]]-1)
+}
 
 #' Read txt files
 #'
@@ -187,4 +196,37 @@ transform.vtk = function (vtk, transformations){
   }
   return (positions)
 }
+
+
+#'  Read a mesh3d object from a .vtk file
+#'
+#' @param filename a list of filenames to covnert into a single mesh3d object
+#'
+read.vtk.to.mesh <- function (filenames){
+  vertices = c()
+  indices = c()
+  for (file in filenames){
+    vtk = read.vtk(file, "points")
+    triang = read.vtk(file, "triangles") + 1
+    indices = rbind(indices, triang)
+    vertices = rbind(vertices, vtk)
+  }
+  vertices = cbind(vertices, 1)
+  rgl::tmesh3d(t(vertices), t(indices), homogeneous = TRUE)
+}
+
+#' Write a mesh3d object, removing internal points
+#'
+#' @param Whereto save the object
+#' @param Value of alpha to be used with alphashape3d::ashape3d() to re-define the surface
+#' @param mesh3d a mesh3d object
+write.vtk.light <- function(mesh3d, alpha = 2, filename){
+  mesh3d.d = t(mesh3d$vb)[,-4][mesh3d$it,]
+  mesh3d.alpha = alphashape3d::ashape3d(unique(mesh3d.d), alpha)
+  triangles = mesh3d.alpha$triang[apply(mesh3d.alpha$triang, 1, function(x) {( any(as.numeric(x[9]) > 1))} ),][,1:3]
+  newmesh = rgl::tmesh3d(t(mesh3d.alpha$x), t(triangles), homogeneous = F)
+  write.vtk(nat::xyzmatrix(newmesh), filename = filename, polygons = t(newmesh$it)-1)
+  return(newmesh)
+}
+
 

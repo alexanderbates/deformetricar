@@ -29,6 +29,7 @@ findcognate <- function (x, db, entries = 10, ...){
     warning("Converting database neurons into dotprops. This can slow things down if the neuronlist is large, better to provide a dotprops neuronlist.")
     db = nat::nlapply(db, nat::dotprops, resample=0.1, .progress = 'text', OmitFailures = T)
   }
+  db = db[unlist(nlapply(db, function(x) length(x))>1)]
   cat("Running NBlast")
   l1_smat = readRDS(system.file("extdata/l1_smat.rds", package = 'deformetricar'))
   results = nat.nblast::nblast(x.dps, target = db, smat = l1_smat,  normalised = T, .progress = 'text', UseAlpha = T)
@@ -36,7 +37,7 @@ findcognate <- function (x, db, entries = 10, ...){
   for (n in 1:ncol(results)){
     scores = sort(results[,n], decreasing = T)[1:entries]
     df= data.frame(pid = as.data.frame(db[names(scores)])$pid, skid = names(scores), name = as.data.frame(db[names(scores)])$name, score = scores)
-    data = list(as.data.frame(db[colnames(results)[n]]),df)
+    data = list(catmaid::catmaid_get_neuronnames(colnames(results)[n]),df)
     names(data) <- c("Query","Matching")
     output = append(output, list(data))
   }
