@@ -1,5 +1,5 @@
 # shoot and flow functions
-# idea is that we want to be able to apply an existing registratino to
+# idea is that we want to be able to apply an existing registratin to
 # an abitrary set of coordinates
 
 # see http://www.deformetrica.org/?page_id=232
@@ -115,15 +115,15 @@ make_params_file<-function(outfile="paramsObject1.xml", kernel.width=5, data.sig
 }
 
 
-
 # Call the ShootAndFlow3 with optional arguments
 ShootAndFlow3<-function(..., verbose=FALSE){
-  app=find_app("ShootAndFlow3")
+  app=ShootAndFlow3("ShootAndFlow3")
   args=paste(..., collapse=" ")
   system(paste(app, args), ignore.stdout=!verbose)
 }
 
-find_app<-function(app){
+
+find_ShootAndFlow3<-function(app){
   deformetricar.bindir=getOption("deformetricar.bindir")
   if(!is.null(deformetricar.bindir)) {
     app=file.path(path.expand(deformetricar.bindir), app)

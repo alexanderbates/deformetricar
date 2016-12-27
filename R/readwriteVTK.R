@@ -116,6 +116,7 @@ read.vtk<-function(filename, item = c("points","triangles", "normals")){
 #' @param datatype .vtk datatype (defaults to float)
 #' @param title Title of the .vtk file (defaults to filename)
 #' @param mesh mesh3d or surf object
+#' @param trafo a transformation that can be given to Morpho::applyTransform
 #' @export
 #'
 write.vtk <-function(points, filename, polygons = NULL, normals = NULL,
@@ -156,8 +157,12 @@ write.vtk.mesh3d <- function(mesh, filename){
 }
 
 #' @export
-write.vtk.surf<- function(mesh, filename){
-  write.vtk(nat::xyzmatrix(mesh$Vertices), filename = filename, polygons = mesh$Regions[[1]]-1)
+write.vtk.surf<- function(mesh, filename, trafo = NULL){
+  if (is.null(trafo)){
+    write.vtk(nat::xyzmatrix(mesh$Vertices), filename = filename, polygons = mesh$Regions[[1]]-1)
+  }else{
+    write.vtk(Morpho::applyTransform(nat::xyzmatrix(mesh$Vertices), trafo), filename = filename, polygons = mesh$Regions[[1]]-1)
+  }
 }
 
 #' Read txt files
@@ -223,10 +228,60 @@ read.vtk.to.mesh <- function (filenames){
 write.vtk.light <- function(mesh3d, alpha = 2, filename){
   mesh3d.d = t(mesh3d$vb)[,-4][mesh3d$it,]
   mesh3d.alpha = alphashape3d::ashape3d(unique(mesh3d.d), alpha)
-  triangles = mesh3d.alpha$triang[apply(mesh3d.alpha$triang, 1, function(x) {( any(as.numeric(x[9]) > 1))} ),][,1:3]
+  triangles = mesh3d.alpha$triang[apply(mesh3d.alpha$triang, 1, function(x) {( any(as.numeric(x[9]) > 0))} ),][,1:3]
   newmesh = rgl::tmesh3d(t(mesh3d.alpha$x), t(triangles), homogeneous = F)
   write.vtk(nat::xyzmatrix(newmesh), filename = filename, polygons = t(newmesh$it)-1)
   return(newmesh)
 }
 
 
+#' @export
+write.vtk.mesh <- function(mesh, filename, trafo = NULL){
+  if (!is.null(trafo)){
+    if(nat::is.amiramesh(mesh)){write.vtk(Morpho::applyTransform(nat::xyzmatrix(mesh$Vertices),trafo), filename = filename, polygons = mesh$Regions[[1]]-1)
+    }else write.vtk(Morpho::applyTransform(nat::xyzmatrix(mesh),trafo), filename = filename, polygons = t(mesh$it)-1)
+  }else if(nat::is.amiramesh(mesh)){write.vtk(nat::xyzmatrix(mesh$Vertices), filename = filename, polygons = mesh$Regions[[1]]-1)
+  }else write.vtk(nat::xyzmatrix(mesh), filename = filename, polygons = t(mesh$it)-1)
+}
+
+
+write.vtk.neurons<-function(someneuronlist,filename,datatype=c("float","double"), connect = T){
+  title = filename
+  d = xyzmatrix(someneuronlist)
+  if(ncol(d)!=3) stop("Expect N rows x 3 cols of 3d points")
+  nummarkers=nrow(d)
+  datatype=match.arg(datatype)
+  if(missing(title)) title=paste("Data written from R by WriteVTKLandmarks at",Sys.time())
+
+  cat("# vtk DataFile Version 2.0",
+      title,
+      "ASCII",
+      "DATASET POLYDATA",
+      paste("POINTS",nummarkers,datatype),sep="\n",file=filename)
+
+  for (neuron in someneuronlist){
+    s = xyzmatrix(neuron)
+    write.table(s,col.names=F,row.names=F,file=filename,append=TRUE)
+    # Then add a space to identify neurons later?
+  }
+
+  if (connect == T){ # Include the connections between points in each neuron in the VTK file
+    count = 0
+    nopolypoints = nrow(d) - length(someneuronlist)
+    cat(paste("LINES",nopolypoints,nopolypoints*3),sep="\n",file=filename, append = TRUE)
+    for (neuron in someneuronlist){
+      r = 0
+      rows = nrow(xyzmatrix(neuron))
+      mx = matrix(, nrow = rows -1, ncol = 3)
+      segments = neuron$SegList
+      for(segment in segments){
+        for (n in 1:(length(segment)-1)){
+          r = r + 1
+          mx[r,] <- c(2, (as.integer(segment[n]) -1 + count), (as.integer(segment[n+1]) -1 + count))
+        }
+      }
+      count = count + rows
+      write.table(mx,col.names=F,row.names=F,file=filename,append=TRUE)
+    }
+  }
+}
