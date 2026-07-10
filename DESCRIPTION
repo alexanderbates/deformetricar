@@ -1,14 +1,23 @@
 Package: deformetricar
 Type: Package
-Title: R wrapper for elements of the Deformetrica registration tool
-Version: 0.1
-Author: Alex Bates and Gregory Jefferis
-Maintainer: Alex Bates <abates@mrc-lmb.cam.ac.uk>
-Description: Wraps deformetrica command line tools to allow 3d coordinates
-    to be transformed using deformetrica registrations. Also provides functions
-    to read and write VTK object formats.
+Title: R Client for the Deformetrica Shape Registration Toolkit
+Version: 0.2.0.9000
+Authors@R: c(
+    person("Alexander", "Bates", email = "alexander.shakeel.bates@gmail.com",
+           role = c("aut", "cre")),
+    person("Gregory", "Jefferis", role = "aut"))
+Description: Wraps the Deformetrica (>= 4.3) command-line tools so that 3D
+    coordinates and neuron objects can be transformed by fitted diffeomorphisms
+    via geodesic shooting and flow. Reads and writes VTK object formats and
+    provides sensible defaults for registering fly connectome neurons.
 License: GPL-3
-LazyData: TRUE
-RoxygenNote: 5.0.1
-Suggests: testthat
+Encoding: UTF-8
+URL: https://github.com/alexanderbates/deformetricar
+BugReports: https://github.com/alexanderbates/deformetricar/issues
+Depends: R (>= 4.1)
 Imports: nat, Morpho, Rvcg, xml2, catmaid, rgl, nat.nblast
+Suggests: testthat (>= 3.0.0)
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Config/testthat/edition: 3
+LazyData: true

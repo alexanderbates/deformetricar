@@ -1,2 +1,10 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^reg_neurons$
+^fullmirror_nana\.rds$
+^R/playground\.R$
+^dev/
+^dev-.*\.md$
+^\.github$
+^LICENSE\.md$
+^README\.Rmd$
