@@ -141,3 +141,103 @@ deformetrica_shoot <- function(x, control_points, momenta, kernel_width,
   final <- fs[which.max(ifelse(is.na(tp), -1L, tp))]
   read.vtk(final, item = "points")
 }
+
+#' Fit a Deformetrica diffeomorphism between two point sets (registration)
+#'
+#' The Deformetrica 4 estimate path: fit a diffeomorphism that deforms `source`
+#' (the moving template) onto `target` (the fixed subject). With ordered `source`
+#' <-> `target` row correspondences a point-to-point Landmark attachment is used.
+#' Returns the estimated control points + momenta, which [deformetrica_shoot()]
+#' then applies to arbitrary new points.
+#'
+#' @param source,target N x 3 matrices of corresponding points (row *i* of
+#'   `source` matches row *i* of `target`). Must have the same number of rows.
+#' @param kernel_width Deformation kernel width (larger = stiffer / more global).
+#' @param timepoints Geodesic integration steps.
+#' @param object_type Deformetrica `deformable-object-type` (default "Landmark").
+#' @param attachment_type "Landmark" (ordered L2, default), "Varifold" or "Current".
+#' @param noise_std Data-attachment noise standard deviation.
+#' @param max_iterations Optimiser iterations.
+#' @param device `kernel-device`: "auto", "cpu" or "cuda".
+#' @param deformetrica Optional path to the executable (auto-detected otherwise).
+#' @param workdir Working directory for the run (a fresh tempdir by default).
+#' @param verbose Show `deformetrica` output.
+#' @return A list with `control_points` and `momenta` (file paths), `kernel_width`
+#'   and `output_dir`; pass the paths straight to [deformetrica_shoot()].
+#' @seealso [deformetrica_shoot()] to apply the fitted transform.
+#' @export
+deformetrica_register <- function(source, target, kernel_width,
+                                  timepoints = 10L, object_type = "Landmark",
+                                  attachment_type = c("Landmark", "Varifold", "Current"),
+                                  noise_std = 0.01, max_iterations = 150L,
+                                  device = c("auto", "cpu", "cuda"),
+                                  deformetrica = NULL,
+                                  workdir = tempfile("dfca_reg_"), verbose = FALSE) {
+  attachment_type <- match.arg(attachment_type); device <- match.arg(device)
+  src <- nat::xyzmatrix(source); tgt <- nat::xyzmatrix(target)
+  if (nrow(src) != nrow(tgt))
+    stop("source and target must have the same number of rows for a Landmark fit.", call. = FALSE)
+  exe <- find_deformetrica(deformetrica)
+  dir.create(workdir, recursive = TRUE, showWarnings = FALSE)
+  write.vtk(src, file.path(workdir, "source.vtk"))
+  write.vtk(tgt, file.path(workdir, "target.vtk"))
+  # Explicit MATCHING object id in both XMLs ("shape") — never derive it by
+  # stripping a filename suffix (that silently desyncs when the suffix recurs).
+  writeLines(sprintf(
+'<?xml version="1.0" encoding="UTF-8"?>
+<model>
+  <model-type>Registration</model-type>
+  <dimension>3</dimension>
+  <template>
+    <object id="shape">
+      <deformable-object-type>%s</deformable-object-type>
+      <attachment-type>%s</attachment-type>
+      <noise-std>%g</noise-std>
+      <kernel-width>%g</kernel-width>
+      <kernel-type>torch</kernel-type>
+      <kernel-device>%s</kernel-device>
+      <filename>source.vtk</filename>
+    </object>
+  </template>
+  <deformation-parameters>
+    <kernel-width>%g</kernel-width>
+    <kernel-type>torch</kernel-type>
+    <number-of-timepoints>%d</number-of-timepoints>
+  </deformation-parameters>
+</model>',
+    object_type, attachment_type, noise_std, kernel_width, device,
+    kernel_width, as.integer(timepoints)), file.path(workdir, "model.xml"))
+  writeLines(
+'<?xml version="1.0" encoding="UTF-8"?>
+<data-set>
+  <subject id="subject">
+    <visit id="visit">
+      <filename object_id="shape">target.vtk</filename>
+    </visit>
+  </subject>
+</data-set>', file.path(workdir, "data_set.xml"))
+  writeLines(sprintf(
+'<?xml version="1.0" encoding="UTF-8"?>
+<optimization-parameters>
+  <optimization-method-type>GradientAscent</optimization-method-type>
+  <max-iterations>%d</max-iterations>
+  <convergence-tolerance>1e-5</convergence-tolerance>
+  <freeze-template>On</freeze-template>
+</optimization-parameters>', as.integer(max_iterations)),
+    file.path(workdir, "optimization_parameters.xml"))
+
+  owd <- setwd(workdir); on.exit(setwd(owd), add = TRUE)
+  status <- system2(exe, c("estimate", "model.xml", "data_set.xml", "-p",
+                           "optimization_parameters.xml", "--output=output/"),
+                    stdout = if (verbose) "" else FALSE,
+                    stderr = if (verbose) "" else FALSE)
+  if (!identical(as.integer(status), 0L))
+    stop("`deformetrica estimate` failed (exit ", status, "). Re-run with verbose=TRUE.", call. = FALSE)
+  od <- file.path(workdir, "output")
+  cp  <- list.files(od, pattern = "ControlPoints\\.txt$", full.names = TRUE)
+  mom <- list.files(od, pattern = "Momenta\\.txt$", full.names = TRUE)
+  if (!length(cp) || !length(mom))
+    stop("estimate produced no ControlPoints/Momenta in ", od, call. = FALSE)
+  list(control_points = cp[[1]], momenta = mom[[1]],
+       kernel_width = kernel_width, output_dir = od)
+}
