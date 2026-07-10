@@ -5,14 +5,17 @@ Version: 0.2.0.9000
 Authors@R: c(
     person("Alexander", "Bates", email = "alexander.shakeel.bates@gmail.com",
            role = c("aut", "cre")),
-    person("Gregory", "Jefferis", role = "aut"))
+    person("Gregory", "Jefferis", email = "jefferis@gmail.com", role = "aut",
+           comment = c(ORCID = "0000-0002-0587-9355")))
 Description: Wraps the Deformetrica (>= 4.3) command-line tools so that 3D
     coordinates and neuron objects can be transformed by fitted diffeomorphisms
     via geodesic shooting and flow. Reads and writes VTK object formats and
     provides sensible defaults for registering fly connectome neurons.
-License: GPL-3
+License: GPL (>= 3)
 Encoding: UTF-8
-URL: https://github.com/alexanderbates/deformetricar
+Language: en-GB
+URL: https://github.com/alexanderbates/deformetricar,
+    https://alexanderbates.github.io/deformetricar/
 BugReports: https://github.com/alexanderbates/deformetricar/issues
 Depends: R (>= 4.1)
 Imports: nat, Morpho, Rvcg, xml2, catmaid, rgl, nat.nblast
@@ -24,6 +27,12 @@ Suggests:
     nat.flybrains,
     insectbrainr,
     gifski
+Remotes:
+    natverse/nat,
+    natverse/nat.nblast,
+    natverse/nat.flybrains,
+    natverse/insectbrainr,
+    catmaid=natverse/rcatmaid
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Config/testthat/edition: 3
