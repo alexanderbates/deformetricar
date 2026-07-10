@@ -44,15 +44,11 @@ library(insectbrainr)    # Aedes brain from the Insect Brain Database
 fly <- as.mesh3d(nat.flybrains::JRC2018U)
 
 ## Source: Aedes aegypti standard brain from the Insect Brain Database.
-## insectbrainr exports (verified): insectbraindb_species_info,
-## insectbraindb_read_brain, insectbraindb_read_neurons, insectbraindb_neuron_info.
-## The brain comes as neuropil sub-surfaces; the union is the whole-brain mesh.
-## NOTE: insectbrainr is older and its Insect Brain Database mesh queries may need
-## a fix upstream (see the package dev notes) — if `insectbraindb_read_brain`
-## errors, that is the PR to make.
-aedes_species <- insectbraindb_species_info("Aedes aegypti")
-aedes_brain   <- insectbraindb_read_brain(brain = aedes_species)   # hxsurf, neuropil sub-regions
-aedes <- as.mesh3d(aedes_brain)                                    # whole-brain union
+## insectbrainr exports (verified): insectbraindb_species_info() (no args),
+## insectbraindb_read_brain(species=, brain.sex=), insectbraindb_read_neurons().
+## The brain is a neuronlist of neuropil sub-surfaces; the union is the whole brain.
+aedes_brain <- insectbraindb_read_brain(species = "Aedes aegypti")   # neuropil sub-meshes
+aedes <- as.mesh3d(aedes_brain)                                      # whole-brain union
 ```
 
 ## 2. Affine initialisation (Morpho)

@@ -1,0 +1,47 @@
+url: https://alexanderbates.github.io/deformetricar
+
+template:
+  bootstrap: 5
+
+navbar:
+  structure:
+    left: [intro, reference, articles]
+    right: [github]
+
+articles:
+- title: Vignettes
+  navbar: ~
+  contents:
+  - mosquito-to-fly
+  - fafb-left-right
+
+reference:
+- title: Deformetrica 4 client
+  desc: Fit and apply diffeomorphisms with a modern Deformetrica (>= 4.3) install.
+  contents:
+  - find_deformetrica
+  - deformetrica_register
+  - deformetrica_register_multi
+  - deformetrica_shoot
+  - write_neuron_vtk
+- title: VTK I/O
+  contents:
+  - read.vtk
+  - write.vtk
+- title: Mirror-symmetry helpers
+  contents:
+  - apply.mirror.affine
+  - mirrormat
+  - otherside
+  - symmetrisel1
+  - transform3dpoints
+  - trafoicpmat
+  - calculate.full.transformation
+- title: Cognate matching
+  contents:
+  - findcognate
+  - checkL1cognates
+- title: Legacy (Deformetrica 2.1)
+  desc: The historical ShootAndFlow3 path; superseded by deformetrica_shoot().
+  contents:
+  - shootflow
