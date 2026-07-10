@@ -2,7 +2,7 @@
 #'
 #' @param regdir Path to directory for performing the deformetrica registration. The .vtk files produced for 3D objects and the registrations generated will be saved here
 #' @param moving.list list of mesh3D objects to be deformed
-#' @param target.list list of mesh3D objects the moving objects are goign to try to match
+#' @param target.list list of mesh3D objects the moving objects are going to try to match
 #' @param choose.params whether or not to manually select values for kernel.width, data.sigma and object.type for eaxch object in the registration. Else, default values will be used
 #' @param plotting whether to plot the 3D objects in question ot help you decide on the above
 #' @param verbose whether or not to see the progress of the sparseMatching3 system command in your R console

@@ -118,7 +118,6 @@ read.vtk<-function(filename, item = c("points","triangles", "normals")){
 #' @param mesh mesh3d or surf object
 #' @param trafo a transformation that can be given to Morpho::applyTransform
 #' @export
-#'
 write.vtk <-function(points, filename, polygons = NULL, normals = NULL,
                      datatype=c("float","double"), title = filename){
   file.create(filename)
@@ -205,7 +204,7 @@ transform.vtk = function (vtk, transformations){
 
 #'  Read a mesh3d object from a .vtk file
 #'
-#' @param filename a list of filenames to covnert into a single mesh3d object
+#' @param filenames a list of filenames to covnert into a single mesh3d object
 #'
 read.vtk.to.mesh <- function (filenames){
   vertices = c()
