@@ -252,3 +252,141 @@ deformetrica_register <- function(source, target, kernel_width,
   list(control_points = cp[[1]], momenta = mom[[1]],
        kernel_width = kernel_width, output_dir = od)
 }
+
+#' Write a neuron as a VTK NonOrientedPolyLine
+#'
+#' Neuron backbones are the natural registration object for connectome work
+#' (cf. the FAFB left-right bridging registration in flyconnectome/deformetricaLR).
+#'
+#' @param x A `nat` neuron (or anything with `xyzmatrix` + a `SegList`).
+#' @param file Output path.
+#' @return "complete" (invisibly via the file written).
+#' @export
+write_neuron_vtk <- function(x, file) {
+  pts <- nat::xyzmatrix(x)
+  sl <- x$SegList
+  if (is.null(sl)) sl <- nat::as.seglist(x)
+  nlines <- length(sl); total <- sum(vapply(sl, length, integer(1))) + nlines
+  con <- file(file, "w"); on.exit(close(con))
+  writeLines(c("# vtk DataFile Version 2.0", "deformetricar polyline", "ASCII",
+               "DATASET POLYDATA", paste("POINTS", nrow(pts), "float")), con)
+  utils::write.table(pts, con, row.names = FALSE, col.names = FALSE)
+  writeLines(paste("LINES", nlines, total), con)
+  for (s in sl) writeLines(paste(c(length(s), s - 1L), collapse = " "), con)
+  "complete"
+}
+
+# Classify an object and write it to VTK; returns its Deformetrica type + attachment.
+.dfca_write_object <- function(x, file) {
+  if (inherits(x, "mesh3d")) {
+    write.vtk(nat::xyzmatrix(x), file, polygons = t(x$it))
+    list(dtype = "SurfaceMesh", attach = "Current")
+  } else if (inherits(x, c("neuron", "neuronlist"))) {
+    write_neuron_vtk(x, file)
+    list(dtype = "NonOrientedPolyLine", attach = "Varifold")
+  } else {
+    write.vtk(nat::xyzmatrix(x), file)
+    list(dtype = "Landmark", attach = "Landmark")
+  }
+}
+
+#' Fit ONE diffeomorphism to many matched objects (multi-object registration)
+#'
+#' The flyconnectome/deformetricaLR recipe, ported to Deformetrica 4: register a
+#' whole SET of matched cognate objects (e.g. left/right neuron tracts) with a
+#' single diffeomorphism, optionally anchored by a shared `landmarks` point cloud.
+#' Objects may mix meshes, neurons (polylines) and point sets; each `sources[[i]]`
+#' is matched to `targets[[i]]` by name.
+#'
+#' @param sources,targets Named, equal-length lists of matched objects. `sources`
+#'   are templates (moving), `targets` the subject (fixed). Names become object ids.
+#' @param kernel_width Deformation kernel width.
+#' @param object_kernel_width Per-object data kernel width (defaults to `kernel_width`).
+#' @param landmarks Optional `list(source=, target=)` of anchoring point matrices,
+#'   added as a shared Landmark object (the `inc_tracts_lmarks` regulariser).
+#' @param data_sigma Per-object data-attachment sigma.
+#' @param timepoints,max_iterations,device,deformetrica,workdir,verbose As
+#'   [deformetrica_register()].
+#' @return A list with `control_points`, `momenta`, `kernel_width`, `output_dir`.
+#' @seealso [deformetrica_register()] for the single-object case.
+#' @export
+deformetrica_register_multi <- function(sources, targets, kernel_width,
+                                        object_kernel_width = kernel_width,
+                                        landmarks = NULL, data_sigma = 0.5,
+                                        timepoints = 10L, max_iterations = 150L,
+                                        device = c("auto", "cpu", "cuda"),
+                                        deformetrica = NULL,
+                                        workdir = tempfile("dfca_multi_"), verbose = FALSE) {
+  device <- match.arg(device)
+  if (is.null(names(sources)) || length(sources) != length(targets))
+    stop("sources and targets must be equal-length, named lists of matched objects.", call. = FALSE)
+  ids <- make.names(names(sources), unique = TRUE)
+  exe <- find_deformetrica(deformetrica)
+  dir.create(file.path(workdir, "data"), recursive = TRUE, showWarnings = FALSE)
+
+  tmpl <- character(); obj_xml <- character(); subj_xml <- character()
+  for (i in seq_along(ids)) {
+    sf <- file.path("data", paste0(ids[i], "_src.vtk"))
+    tf <- file.path("data", paste0(ids[i], "_tgt.vtk"))
+    spec <- .dfca_write_object(sources[[i]], file.path(workdir, sf))
+    .dfca_write_object(targets[[i]], file.path(workdir, tf))
+    obj_xml <- c(obj_xml, sprintf(
+'    <object id="%s">
+      <deformable-object-type>%s</deformable-object-type>
+      <attachment-type>%s</attachment-type>
+      <data-sigma>%g</data-sigma>
+      <kernel-width>%g</kernel-width>
+      <kernel-type>torch</kernel-type>
+      <kernel-device>%s</kernel-device>
+      <filename>%s</filename>
+    </object>', ids[i], spec$dtype, spec$attach, data_sigma, object_kernel_width, device, sf))
+    subj_xml <- c(subj_xml, sprintf('      <filename object_id="%s">%s</filename>', ids[i], tf))
+  }
+  if (!is.null(landmarks)) {
+    write.vtk(nat::xyzmatrix(landmarks$source), file.path(workdir, "data/landmarks_src.vtk"))
+    write.vtk(nat::xyzmatrix(landmarks$target), file.path(workdir, "data/landmarks_tgt.vtk"))
+    obj_xml <- c(obj_xml, sprintf(
+'    <object id="landmarks">
+      <deformable-object-type>Landmark</deformable-object-type>
+      <attachment-type>Landmark</attachment-type>
+      <data-sigma>%g</data-sigma>
+      <kernel-width>%g</kernel-width>
+      <kernel-type>torch</kernel-type>
+      <kernel-device>%s</kernel-device>
+      <filename>data/landmarks_src.vtk</filename>
+    </object>', data_sigma, object_kernel_width, device))
+    subj_xml <- c(subj_xml, '      <filename object_id="landmarks">data/landmarks_tgt.vtk</filename>')
+  }
+  writeLines(c('<?xml version="1.0" encoding="UTF-8"?>', '<model>',
+    '  <model-type>Registration</model-type>', '  <dimension>3</dimension>',
+    '  <template>', obj_xml, '  </template>',
+    '  <deformation-parameters>',
+    sprintf('    <kernel-width>%g</kernel-width>', kernel_width),
+    '    <kernel-type>torch</kernel-type>',
+    sprintf('    <number-of-timepoints>%d</number-of-timepoints>', as.integer(timepoints)),
+    '  </deformation-parameters>', '</model>'), file.path(workdir, "model.xml"))
+  writeLines(c('<?xml version="1.0" encoding="UTF-8"?>', '<data-set>',
+    '  <subject id="subject">', '    <visit id="visit">', subj_xml,
+    '    </visit>', '  </subject>', '</data-set>'), file.path(workdir, "data_set.xml"))
+  writeLines(sprintf(
+'<?xml version="1.0" encoding="UTF-8"?>
+<optimization-parameters>
+  <optimization-method-type>GradientAscent</optimization-method-type>
+  <max-iterations>%d</max-iterations>
+  <convergence-tolerance>1e-5</convergence-tolerance>
+  <freeze-template>On</freeze-template>
+</optimization-parameters>', as.integer(max_iterations)),
+    file.path(workdir, "optimization_parameters.xml"))
+
+  owd <- setwd(workdir); on.exit(setwd(owd), add = TRUE)
+  status <- system2(exe, c("estimate", "model.xml", "data_set.xml", "-p",
+                           "optimization_parameters.xml", "--output=output/"),
+                    stdout = if (verbose) "" else FALSE, stderr = if (verbose) "" else FALSE)
+  if (!identical(as.integer(status), 0L))
+    stop("`deformetrica estimate` (multi-object) failed (exit ", status, ").", call. = FALSE)
+  od <- file.path(workdir, "output")
+  cp  <- list.files(od, pattern = "ControlPoints\\.txt$", full.names = TRUE)
+  mom <- list.files(od, pattern = "Momenta\\.txt$", full.names = TRUE)
+  if (!length(cp) || !length(mom)) stop("multi-object estimate produced no CP/Momenta.", call. = FALSE)
+  list(control_points = cp[[1]], momenta = mom[[1]], kernel_width = kernel_width, output_dir = od)
+}

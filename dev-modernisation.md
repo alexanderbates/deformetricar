@@ -45,6 +45,20 @@ Deformetrica 4.3.0 fit + shooting pipeline on O2.
       geodesic flow. Heavy chunks `eval=FALSE` (need IBdb + GPU).
 - [x] DESCRIPTION: VignetteBuilder + vignette Suggests (knitr, rmarkdown, nat.flybrains, insectbrainr, gifski).
 
+### Concepts ported from flyconnectome/deformetricaLR (2026-07-10)
+That repo (FAFB L-R bridging registration, Deformetrica 3.0.0.beta) contributed:
+- [x] **Multi-object registration** — `deformetrica_register_multi()`: ONE diffeomorphism fit to a whole
+      SET of matched objects at once (its `model.xml` had one `<object>` per cognate neuron tract). This is
+      how a real bridging registration is built, vs a single source→target shape.
+- [x] **Neuron tracts as `NonOrientedPolyLine`** — `write_neuron_vtk()` (VTK POLYDATA LINES) + object
+      auto-classification (mesh→SurfaceMesh/Current, neuron→NonOrientedPolyLine/Varifold, points→Landmark).
+- [x] **Landmark object as a global regulariser** — the `inc_tracts_lmarks` vs `inc_tracts_no_landmark`
+      ablation: `deformetrica_register_multi(landmarks=list(source=,target=))` adds a shared Landmark object
+      alongside the tracts. Per-object `data_sigma` supported.
+- [x] **mirror → affine → deformable** L-R pipeline → `vignettes/fafb-left-right.Rmd` (with its own GIF).
+- [ ] Still worth lifting: their `param_gen/` parameter-file generators (superseded by our XML writers) and
+      the neuropil-landmark feathers (`regLandmarks/FCWB_unmirrored`) as ready-made anchor sets.
+
 ### Next (in rough priority)
 - [ ] **insectbrainr may need a PR**: it is older and its Insect Brain Database mesh queries may be broken;
       reconcile the vignette's `insectbraindb_*` calls with the real API (preferred mosquito: **Aedes aegypti**),
