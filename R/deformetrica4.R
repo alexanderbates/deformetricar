@@ -85,6 +85,10 @@ deformetrica_shoot <- function(x, control_points, momenta, kernel_width,
   out <- .dfca_read_final_flow(file.path(workdir, "output"))
   if (nrow(out) != nrow(pts))
     stop("Deformed point count (", nrow(out), ") != input (", nrow(pts), ").", call. = FALSE)
+  # Return the same class as the input: a warped mesh3d (faces preserved), a
+  # neuron/dotprops with coordinates replaced, or a bare matrix.
+  if (inherits(x, "mesh3d")) { x$vb <- rbind(t(out), 1); x$normals <- NULL; return(x) }
+  if (inherits(x, c("neuron", "neuronlist", "dotprops"))) { nat::xyzmatrix(x) <- out; return(x) }
   unname(out)
 }
 
@@ -174,13 +178,20 @@ deformetrica_register <- function(source, target, kernel_width,
                                   deformetrica = NULL,
                                   workdir = tempfile("dfca_reg_"), verbose = FALSE) {
   attachment_type <- match.arg(attachment_type); device <- match.arg(device)
+  src_is_mesh <- inherits(source, "mesh3d"); tgt_is_mesh <- inherits(target, "mesh3d")
   src <- nat::xyzmatrix(source); tgt <- nat::xyzmatrix(target)
-  if (nrow(src) != nrow(tgt))
-    stop("source and target must have the same number of rows for a Landmark fit.", call. = FALSE)
+  is_mesh <- src_is_mesh && tgt_is_mesh
+  # Surfaces register unlabelled (Current/Varifold): no row correspondence needed
+  # and the mesh FACES must go into the VTK. Point sets use ordered Landmark L2.
+  if (is_mesh && object_type == "Landmark") object_type <- "SurfaceMesh"
+  if (is_mesh && attachment_type == "Landmark") attachment_type <- "Current"
+  if (!is_mesh && attachment_type == "Landmark" && nrow(src) != nrow(tgt))
+    stop("For a Landmark fit source and target must have the same number of rows; ",
+         "for unlabelled surfaces pass mesh3d objects (attachment_type='Current').", call. = FALSE)
   exe <- find_deformetrica(deformetrica)
   dir.create(workdir, recursive = TRUE, showWarnings = FALSE)
-  write.vtk(src, file.path(workdir, "source.vtk"))
-  write.vtk(tgt, file.path(workdir, "target.vtk"))
+  write.vtk(src, file.path(workdir, "source.vtk"), polygons = if (src_is_mesh) t(source$it) else NULL)
+  write.vtk(tgt, file.path(workdir, "target.vtk"), polygons = if (tgt_is_mesh) t(target$it) else NULL)
   # Explicit MATCHING object id in both XMLs ("shape") — never derive it by
   # stripping a filename suffix (that silently desyncs when the suffix recurs).
   writeLines(sprintf(

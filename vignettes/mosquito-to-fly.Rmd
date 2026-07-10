@@ -1,0 +1,163 @@
+---
+title: "Warping a mosquito brain onto the fly (JRC2018U) with Deformetrica"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Warping a mosquito brain onto the fly (JRC2018U) with Deformetrica}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", eval = FALSE)
+# The data-pull and Deformetrica chunks need the Insect Brain Database, a
+# Deformetrica (>= 4.3) install and a GPU, so they are eval=FALSE by default.
+# Run them locally after `find_deformetrica()` resolves.
+```
+
+## Goal
+
+Register the whole-brain surface of the **mosquito _Aedes aegypti_** onto the
+**_Drosophila_ JRC2018U** unisex template brain, as accurately as possible, and
+render the geodesic flow of the transform as a GIF. Cross-species brain shapes
+differ enormously, so we do this in two stages — an **affine initialisation**
+(Morpho) to remove gross pose/scale differences, then a **non-rigid Deformetrica
+diffeomorphism** (surface registration). We validate on **homologous neuropils**
+(antennal lobe, mushroom body, central complex) that both brains share.
+
+This mirrors the two-stage recipe in the package's `deform/` scripts: affine
+first, deformable second.
+
+```{r setup}
+library(deformetricar)
+library(nat)
+library(nat.flybrains)   # JRC2018U template
+library(Morpho)          # affine initialisation + ICP
+library(Rvcg)            # mesh decimation / surface metrics
+# install.packages("remotes"); remotes::install_github("natverse/insectbrainr")
+library(insectbrainr)    # Aedes brain from the Insect Brain Database
+```
+
+## 1. The two brain surfaces
+
+```{r meshes}
+## Target: Drosophila JRC2018U whole-brain surface, as a mesh3d (in microns).
+fly <- as.mesh3d(nat.flybrains::JRC2018U)
+
+## Source: Aedes aegypti standard brain from the Insect Brain Database.
+## insectbrainr exports (verified): insectbraindb_species_info,
+## insectbraindb_read_brain, insectbraindb_read_neurons, insectbraindb_neuron_info.
+## The brain comes as neuropil sub-surfaces; the union is the whole-brain mesh.
+## NOTE: insectbrainr is older and its Insect Brain Database mesh queries may need
+## a fix upstream (see the package dev notes) — if `insectbraindb_read_brain`
+## errors, that is the PR to make.
+aedes_species <- insectbraindb_species_info("Aedes aegypti")
+aedes_brain   <- insectbraindb_read_brain(brain = aedes_species)   # hxsurf, neuropil sub-regions
+aedes <- as.mesh3d(aedes_brain)                                    # whole-brain union
+```
+
+## 2. Affine initialisation (Morpho)
+
+A diffeomorphism cannot (and should not) absorb a cross-species change of pose
+and scale — that is the affine step's job. We drive it from **homologous neuropil
+centroids** (robust landmarks present in both brains), then refine with a
+surface ICP.
+
+```{r affine}
+homologous <- c("antennal_lobe", "mushroom_body", "central_body", "optic_lobe")
+centroid <- function(brain, region) colMeans(nat::xyzmatrix(subset(brain, region)))
+lm_moz <- t(sapply(homologous, centroid, brain = aedes_brain))
+lm_fly <- t(sapply(homologous, centroid, brain = nat.flybrains::JRC2018U))
+
+aff      <- Morpho::computeTransform(lm_fly, lm_moz, type = "affine")   # moz -> fly
+aedes_aff <- Morpho::applyTransform(aedes, aff)
+aedes_aff <- Morpho::icp(aedes_aff, fly, iterations = 30, type = "affine")  # surface refine
+```
+
+## 3. Non-rigid Deformetrica warp (surface registration)
+
+Decimate both surfaces to a tractable, comparable vertex count, then fit an
+unlabelled-surface diffeomorphism (`SurfaceMesh` + `Current` attachment — no
+vertex correspondence required). `kernel_width` sets the deformation length-scale
+(a few tens of microns for whole-brain shape; sweep it as a validation knob).
+
+```{r warp}
+src <- Rvcg::vcgQEdecim(aedes_aff, percent = 0.15)
+tgt <- Rvcg::vcgQEdecim(fly,       percent = 0.15)
+
+fit <- deformetrica_register(
+  source = src, target = tgt,        # mesh3d in, SurfaceMesh/Current auto-selected
+  kernel_width = 30, timepoints = 15, max_iterations = 200,
+  device = "cuda", verbose = TRUE)
+```
+
+## 4. Apply the transform + GIF frames
+
+`deformetrica_shoot()` flows any object through the fitted diffeomorphism and
+returns the same class it was given — so we can warp the full-resolution mosquito
+mesh (not just the decimated fit surface). The Deformetrica shooting output writes
+one VTK per timepoint under `fit$output_dir`/`workdir`; those are the GIF frames.
+
+```{r apply-gif}
+aedes_warped <- deformetrica_shoot(aedes_aff, fit$control_points, fit$momenta,
+                                   kernel_width = fit$kernel_width, device = "cuda")
+
+## Render each geodesic timepoint to a frame, then assemble a GIF.
+frames <- sort(Sys.glob(file.path(fit$output_dir, "*GeodesicFlow*tp_*.vtk")))
+render_frame <- function(vtk, png) {
+  m <- read.vtk(vtk, item = "points")
+  rgl::open3d(useNULL = TRUE); rgl::points3d(m, size = 1)
+  rgl::wire3d(fly, col = "grey80")            # fly target for reference
+  rgl::snapshot3d(png, webshot = FALSE); rgl::close3d()
+}
+pngs <- vapply(seq_along(frames), function(i) { p <- sprintf("frame_%02d.png", i); render_frame(frames[i], p); p }, "")
+# gifski::gifski(pngs, "mosquito_to_fly.gif", delay = 0.15)   # or magick::image_animate
+```
+
+## 5. Validation — homologous neuropils
+
+The whole-brain surface distance alone is a weak criterion (a diffeomorphism can
+over-fit the outer hull). The meaningful test is whether **homologous interior
+neuropils land on their fly counterparts** after the warp. For each shared
+neuropil we report the symmetric surface distance and a volumetric Dice overlap
+between the warped mosquito neuropil and the fly neuropil.
+
+```{r validation}
+surface_dist <- function(a, b) mean(Rvcg::vcgClostKD(a, b)$quality)   # a->b nearest-vertex dist
+dice <- function(a, b) {                                              # volumetric overlap
+  ov <- Rvcg::vcgBool(a, b, "intersection")
+  2 * Rvcg::vcgVolume(ov) / (Rvcg::vcgVolume(a) + Rvcg::vcgVolume(b))
+}
+score_neuropil <- function(region) {
+  moz_w <- deformetrica_shoot(as.mesh3d(subset(aedes_brain, region)),
+                              fit$control_points, fit$momenta, kernel_width = fit$kernel_width)
+  fly_n <- as.mesh3d(subset(nat.flybrains::JRC2018U, region))
+  data.frame(region, affine_dist = surface_dist(Morpho::applyTransform(as.mesh3d(subset(aedes_brain, region)), aff), fly_n),
+             warp_dist = surface_dist(moz_w, fly_n), dice = dice(moz_w, fly_n))
+}
+val <- do.call(rbind, lapply(homologous, score_neuropil))
+val   # warp_dist should beat affine_dist for each neuropil; dice should rise
+```
+
+**Acceptance criteria (iterate `kernel_width` / decimation against these):**
+
+1. Every homologous neuropil's `warp_dist` < its `affine_dist` (the diffeomorphism
+   improves on the affine init everywhere, not just the hull).
+2. Mean neuropil Dice rises materially over the affine-only baseline.
+3. The transform is a valid diffeomorphism (no folding) — check that the Jacobian
+   of the flow stays positive (Deformetrica will not fold, but a too-small kernel
+   with too-few iterations can leave the surfaces unmatched).
+
+### Fallback — register comparable neuropils as query/target pairs
+
+If the whole-brain warp cannot satisfy (1)–(2) (very different overall shape), drop
+to **per-neuropil registration**: fit one diffeomorphism per homologous pair
+(mosquito AL → fly AL, MB → MB, …) with the neuropil surfaces as the query/target,
+which removes the competing whole-brain constraints and is the more honest test of
+local homology.
+
+```{r fallback}
+fit_al <- deformetrica_register(
+  source = as.mesh3d(subset(aedes_brain, "antennal_lobe")),
+  target = as.mesh3d(subset(nat.flybrains::JRC2018U, "antennal_lobe")),
+  kernel_width = 15, device = "cuda")
+```

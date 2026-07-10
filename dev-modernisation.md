@@ -34,9 +34,22 @@ Deformetrica 4.3.0 fit + shooting pipeline on O2.
       `RoxygenNote: 7.3.2`, testthat edition 3, `Depends: R (>= 4.1)`.
 - [x] `.Rbuildignore`: exclude the 37 MB `reg_neurons` blob, `fullmirror_nana.rds`, `R/playground.R`, dev docs.
 
+### Done on `dev` (cont.)
+- [x] `deformetrica_register()` (Deformetrica 4 estimate/fit path) + mesh support: `deformetrica_register`
+      and `deformetrica_shoot` accept `mesh3d` (SurfaceMesh + Current, faces written to VTK; shoot returns a
+      warped mesh/neuron/dotprops of the same class).
+- [x] `tests/testthat/test-deformetrica4.R`: VTK point + mesh round-trip (nat/Rvcg data), find_deformetrica
+      error path, register->shoot recovers a known translation (skip when the binary is absent).
+- [x] `vignettes/mosquito-to-fly.Rmd`: Aedes mosquito brain -> JRC2018U fly, affine init (Morpho) then
+      Deformetrica surface warp, homologous-neuropil validation + per-neuropil fallback, GIF frames from the
+      geodesic flow. Heavy chunks `eval=FALSE` (need IBdb + GPU).
+- [x] DESCRIPTION: VignetteBuilder + vignette Suggests (knitr, rmarkdown, nat.flybrains, insectbrainr, gifski).
+
 ### Next (in rough priority)
-- [ ] Regenerate `NAMESPACE` + `man/` with roxygen2 7.x (`devtools::document()`); export
-      `deformetrica_shoot`, `find_deformetrica`.
+- [ ] **insectbrainr may need a PR**: it is older and its Insect Brain Database mesh queries may be broken;
+      reconcile the vignette's `insectbraindb_*` calls with the real API (preferred mosquito: **Aedes aegypti**),
+      and if the mesh fetch is broken, fix it upstream (clone natverse/insectbrainr, dev branch).
+- [ ] Regenerate `NAMESPACE` + `man/` with roxygen2 7.x (`devtools::document()`); export the new functions.
 - [ ] Add a Deformetrica 4 **estimate** wrapper (`deformetrica_register()`) mirroring the
       `bancpipeline` fit: write ordered Landmark VTKs + Registration/DeterministicAtlas model, run
       `deformetrica estimate`, return control points + momenta. Fold in the object-id derivation fix
