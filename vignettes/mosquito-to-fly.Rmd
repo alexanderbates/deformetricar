@@ -157,8 +157,8 @@ tgts$outer <- Rvcg::vcgQEdecim(fly,         tarface = 12000L)
 # values were tuned by iterating on the result — see the article notes.)
 sigma <- setNames(rep(3.0, length(srcs)), names(srcs))  # neuropils: strong
 sigma["outer"] <- 5.0                                   # hull: weaker but consequential
-sigma[grep("^(VL|ML|PED)_", names(sigma))] <- 1.5       # MB lobes: strongest (contain the vertical lobe)
-sigma[grep("^(FB|EB|PB|NO)_", names(sigma))] <- 7.0     # central complex: gentle (ring vs arch)
+sigma[grep("^(VL|ML|PED)_", names(sigma))] <- 1.0       # MB lobes: strongest (compress the elongated vertical lobe)
+sigma[grep("^(FB|EB|PB|NO)_", names(sigma))] <- 5.0     # central complex: fairly strong, to sit close to the fly
 
 # A larger kernel width gives a stiffer, more GLOBAL warp, so elongated structures
 # (peduncle, vertical lobe) move coherently onto their target instead of leaving a
