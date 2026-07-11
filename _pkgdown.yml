@@ -38,6 +38,6 @@ reference:
   desc: Read and write neurons, meshes and point sets as VTK.
   contents:
   - write_neuron_vtk
-  - read.vtk
-  - write.vtk
+  - read_vtk
+  - write_vtk
   - transform_vtk

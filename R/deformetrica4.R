@@ -69,7 +69,7 @@ deformetrica_shoot <- function(x, control_points, momenta, kernel_width,
 
   cp  <- .dfca_as_txt(control_points, file.path(workdir, "control_points.txt"))
   mom <- .dfca_as_txt(momenta,        file.path(workdir, "momenta.txt"))
-  write.vtk(pts, file.path(workdir, "points.vtk"))
+  write_vtk(pts, file.path(workdir, "points.vtk"))
   .dfca_write_shooting_model(file.path(workdir, "model.xml"),
     points_file = "points.vtk",
     control_points = normalizePath(cp), momenta = normalizePath(mom),
@@ -158,11 +158,11 @@ deformetrica_shoot <- function(x, control_points, momenta, kernel_width,
 
 .dfca_read_final_flow <- function(outdir) {
   fs <- .dfca_flow_files(outdir)
-  read.vtk(fs[[length(fs)]], item = "points")
+  read_vtk(fs[[length(fs)]], item = "points")
 }
 
 .dfca_read_all_flow <- function(outdir) {
-  lapply(.dfca_flow_files(outdir), read.vtk, item = "points")
+  lapply(.dfca_flow_files(outdir), read_vtk, item = "points")
 }
 
 #' Fit a Deformetrica diffeomorphism between two point sets (registration)
@@ -209,8 +209,8 @@ deformetrica_register <- function(source, target, kernel_width,
          "for unlabelled surfaces pass mesh3d objects (attachment_type='Current').", call. = FALSE)
   exe <- find_deformetrica(deformetrica)
   dir.create(workdir, recursive = TRUE, showWarnings = FALSE)
-  write.vtk(src, file.path(workdir, "source.vtk"), polygons = if (src_is_mesh) t(source$it) - 1L else NULL)
-  write.vtk(tgt, file.path(workdir, "target.vtk"), polygons = if (tgt_is_mesh) t(target$it) - 1L else NULL)
+  write_vtk(src, file.path(workdir, "source.vtk"), polygons = if (src_is_mesh) t(source$it) - 1L else NULL)
+  write_vtk(tgt, file.path(workdir, "target.vtk"), polygons = if (tgt_is_mesh) t(target$it) - 1L else NULL)
   # Explicit MATCHING object id in both XMLs ("shape") — never derive it by
   # stripping a filename suffix (that silently desyncs when the suffix recurs).
   writeLines(sprintf(
@@ -318,13 +318,13 @@ write_neuron_vtk <- function(x, file) {
 # Classify an object and write it to VTK; returns its Deformetrica type + attachment.
 .dfca_write_object <- function(x, file) {
   if (inherits(x, "mesh3d")) {
-    write.vtk(nat::xyzmatrix(x), file, polygons = t(x$it) - 1L)   # 0-indexed faces for Deformetrica
+    write_vtk(nat::xyzmatrix(x), file, polygons = t(x$it) - 1L)   # 0-indexed faces for Deformetrica
     list(dtype = "SurfaceMesh", attach = "Current")
   } else if (inherits(x, c("neuron", "neuronlist"))) {
     write_neuron_vtk(x, file)
     list(dtype = "PolyLine", attach = "Varifold")   # Deformetrica 4.x name (was NonOrientedPolyLine in 2.1)
   } else {
-    write.vtk(nat::xyzmatrix(x), file)
+    write_vtk(nat::xyzmatrix(x), file)
     list(dtype = "Landmark", attach = "Landmark")
   }
 }
@@ -395,8 +395,8 @@ deformetrica_register_multi <- function(sources, targets, kernel_width,
     subj_xml <- c(subj_xml, sprintf('      <filename object_id="%s">%s</filename>', ids[i], tf))
   }
   if (!is.null(landmarks)) {
-    write.vtk(nat::xyzmatrix(landmarks$source), file.path(workdir, "data/landmarks_src.vtk"))
-    write.vtk(nat::xyzmatrix(landmarks$target), file.path(workdir, "data/landmarks_tgt.vtk"))
+    write_vtk(nat::xyzmatrix(landmarks$source), file.path(workdir, "data/landmarks_src.vtk"))
+    write_vtk(nat::xyzmatrix(landmarks$target), file.path(workdir, "data/landmarks_tgt.vtk"))
     obj_xml <- c(obj_xml, sprintf(
 '    <object id="landmarks">
       <deformable-object-type>Landmark</deformable-object-type>

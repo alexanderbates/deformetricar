@@ -12,24 +12,24 @@ skip_if_no_live_deformetrica <- function() {
                         "set DEFORMETRICAR_TEST_LIVE=1 to run live Deformetrica compute tests")
 }
 
-test_that("write.vtk / read.vtk round-trips a point cloud (nat neuron data)", {
+test_that("write_vtk / read_vtk round-trips a point cloud (nat neuron data)", {
   skip_if_not_installed("nat")
   pts <- nat::xyzmatrix(nat::Cell07PNs[[1]])
   f <- tempfile(fileext = ".vtk"); on.exit(unlink(f))
-  expect_equal(write.vtk(pts, f), "complete")
-  back <- read.vtk(f, item = "points")
+  expect_equal(write_vtk(pts, f), "complete")
+  back <- read_vtk(f, item = "points")
   expect_equal(nrow(back), nrow(pts))
   expect_equal(back, pts, tolerance = 1e-4, ignore_attr = TRUE)
 })
 
-test_that("write.vtk / read.vtk round-trips a triangular surface mesh", {
+test_that("write_vtk / read_vtk round-trips a triangular surface mesh", {
   skip_if_not_installed("Rvcg")
   m <- Rvcg::vcgSphere()                       # mesh3d: 3 x V verts, 3 x F faces
   v <- t(m$vb[1:3, ]); faces <- t(m$it)
   f <- tempfile(fileext = ".vtk"); on.exit(unlink(f))
-  expect_equal(write.vtk(v, f, polygons = faces), "complete")
-  expect_equal(nrow(read.vtk(f, item = "points")), nrow(v))
-  tri <- read.vtk(f, item = "triangles")
+  expect_equal(write_vtk(v, f, polygons = faces), "complete")
+  expect_equal(nrow(read_vtk(f, item = "points")), nrow(v))
+  tri <- read_vtk(f, item = "triangles")
   expect_equal(nrow(tri), nrow(faces))
 })
 

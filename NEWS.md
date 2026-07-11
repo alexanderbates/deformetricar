@@ -35,6 +35,10 @@ A major modernisation: `deformetricar` is now a focused client for Deformetrica
 
 ## Breaking changes
 
+* `read.vtk()` / `write.vtk()` renamed to `read_vtk()` / `write_vtk()` so they no
+  longer shadow `nat::write.vtk()` (an S3 generic). `nat`'s neuron VTK writes
+  multi-point polylines, whereas Deformetrica 4 needs 2-point line segments, so the
+  two cannot share a method — hence the distinct names.
 * Removed the defunct Deformetrica 2.1 `shootflow()` / `ShootAndFlow3` path — use
   `deformetrica_shoot()`.
 * Removed the L1 larval mirroring / cognate helpers (`symmetrisel1()`,

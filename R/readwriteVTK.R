@@ -5,7 +5,7 @@
 #'
 #' @return A matrix of points, indices (polygons) or normals
 #' @export
-read.vtk<-function(filename, item = c("points","triangles", "normals")){
+read_vtk<-function(filename, item = c("points","triangles", "normals")){
   item=match.arg(item)
 
   if(!file.exists(filename)) stop("Cannot read: ",filename)
@@ -118,7 +118,7 @@ read.vtk<-function(filename, item = c("points","triangles", "normals")){
 #'
 #' @export
 #'
-write.vtk <-function(points, filename, polygons = NULL, normals = NULL,
+write_vtk <-function(points, filename, polygons = NULL, normals = NULL,
                      datatype=c("float","double"), title = filename){
   file.create(filename)
   if(ncol(points)!=3) stop("Expect N rows x 3 cols of 3d points")
@@ -175,7 +175,7 @@ read.points<-function(filename){
 #' @param transformations transformation(s)
 #' @export
 transform_vtk = function (vtk, transformations){
-  positions = xyzmatrix(read.vtk(vtk, item = "points"))
+  positions = xyzmatrix(read_vtk(vtk, item = "points"))
   if (is.list(transformations) == F){
     cat("Single transformation")
     positions <- xform(positions, transformations)
