@@ -1,8 +1,8 @@
 ---
-title: "Warping a mosquito brain onto the fly (JRC2018U) with Deformetrica"
+title: "Warping a mosquito brain onto the fly (JRC2018F) with Deformetrica"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Warping a mosquito brain onto the fly (JRC2018U) with Deformetrica}
+  %\VignetteIndexEntry{Warping a mosquito brain onto the fly (JRC2018F) with Deformetrica}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -17,7 +17,7 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>", eval = FALSE)
 ## Goal
 
 Register the whole-brain surface of the **mosquito _Aedes aegypti_** onto the
-**_Drosophila_ JRC2018U** unisex template brain, as accurately as possible, and
+**_Drosophila_ JRC2018F** unisex template brain, as accurately as possible, and
 render the geodesic flow of the transform as a GIF. Cross-species brain shapes
 differ enormously, so we do this in two stages — an **affine initialisation**
 (Morpho) to remove gross pose/scale differences, then a **non-rigid Deformetrica
@@ -29,7 +29,7 @@ first, deformable second. The result — the mosquito brain surface (red) warpin
 onto the fly brain (grey) under the fitted diffeomorphism (surface distance
 roughly halved, ~9 → ~4 µm):
 
-![Aedes aegypti brain surface warping onto the Drosophila JRC2018U brain.](../man/figures/mosquito_to_fly.gif)
+![Aedes aegypti brain surface warping onto the Drosophila JRC2018F brain.](../man/figures/mosquito_to_fly.gif)
 
 > **insectbrainr note.** The Insect Brain Database moved its file store to a private
 > bucket, so the released `insectbraindb_read_brain()` fails (dead S3 path →
@@ -41,7 +41,7 @@ roughly halved, ~9 → ~4 µm):
 ```{r setup}
 library(deformetricar)
 library(nat)
-library(nat.flybrains)   # JRC2018U template
+library(nat.flybrains)   # JRC2018F template
 library(Morpho)          # affine initialisation + ICP
 library(Rvcg)            # mesh decimation / surface metrics
 # install.packages("remotes"); remotes::install_github("natverse/insectbrainr")
@@ -51,9 +51,9 @@ library(insectbrainr)    # Aedes brain from the Insect Brain Database
 ## 1. The two brain surfaces
 
 ```{r meshes}
-## Target: Drosophila JRC2018U whole-brain surface, as a mesh3d (in microns). Use
-## the .surf hxsurf — as.mesh3d() on the JRC2018U *templatebrain* object fails.
-fly <- as.mesh3d(nat.flybrains::JRC2018U.surf)
+## Target: Drosophila JRC2018F whole-brain surface, as a mesh3d (in microns). Use
+## the .surf hxsurf — as.mesh3d() on the JRC2018F *templatebrain* object fails.
+fly <- as.mesh3d(nat.flybrains::JRC2018F.surf)
 
 ## Source: Aedes aegypti standard brain from the Insect Brain Database.
 ## insectbrainr exports (verified): insectbraindb_species_info() (no args),
@@ -139,7 +139,7 @@ dice <- function(a, b) {                                              # volumetr
 score_neuropil <- function(region) {
   moz_w <- deformetrica_shoot(as.mesh3d(subset(aedes_brain, region)),
                               fit$control_points, fit$momenta, kernel_width = fit$kernel_width)
-  fly_n <- as.mesh3d(subset(nat.flybrains::JRC2018U, region))
+  fly_n <- as.mesh3d(subset(nat.flybrains::JRC2018F, region))
   data.frame(region, affine_dist = surface_dist(Morpho::applyTransform(as.mesh3d(subset(aedes_brain, region)), aff), fly_n),
              warp_dist = surface_dist(moz_w, fly_n), dice = dice(moz_w, fly_n))
 }
@@ -167,6 +167,6 @@ local homology.
 ```{r fallback}
 fit_al <- deformetrica_register(
   source = as.mesh3d(subset(aedes_brain, "antennal_lobe")),
-  target = as.mesh3d(subset(nat.flybrains::JRC2018U, "antennal_lobe")),
+  target = as.mesh3d(subset(nat.flybrains::JRC2018F, "antennal_lobe")),
   kernel_width = 15, device = "cuda")
 ```
