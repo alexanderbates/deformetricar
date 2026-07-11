@@ -3,6 +3,15 @@ skip_if_no_deformetrica <- function() {
   testthat::skip_if_not(ok, "deformetrica (>= 4.3) executable not found")
 }
 
+# Running deformetrica needs its (conda) environment activated for the torch/CUDA
+# backend, which a bare `R CMD check` process does not provide — so live-compute
+# tests are opt-in via DEFORMETRICAR_TEST_LIVE=1.
+skip_if_no_live_deformetrica <- function() {
+  skip_if_no_deformetrica()
+  testthat::skip_if_not(nzchar(Sys.getenv("DEFORMETRICAR_TEST_LIVE")),
+                        "set DEFORMETRICAR_TEST_LIVE=1 to run live Deformetrica compute tests")
+}
+
 test_that("write.vtk / read.vtk round-trips a point cloud (nat neuron data)", {
   skip_if_not_installed("nat")
   pts <- nat::xyzmatrix(nat::Cell07PNs[[1]])
@@ -10,7 +19,7 @@ test_that("write.vtk / read.vtk round-trips a point cloud (nat neuron data)", {
   expect_equal(write.vtk(pts, f), "complete")
   back <- read.vtk(f, item = "points")
   expect_equal(nrow(back), nrow(pts))
-  expect_equal(unname(back), unname(pts), tolerance = 1e-4)
+  expect_equal(back, pts, tolerance = 1e-4, ignore_attr = TRUE)
 })
 
 test_that("write.vtk / read.vtk round-trips a triangular surface mesh", {
@@ -35,7 +44,7 @@ test_that("find_deformetrica errors informatively when nothing is available", {
 })
 
 test_that("deformetrica_register + deformetrica_shoot recover a known translation", {
-  skip_if_no_deformetrica()
+  skip_if_no_live_deformetrica()
   skip_if_not_installed("nat")
   set.seed(1)
   src <- nat::xyzmatrix(nat::kcs20[[1]])

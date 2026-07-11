@@ -31,7 +31,6 @@ library(deformetricar)
 library(nat)
 library(elmr)     # elmr::FAFB.surf, the FAFB brain surface
 library(Rvcg)     # mesh decimation
-library(Morpho)
 ```
 
 ## 1. The FAFB brain and its mirror
@@ -65,17 +64,16 @@ fit <- deformetrica_register(src, tgt, kernel_width = kw, timepoints = 15,
 ## 3. Apply + GIF of the L-R flow
 
 `deformetrica_shoot()` flows any object through the fitted diffeomorphism (returning
-the same class you give it), and the Deformetrica shooting output writes one VTK per
-geodesic timepoint under `fit$output_dir` — those are the GIF frames.
+the same class you give it). With `flow = TRUE` it returns *every* geodesic
+timepoint, which `ggplot_flow_gif()` animates with `nat.ggplot`: the flipped brain
+(red) flowing onto the translucent original.
 
 ```{r apply-gif}
-brain_LR <- deformetrica_shoot(mir, fit$control_points, fit$momenta,
-                               kernel_width = fit$kernel_width)   # a warped mesh3d
+flow <- deformetrica_shoot(mir, fit$control_points, fit$momenta,
+                           kernel_width = fit$kernel_width, flow = TRUE)  # list of meshes
 
-frames <- sort(Sys.glob(file.path(fit$output_dir, "*flow*.vtk")))
-# render each frame's mesh points (grey original + red flowing mirror) and assemble
-# a GIF with gifski::gifski() or magick::image_animate() — see the package's
-# jobs/lr_run_score.R for a headless (base-graphics) renderer.
+ggplot_flow_gif(list(mirror = flow), cols = c(mirror = "#C1121F"),
+                volume = brain, file = "fafb_left_right.gif")   # needs the gifski package
 ```
 
 ## 4. Validation — does the warp tighten the L-R match?

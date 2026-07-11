@@ -4,8 +4,14 @@
 \alias{write.vtk}
 \title{Write VTK file}
 \usage{
-write.vtk(points, filename, polygons = NULL, normals = NULL,
-  datatype = c("float", "double"), title = filename)
+write.vtk(
+  points,
+  filename,
+  polygons = NULL,
+  normals = NULL,
+  datatype = c("float", "double"),
+  title = filename
+)
 }
 \arguments{
 \item{points}{3D coordinates (Nx3 matrix)}
@@ -23,4 +29,3 @@ write.vtk(points, filename, polygons = NULL, normals = NULL,
 \description{
 Write VTK file
 }
-

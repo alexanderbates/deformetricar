@@ -12,4 +12,3 @@ read.points(filename)
 \description{
 Read txt files
 }
-

@@ -18,24 +18,35 @@ URL: https://github.com/alexanderbates/deformetricar,
     https://alexanderbates.github.io/deformetricar/
 BugReports: https://github.com/alexanderbates/deformetricar/issues
 Depends: R (>= 4.1)
-Imports: nat, Morpho, Rvcg, xml2, catmaid, rgl, nat.nblast
+Imports: nat, Morpho
 Suggests:
+    Rvcg,
+    ggplot2,
+    nat.ggplot,
+    gifski,
+    nat.templatebrains,
+    nat.flybrains,
+    nat.jrcbrains,
+    insectbrainr,
+    elmr,
+    catmaid,
+    nat.nblast,
     testthat (>= 3.0.0),
     withr,
     knitr,
-    rmarkdown,
-    nat.flybrains,
-    insectbrainr,
-    gifski
+    rmarkdown
 Remotes:
     natverse/nat,
+    natverse/nat.ggplot,
     natverse/nat.nblast,
+    natverse/nat.templatebrains,
     natverse/nat.flybrains,
+    natverse/nat.jrcbrains,
     natverse/insectbrainr,
+    natverse/elmr,
     catmaid=natverse/rcatmaid
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
 Config/testthat/edition: 3
 Config/Needs/website: pkgdown
 VignetteBuilder: knitr
-LazyData: true
+Config/roxygen2/version: 8.0.0

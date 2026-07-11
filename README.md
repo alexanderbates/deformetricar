@@ -58,9 +58,12 @@ fit <- deformetrica_register_multi(sources, targets, kernel_width = 20,
 ## Articles
 
 - **[Warping a mosquito brain onto the fly](https://alexanderbates.github.io/deformetricar/articles/mosquito-to-fly.html)** —
-  register the *Aedes aegypti* brain onto *Drosophila* JRC2018U (affine init + surface warp), with a GIF.
-- **[A FAFB left-right bridging registration](https://alexanderbates.github.io/deformetricar/articles/fafb-left-right.html)** —
-  one diffeomorphism from matched cognate neuron tracts + neuropil landmarks.
+  register the *Aedes aegypti* brain onto *Drosophila* JRC2018F, driven by cross-identified
+  neuropils matched left-to-left and right-to-right, with a nat.ggplot GIF.
+- **[A FAFB left-right brain registration](https://alexanderbates.github.io/deformetricar/articles/fafb-left-right.html)** —
+  register the FAFB brain surface to its mirror image.
+- **[Symmetrising the L1 larval CNS + finding cognates](https://alexanderbates.github.io/deformetricar/articles/l1-symmetrise-cognates.html)** —
+  build a left-right symmetrising warp from L1 larval VFB CATMAID neurons and find cognate pairs.
 
 ## Citation
 

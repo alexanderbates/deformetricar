@@ -1,0 +1,116 @@
+---
+title: "Symmetrising the L1 larval CNS and finding left-right cognates"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Symmetrising the L1 larval CNS and finding left-right cognates}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", eval = FALSE)
+# Needs a live CATMAID/VFB connection and a Deformetrica (>= 4.3) install, so the
+# chunks are eval=FALSE. Run them locally.
+```
+
+## Goal
+
+The **L1 larval connectome** — the first-instar *Drosophila* larval CNS, manually
+reconstructed and hosted openly by [Virtual Fly Brain](https://www.virtualflybrain.org/)
+— is very nearly bilaterally symmetric. This vignette builds a **left-right
+symmetrising diffeomorphism** for the L1 CNS from matched cognate neuron tracts,
+uses it to bring the two hemispheres into register, and then **finds cognate pairs**
+by morphological similarity (NBLAST) after symmetrisation.
+
+This is the modern, Deformetrica-4 realisation of the old `symmetrisel1()` /
+mirror-affine helpers that used to live in this package — the code now lives in the
+vignette, driven by the live VFB dataset rather than a bundled transform.
+
+![Right L1 neurons (red) flowing onto their left cognates (grey) under the symmetrising diffeomorphism.](../man/figures/l1_symmetrise.gif)
+
+## 1. Fetch L1 neurons from Virtual Fly Brain (CATMAID)
+
+The L1 larval CATMAID is public and read-only (project id 1, no token needed).
+
+```{r fetch}
+library(deformetricar)
+library(nat)
+library(catmaid)          # aka rcatmaid
+library(nat.nblast)
+library(Morpho)
+
+l1 <- catmaid_connection(server = "https://l1em.catmaid.virtualflybrain.org/")
+
+## Pull a bilateral, well-annotated set — e.g. the mushroom-body Kenyon cells.
+skids <- catmaid_skids("annotation:^Kenyon cell$", conn = l1)
+nrns  <- read.neurons.catmaid(skids, conn = l1)          # a nat neuronlist
+
+## L1 neuron names carry a side tag; split into left / right.
+side  <- ifelse(grepl("right|_r$| r$", names(nrns), ignore.case = TRUE), "R",
+         ifelse(grepl("left|_l$| l$",  names(nrns), ignore.case = TRUE), "L", NA))
+right <- nrns[which(side == "R")]
+left  <- nrns[which(side == "L")]
+```
+
+## 2. Mirror + affine, then a Deformetrica symmetrising warp
+
+Reflect the right neurons across the CNS midline, affine-align to the left set,
+then fit ONE diffeomorphism over the matched cognate tracts (the `deformetricaLR`
+recipe) with [`deformetrica_register_multi()`].
+
+```{r warp}
+## reflect right across the midline (x) and similarity-align to the left set
+allm  <- nat::xyzmatrix(c(right, left)); midX <- mean(range(allm[, 1]))
+reflectX <- function(n) { m <- nat::xyzmatrix(n); m[, 1] <- 2 * midX - m[, 1]; nat::xyzmatrix(n) <- m; n }
+right_ref <- nat::nlapply(right, reflectX)
+aff <- Morpho::computeTransform(
+  t(sapply(left,      \(n) colMeans(nat::xyzmatrix(n)))),
+  t(sapply(right_ref, \(n) colMeans(nat::xyzmatrix(n)))), type = "similarity")
+right_aff <- nat::nlapply(right_ref, \(n) { nat::xyzmatrix(n) <- Morpho::applyTransform(nat::xyzmatrix(n), aff); n })
+
+## one diffeomorphism from the matched cognate tracts (resample first)
+ids <- intersect(names(right_aff), names(left))        # or match by a shared type annotation
+src <- setNames(nat::nlapply(right_aff[ids], nat::resample, stepsize = 1000), ids)
+tgt <- setNames(nat::nlapply(left[ids],      nat::resample, stepsize = 1000), ids)
+fit <- deformetrica_register_multi(src, tgt, kernel_width = 15, device = "cuda", verbose = TRUE)
+```
+
+## 3. Animate the symmetrising flow
+
+`deformetrica_shoot(..., flow = TRUE)` returns every geodesic timepoint; because a
+`neuronlist` is warped as one object, this animates the whole right hemisphere
+sweeping onto the left with `ggplot_flow_gif()`.
+
+```{r animate}
+flow <- deformetrica_shoot(right_aff, fit$control_points, fit$momenta,
+                           kernel_width = fit$kernel_width, flow = TRUE)  # list of neuronlists
+ggplot_flow_gif(list(right = flow), cols = c(right = "#C1121F"),
+                volume = left, file = "l1_symmetrise.gif")   # grey left cognates for reference
+```
+
+## 4. Symmetrise, then find cognates by NBLAST
+
+Warp every right neuron into left space and score it against the left neurons; the
+top NBLAST hit is its putative left cognate. Symmetrisation should make the correct
+cognate the clear winner.
+
+```{r cognates}
+right_sym <- nat::nlapply(right_aff, deformetrica_shoot,
+                          control_points = fit$control_points, momenta = fit$momenta,
+                          kernel_width = fit$kernel_width)
+
+dp <- function(nl) nat::dotprops(nl / 1e3, resample = 1, k = 5)
+scores <- nat.nblast::nblast(dp(right_sym), dp(left), normalised = TRUE)
+cognate <- apply(scores, 2, \(s) names(which.max(s)))   # best right match per left neuron
+head(data.frame(left = colnames(scores), cognate))
+```
+
+Compare `nblast(dp(right_aff), dp(left))` (affine only) with the symmetrised scores:
+the diffeomorphism should raise the correct-cognate NBLAST and sharpen the top-1
+margin, making hemilineage- and cell-type-level left-right mapping clearer.
+
+## See also
+
+The whole-brain and neuropil surface analogues of this workflow are in the
+[mosquito-to-fly](mosquito-to-fly.html) and [FAFB left-right](fafb-left-right.html)
+vignettes.

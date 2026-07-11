@@ -1,4 +1,4 @@
-# Deformetrica >= 4 client. The historical shootflow() drives the Deformetrica 2.1
+# Deformetrica >= 4 client (estimate + compute). Deformetrica 4 replaced the 2.1
 # `ShootAndFlow3` C++ binary (paramDiffeos.xml / CP_final.txt / Mom_final.txt),
 # which no longer exists in Deformetrica 4.x. Deformetrica 4 instead exposes a
 # single `deformetrica` CLI whose `compute` subcommand runs a <model-type>Shooting
@@ -30,9 +30,8 @@ find_deformetrica <- function(deformetrica = getOption("deformetricar.exe")) {
 
 #' Apply a fitted Deformetrica diffeomorphism to 3D points (geodesic shooting)
 #'
-#' The Deformetrica 4 replacement for the 2.1 `ShootAndFlow3` path in
-#' [shootflow()]. Flows arbitrary points through the diffeomorphism defined by a
-#' fitted registration's control points and initial momenta, by writing a
+#' Flows arbitrary points through the diffeomorphism defined by a fitted
+#' registration's control points and initial momenta, by writing a
 #' `<model-type>Shooting` model and calling `deformetrica compute`.
 #'
 #' @param x An N x 3 matrix of coordinates, or anything [nat::xyzmatrix()] accepts.
@@ -48,15 +47,20 @@ find_deformetrica <- function(deformetrica = getOption("deformetricar.exe")) {
 #' @param device `kernel-device`: "auto", "cpu" or "cuda".
 #' @param deformetrica Optional path to the executable (auto-detected otherwise).
 #' @param workdir Working directory for the run (a fresh tempdir by default).
+#' @param flow If `TRUE`, return the *whole* geodesic flow (every timepoint) as a
+#'   list of deformed objects (one per timepoint, named `tp_00`..`tp_NN`) rather
+#'   than just the final shape. Useful for animating a warp.
 #' @param verbose Show `deformetrica` output.
-#' @return An N x 3 matrix of deformed coordinates, in the input units and row order.
-#' @seealso [shootflow()] for the legacy Deformetrica 2.1 path.
+#' @return By default an N x 3 matrix of deformed coordinates (or a warped object
+#'   of the input class), in the input units and row order. With `flow = TRUE`, a
+#'   list of such objects, one per geodesic timepoint.
 #' @export
 deformetrica_shoot <- function(x, control_points, momenta, kernel_width,
                                timepoints = 10L, object_type = "Landmark",
                                device = c("auto", "cpu", "cuda"),
                                deformetrica = NULL,
                                workdir = tempfile("dfca_shoot_"),
+                               flow = FALSE,
                                verbose = FALSE) {
   device <- match.arg(device)
   pts <- nat::xyzmatrix(x)
@@ -82,14 +86,21 @@ deformetrica_shoot <- function(x, control_points, momenta, kernel_width,
     stop("`deformetrica compute` failed (exit ", status, "). Re-run with verbose=TRUE.",
          call. = FALSE)
 
-  out <- .dfca_read_final_flow(file.path(workdir, "output"))
-  if (nrow(out) != nrow(pts))
-    stop("Deformed point count (", nrow(out), ") != input (", nrow(pts), ").", call. = FALSE)
-  # Return the same class as the input: a warped mesh3d (faces preserved), a
-  # neuron/dotprops with coordinates replaced, or a bare matrix.
-  if (inherits(x, "mesh3d")) { x$vb <- rbind(t(out), 1); x$normals <- NULL; return(x) }
-  if (inherits(x, c("neuron", "neuronlist", "dotprops"))) { nat::xyzmatrix(x) <- out; return(x) }
-  unname(out)
+  # Re-cast a deformed coordinate matrix back to the input's class.
+  as_input <- function(out) {
+    if (nrow(out) != nrow(pts))
+      stop("Deformed point count (", nrow(out), ") != input (", nrow(pts), ").", call. = FALSE)
+    if (inherits(x, "mesh3d")) { y <- x; y$vb <- rbind(t(out), 1); y$normals <- NULL; return(y) }
+    if (inherits(x, c("neuron", "neuronlist", "dotprops"))) { y <- x; nat::xyzmatrix(y) <- out; return(y) }
+    unname(out)
+  }
+  if (flow) {
+    outs <- .dfca_read_all_flow(file.path(workdir, "output"))
+    res <- lapply(outs, as_input)
+    names(res) <- sprintf("tp_%02d", seq_along(res) - 1L)
+    return(res)
+  }
+  as_input(.dfca_read_final_flow(file.path(workdir, "output")))
 }
 
 # ---- internal helpers -------------------------------------------------------
@@ -137,13 +148,21 @@ deformetrica_shoot <- function(x, control_points, momenta, kernel_width,
 </optimization-parameters>', file)
 }
 
-.dfca_read_final_flow <- function(outdir) {
+.dfca_flow_files <- function(outdir) {
   fs <- list.files(outdir, pattern = "GeodesicFlow.*\\.vtk$", full.names = TRUE)
   if (!length(fs)) fs <- list.files(outdir, pattern = "\\.vtk$", full.names = TRUE)
   if (!length(fs)) stop("No flow VTK produced in ", outdir, call. = FALSE)
   tp <- suppressWarnings(as.integer(sub(".*tp_([0-9]+).*", "\\1", basename(fs))))
-  final <- fs[which.max(ifelse(is.na(tp), -1L, tp))]
-  read.vtk(final, item = "points")
+  fs[order(ifelse(is.na(tp), 0L, tp))]
+}
+
+.dfca_read_final_flow <- function(outdir) {
+  fs <- .dfca_flow_files(outdir)
+  read.vtk(fs[[length(fs)]], item = "points")
+}
+
+.dfca_read_all_flow <- function(outdir) {
+  lapply(.dfca_flow_files(outdir), read.vtk, item = "points")
 }
 
 #' Fit a Deformetrica diffeomorphism between two point sets (registration)
@@ -309,7 +328,13 @@ write_neuron_vtk <- function(x, file) {
 #' @param object_kernel_width Per-object data kernel width (defaults to `kernel_width`).
 #' @param landmarks Optional `list(source=, target=)` of anchoring point matrices,
 #'   added as a shared Landmark object (the `inc_tracts_lmarks` regulariser).
-#' @param data_sigma Per-object data-attachment sigma.
+#' @param data_sigma Data-attachment noise sigma. A single value applied to every
+#'   object, or a per-object vector (recycled if length 1; matched by name to
+#'   `sources` if named, else taken in order). *Smaller sigma weights that object
+#'   more strongly* in the fit — e.g. give homologous neuropils a small sigma and
+#'   the outer hull a larger one so the neuropils drive the internal alignment.
+#' @param landmark_sigma Data-attachment sigma for the optional shared `landmarks`
+#'   object (defaults to the mean of `data_sigma`).
 #' @param timepoints,max_iterations,device,deformetrica,workdir,verbose As
 #'   [deformetrica_register()].
 #' @return A list with `control_points`, `momenta`, `kernel_width`, `output_dir`.
@@ -318,6 +343,7 @@ write_neuron_vtk <- function(x, file) {
 deformetrica_register_multi <- function(sources, targets, kernel_width,
                                         object_kernel_width = kernel_width,
                                         landmarks = NULL, data_sigma = 0.5,
+                                        landmark_sigma = mean(data_sigma),
                                         timepoints = 10L, max_iterations = 150L,
                                         device = c("auto", "cpu", "cuda"),
                                         deformetrica = NULL,
@@ -326,6 +352,12 @@ deformetrica_register_multi <- function(sources, targets, kernel_width,
   if (is.null(names(sources)) || length(sources) != length(targets))
     stop("sources and targets must be equal-length, named lists of matched objects.", call. = FALSE)
   ids <- make.names(names(sources), unique = TRUE)
+  # Resolve data_sigma to one value per object (recycle scalar, match names, or in order).
+  sigma <- if (length(data_sigma) == 1L) rep(data_sigma, length(sources))
+    else if (!is.null(names(data_sigma))) unname(data_sigma[names(sources)])
+    else if (length(data_sigma) == length(sources)) data_sigma
+    else stop("data_sigma must be length 1, length(sources), or named by sources.", call. = FALSE)
+  if (anyNA(sigma)) stop("named data_sigma is missing an entry for some source object.", call. = FALSE)
   exe <- find_deformetrica(deformetrica)
   dir.create(file.path(workdir, "data"), recursive = TRUE, showWarnings = FALSE)
 
@@ -339,12 +371,12 @@ deformetrica_register_multi <- function(sources, targets, kernel_width,
 '    <object id="%s">
       <deformable-object-type>%s</deformable-object-type>
       <attachment-type>%s</attachment-type>
-      <data-sigma>%g</data-sigma>
+      <noise-std>%g</noise-std>
       <kernel-width>%g</kernel-width>
       <kernel-type>torch</kernel-type>
       <kernel-device>%s</kernel-device>
       <filename>%s</filename>
-    </object>', ids[i], spec$dtype, spec$attach, data_sigma, object_kernel_width, device, sf))
+    </object>', ids[i], spec$dtype, spec$attach, sigma[i], object_kernel_width, device, sf))
     subj_xml <- c(subj_xml, sprintf('      <filename object_id="%s">%s</filename>', ids[i], tf))
   }
   if (!is.null(landmarks)) {
@@ -354,12 +386,12 @@ deformetrica_register_multi <- function(sources, targets, kernel_width,
 '    <object id="landmarks">
       <deformable-object-type>Landmark</deformable-object-type>
       <attachment-type>Landmark</attachment-type>
-      <data-sigma>%g</data-sigma>
+      <noise-std>%g</noise-std>
       <kernel-width>%g</kernel-width>
       <kernel-type>torch</kernel-type>
       <kernel-device>%s</kernel-device>
       <filename>data/landmarks_src.vtk</filename>
-    </object>', data_sigma, object_kernel_width, device))
+    </object>', landmark_sigma, object_kernel_width, device))
     subj_xml <- c(subj_xml, '      <filename object_id="landmarks">data/landmarks_tgt.vtk</filename>')
   }
   writeLines(c('<?xml version="1.0" encoding="UTF-8"?>', '<model>',

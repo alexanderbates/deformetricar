@@ -17,4 +17,3 @@ A matrix of points, indices (polygons) or normals
 \description{
 Read a VTK format file
 }
-

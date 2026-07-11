@@ -173,8 +173,8 @@ read.points<-function(filename){
 #'
 #' @param vtk path to vtk object
 #' @param transformations transformation(s)
-#'
-transform.vtk = function (vtk, transformations){
+#' @export
+transform_vtk = function (vtk, transformations){
   positions = xyzmatrix(read.vtk(vtk, item = "points"))
   if (is.list(transformations) == F){
     cat("Single transformation")

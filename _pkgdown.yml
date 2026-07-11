@@ -14,6 +14,7 @@ articles:
   contents:
   - mosquito-to-fly
   - fafb-left-right
+  - l1-symmetrise-cognates
 
 reference:
 - title: Deformetrica 4 client
@@ -23,25 +24,20 @@ reference:
   - deformetrica_register
   - deformetrica_register_multi
   - deformetrica_shoot
-  - write_neuron_vtk
-- title: VTK I/O
+- title: Alignment helpers
+  desc: Prepare and post-process objects for a cross-brain registration.
   contents:
+  - affine_prealign
+  - split_mesh_lr
+  - mirror_lr_split
+- title: Visualisation
+  desc: Animate a geodesic flow with nat.ggplot.
+  contents:
+  - ggplot_flow_gif
+- title: Object I/O
+  desc: Read and write neurons, meshes and point sets as VTK.
+  contents:
+  - write_neuron_vtk
   - read.vtk
   - write.vtk
-- title: Mirror-symmetry helpers
-  contents:
-  - apply.mirror.affine
-  - mirrormat
-  - otherside
-  - symmetrisel1
-  - transform3dpoints
-  - trafoicpmat
-  - calculate.full.transformation
-- title: Cognate matching
-  contents:
-  - findcognate
-  - checkL1cognates
-- title: Legacy (Deformetrica 2.1)
-  desc: The historical ShootAndFlow3 path; superseded by deformetrica_shoot().
-  contents:
-  - shootflow
+  - transform_vtk
