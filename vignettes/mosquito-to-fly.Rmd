@@ -25,15 +25,18 @@ diffeomorphism** (surface registration). We validate on **homologous neuropils**
 (antennal lobe, mushroom body, central complex) that both brains share.
 
 This mirrors the two-stage recipe in the package's `deform/` scripts: affine
-first, deformable second.
+first, deformable second. The result — the mosquito brain surface (red) warping
+onto the fly brain (grey) under the fitted diffeomorphism (surface distance
+roughly halved, ~9 → ~4 µm):
 
-> **Data availability note (2026-07-10).** The Insect Brain Database currently
-> returns `AllAccessDisabled` for the Aedes reconstruction's mesh objects on its S3
-> store, so `insectbraindb_read_brain()` cannot download them at the moment (this is
-> an IBdb hosting issue, not a package one; the sex-matching bug that returned NULL
-> is fixed on the `insectbrainr` `dev` branch). Until IBdb re-enables access, run the
-> package's **[FAFB left-right](fafb-left-right.html)** vignette for a fully
-> reproducible end-to-end registration + GIF (it uses only `nat`-packaged data).
+![Aedes aegypti brain surface warping onto the Drosophila JRC2018U brain.](../man/figures/mosquito_to_fly.gif)
+
+> **insectbrainr note.** The Insect Brain Database moved its file store to a private
+> bucket, so the released `insectbraindb_read_brain()` fails (dead S3 path →
+> `AllAccessDisabled`). The fix — resolving signed download URLs, plus a
+> single-sex-reconstruction fix — is on the `insectbrainr` **`dev`** branch
+> (`remotes::install_github("natverse/insectbrainr@dev")`); with it the Aedes fetch
+> below works.
 
 ```{r setup}
 library(deformetricar)
@@ -48,8 +51,9 @@ library(insectbrainr)    # Aedes brain from the Insect Brain Database
 ## 1. The two brain surfaces
 
 ```{r meshes}
-## Target: Drosophila JRC2018U whole-brain surface, as a mesh3d (in microns).
-fly <- as.mesh3d(nat.flybrains::JRC2018U)
+## Target: Drosophila JRC2018U whole-brain surface, as a mesh3d (in microns). Use
+## the .surf hxsurf — as.mesh3d() on the JRC2018U *templatebrain* object fails.
+fly <- as.mesh3d(nat.flybrains::JRC2018U.surf)
 
 ## Source: Aedes aegypti standard brain from the Insect Brain Database.
 ## insectbrainr exports (verified): insectbraindb_species_info() (no args),
@@ -64,20 +68,18 @@ aedes <- as.mesh3d(aedes_brain)                                      # whole-bra
 
 ## 2. Affine initialisation (Morpho)
 
-A diffeomorphism cannot (and should not) absorb a cross-species change of pose
-and scale — that is the affine step's job. We drive it from **homologous neuropil
-centroids** (robust landmarks present in both brains), then refine with a
-surface ICP.
+A diffeomorphism cannot (and should not) absorb a cross-species change of pose and
+scale — that is the affine step's job. Homologous neuropil *names* differ across
+species, so a whole-surface alignment is more robust than a landmark one: centre
+both brains, isotropically scale the mosquito to the fly's size, then a rigid ICP
+refines the orientation.
 
 ```{r affine}
-homologous <- c("antennal_lobe", "mushroom_body", "central_body", "optic_lobe")
-centroid <- function(brain, region) colMeans(nat::xyzmatrix(subset(brain, region)))
-lm_moz <- t(sapply(homologous, centroid, brain = aedes_brain))
-lm_fly <- t(sapply(homologous, centroid, brain = nat.flybrains::JRC2018U))
-
-aff      <- Morpho::computeTransform(lm_fly, lm_moz, type = "affine")   # moz -> fly
-aedes_aff <- Morpho::applyTransform(aedes, aff)
-aedes_aff <- Morpho::icp(aedes_aff, fly, iterations = 30, type = "affine")  # surface refine
+Va <- nat::xyzmatrix(aedes); Vf <- nat::xyzmatrix(fly)
+diag <- function(V) sqrt(sum((apply(V, 2, max) - apply(V, 2, min))^2))
+aedes_s <- aedes
+nat::xyzmatrix(aedes_s) <- sweep(sweep(Va, 2, colMeans(Va)) * (diag(Vf) / diag(Va)), 2, -colMeans(Vf))
+aedes_aff <- Morpho::icp(aedes_s, fly, iterations = 30, type = "rigid")   # moz -> fly
 ```
 
 ## 3. Non-rigid Deformetrica warp (surface registration)

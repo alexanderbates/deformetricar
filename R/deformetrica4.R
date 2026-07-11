@@ -190,8 +190,8 @@ deformetrica_register <- function(source, target, kernel_width,
          "for unlabelled surfaces pass mesh3d objects (attachment_type='Current').", call. = FALSE)
   exe <- find_deformetrica(deformetrica)
   dir.create(workdir, recursive = TRUE, showWarnings = FALSE)
-  write.vtk(src, file.path(workdir, "source.vtk"), polygons = if (src_is_mesh) t(source$it) else NULL)
-  write.vtk(tgt, file.path(workdir, "target.vtk"), polygons = if (tgt_is_mesh) t(target$it) else NULL)
+  write.vtk(src, file.path(workdir, "source.vtk"), polygons = if (src_is_mesh) t(source$it) - 1L else NULL)
+  write.vtk(tgt, file.path(workdir, "target.vtk"), polygons = if (tgt_is_mesh) t(target$it) - 1L else NULL)
   # Explicit MATCHING object id in both XMLs ("shape") — never derive it by
   # stripping a filename suffix (that silently desyncs when the suffix recurs).
   writeLines(sprintf(
@@ -284,7 +284,7 @@ write_neuron_vtk <- function(x, file) {
 # Classify an object and write it to VTK; returns its Deformetrica type + attachment.
 .dfca_write_object <- function(x, file) {
   if (inherits(x, "mesh3d")) {
-    write.vtk(nat::xyzmatrix(x), file, polygons = t(x$it))
+    write.vtk(nat::xyzmatrix(x), file, polygons = t(x$it) - 1L)   # 0-indexed faces for Deformetrica
     list(dtype = "SurfaceMesh", attach = "Current")
   } else if (inherits(x, c("neuron", "neuronlist"))) {
     write_neuron_vtk(x, file)
