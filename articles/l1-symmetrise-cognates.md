@@ -1,0 +1,127 @@
+# Symmetrising the L1 larval CNS and finding left-right cognates
+
+## Goal
+
+The **L1 larval connectome** — the first-instar *Drosophila* larval CNS,
+manually reconstructed and hosted openly by [Virtual Fly
+Brain](https://www.virtualflybrain.org/) — is very nearly bilaterally
+symmetric. This vignette builds a **left-right symmetrising
+diffeomorphism** for the L1 CNS from matched cognate neuron tracts, uses
+it to bring the two hemispheres into register, and then **finds cognate
+pairs** by morphological similarity (NBLAST) after symmetrisation.
+
+This is the modern, Deformetrica-4 realisation of the old
+`symmetrisel1()` / mirror-affine helpers that used to live in this
+package — the code now lives in the vignette, driven by the live VFB
+dataset rather than a bundled transform.
+
+![Right L1 neurons (red) flowing onto their left cognates (grey) under
+the symmetrising
+diffeomorphism.](../reference/figures/l1_symmetrise.gif)
+
+Right L1 neurons (red) flowing onto their left cognates (grey) under the
+symmetrising diffeomorphism.
+
+## 1. Fetch the L1 brain-hemisphere volumes (CATMAID)
+
+The L1 larval CATMAID is public and read-only. It ships bilateral
+neuropil **volumes** — including the two brain hemispheres — which are
+the natural anchors for a symmetrising registration (the modern stand-in
+for the old bundled `symmetry_transform`).
+
+``` r
+
+library(deformetricar)
+library(nat)
+library(catmaid)          # aka rcatmaid
+library(Rvcg)             # mesh clean / decimate
+
+l1 <- catmaid_connection(server = "https://l1em.catmaid.virtualflybrain.org/")
+vl <- catmaid_get_volumelist(conn = l1)
+hemi <- function(name) Rvcg::vcgClean(
+  as.mesh3d(catmaid_get_volume(vl$id[vl$name == name], conn = l1, rval = "mesh3d")),
+  sel = 0:6, silent = TRUE)
+left  <- hemi("Brain Hemisphere left")
+right <- hemi("Brain Hemisphere right")
+```
+
+## 2. Build the symmetrising diffeomorphism from the hemispheres
+
+Reflect the right hemisphere across the CNS midline, affine-align it
+onto the left with
+[`affine_prealign()`](https://alexanderbates.github.io/deformetricar/reference/affine_prealign.md),
+then fit ONE surface diffeomorphism (`mesh3d` in → SurfaceMesh +
+Current). Registering the *hemisphere surfaces* is robust and cheap; the
+fitted transform is what symmetrises everything else.
+
+``` r
+
+V <- t(left$vb[1:3, ]); midX <- mean(range(cbind(left$vb[1, ], right$vb[1, ])))
+mir <- right; mir$vb[1, ] <- 2 * midX - right$vb[1, ]; mir$it <- mir$it[c(2, 1, 3), ]  # reflect + fix winding
+pre <- affine_prealign(mir, left, type = "rigid")
+
+kw  <- sqrt(sum((apply(V, 2, max) - apply(V, 2, min))^2)) / 11
+fit <- deformetrica_register(pre$aligned, left, kernel_width = kw,
+                             timepoints = 15, max_iterations = 60, device = "cuda")
+```
+
+## 3. Symmetrise neurons and animate the flow
+
+The hemisphere fit gives the transform; the *neurons* are what we
+actually want to compare left-to-right. Fetch a bilateral set (here the
+mushroom-body Kenyon cells), mirror and affine-align the right ones
+exactly as the hemisphere, then
+[`deformetrica_shoot()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_shoot.md)
+them through the transform — cheap, so we take every timepoint
+(`flow = TRUE`) and animate it with
+[`ggplot_flow_gif()`](https://alexanderbates.github.io/deformetricar/reference/ggplot_flow_gif.md).
+
+``` r
+
+right_kc <- read.neurons.catmaid(catmaid_skids("annotation:Kenyon Cell right", conn = l1), conn = l1)
+right_kc <- nat::nlapply(right_kc, nat::resample, stepsize = 1000)
+reflectX <- function(n) { m <- nat::xyzmatrix(n); m[, 1] <- 2 * midX - m[, 1]; nat::xyzmatrix(n) <- m; n }
+right_aff <- nat::nlapply(nat::nlapply(right_kc, reflectX), pre$apply)  # mirror + same affine
+
+flow <- deformetrica_shoot(right_aff, fit$control_points, fit$momenta,
+                           kernel_width = fit$kernel_width, flow = TRUE)  # list of neuronlists
+ggplot_flow_gif(list(neurons = flow), cols = c(neurons = "#C1121F"),
+                volume = left, file = "l1_symmetrise.gif")   # translucent left hemisphere
+```
+
+## 4. Symmetrise, then find cognates by NBLAST
+
+Warp every right neuron into left space and score it against the left
+neurons; the top NBLAST hit is its putative left cognate. Symmetrisation
+should make the correct cognate the clear winner.
+
+``` r
+
+library(nat.nblast)
+left_kc <- read.neurons.catmaid(catmaid_skids("annotation:Kenyon Cell left", conn = l1), conn = l1)
+left_kc <- nat::nlapply(left_kc, nat::resample, stepsize = 1000)
+
+# symmetrise every right Kenyon cell (final warped position) and NBLAST vs the left set
+right_sym <- nat::nlapply(right_aff, deformetrica_shoot,
+                          control_points = fit$control_points, momenta = fit$momenta,
+                          kernel_width = fit$kernel_width)
+
+dp <- function(nl) nat::dotprops(nl / 1e3, resample = 1, k = 5)   # nm -> microns
+scores <- nat.nblast::nblast(dp(right_sym), dp(left_kc), normalised = TRUE)
+cognate <- apply(scores, 2, \(s) names(which.max(s)))   # best right match per left neuron
+head(data.frame(left = colnames(scores), cognate))
+```
+
+Compare `nblast(dp(right_aff), dp(left))` (affine only) with the
+symmetrised scores: the diffeomorphism should raise the correct-cognate
+NBLAST and sharpen the top-1 margin, making hemilineage- and
+cell-type-level left-right mapping clearer.
+
+## See also
+
+The whole-brain and neuropil surface analogues of this workflow are in
+the
+[mosquito-to-fly](https://alexanderbates.github.io/deformetricar/articles/mosquito-to-fly.md)
+and [FAFB
+left-right](https://alexanderbates.github.io/deformetricar/articles/fafb-left-right.md)
+vignettes.
