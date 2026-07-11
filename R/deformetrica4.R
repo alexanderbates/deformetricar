@@ -266,13 +266,18 @@ write_neuron_vtk <- function(x, file) {
   pts <- nat::xyzmatrix(x)
   sl <- x$SegList
   if (is.null(sl)) sl <- nat::as.seglist(x)
-  nlines <- length(sl); total <- sum(vapply(sl, length, integer(1))) + nlines
+  # Deformetrica 4 reads VTK LINES as 2-point segments ([2 i j], reshaped to (-1,3)),
+  # so split each backbone path into consecutive edges rather than one long polyline.
+  edges <- do.call(rbind, lapply(sl, function(s)
+    if (length(s) >= 2L) cbind(s[-length(s)], s[-1L]) else NULL))
+  ne <- nrow(edges)
   con <- file(file, "w"); on.exit(close(con))
   writeLines(c("# vtk DataFile Version 2.0", "deformetricar polyline", "ASCII",
                "DATASET POLYDATA", paste("POINTS", nrow(pts), "float")), con)
   utils::write.table(pts, con, row.names = FALSE, col.names = FALSE)
-  writeLines(paste("LINES", nlines, total), con)
-  for (s in sl) writeLines(paste(c(length(s), s - 1L), collapse = " "), con)
+  writeLines(paste("LINES", ne, ne * 3L), con)
+  utils::write.table(cbind(2L, edges[, 1] - 1L, edges[, 2] - 1L), con,
+                     row.names = FALSE, col.names = FALSE)
   "complete"
 }
 
@@ -283,7 +288,7 @@ write_neuron_vtk <- function(x, file) {
     list(dtype = "SurfaceMesh", attach = "Current")
   } else if (inherits(x, c("neuron", "neuronlist"))) {
     write_neuron_vtk(x, file)
-    list(dtype = "NonOrientedPolyLine", attach = "Varifold")
+    list(dtype = "PolyLine", attach = "Varifold")   # Deformetrica 4.x name (was NonOrientedPolyLine in 2.1)
   } else {
     write.vtk(nat::xyzmatrix(x), file)
     list(dtype = "Landmark", attach = "Landmark")

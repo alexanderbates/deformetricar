@@ -22,12 +22,18 @@ is the modern, package-native re-implementation of the recipe in
 which fit one diffeomorphism to a **set of matched cognate neuron tracts** (each a
 `NonOrientedPolyLine`), optionally anchored by neuropil **landmarks**.
 
+The result — the flipped right projection-neuron tracts flowing onto their left
+cognates under the fitted diffeomorphism:
+
+![FAFB left-right registration: flipped-right PN tracts (red) warping onto their left cognates (grey).](../man/figures/fafb_left_right.gif)
+
 The pipeline is three stages, following that repo and the package's `deform/`
 scripts:
 
-1. **Mirror** the right-side neurons to the left (a whole-brain flip).
+1. **Mirror** the right-side neurons to the left (reflect across the midline).
 2. **Affine** initialise (Morpho) so the flipped tracts roughly overlie their
-   left cognates.
+   left cognates (a *similarity* transform from cognate centroids — stable from few
+   correspondences, where a full 12-DOF affine would shear the tracts apart).
 3. **Deformable** multi-object Deformetrica fit over all matched pairs at once,
    with a neuropil landmark object as a global regulariser.
 
@@ -49,47 +55,52 @@ cells to the left hemisphere first.
 
 ```{r matched}
 pn <- Cell07PNs
-right <- subset(pn, Side == "R")
-left  <- subset(pn, Side == "L")
-gloms <- intersect(right[, "Glomerulus"], left[, "Glomerulus"])
-
-## flip the right neurons across the midline into left space (the L-R prior)
-right_flipped <- nat.templatebrains::mirror_brain(right, brain = nat.flybrains::FCWB)
-
-## match by glomerulus -> named lists of cognate pairs
-src <- setNames(lapply(gloms, function(g) right_flipped[[which(right[, "Glomerulus"] == g)[1]]]), gloms)
-tgt <- setNames(lapply(gloms, function(g) left[[which(left[, "Glomerulus"] == g)[1]]]), gloms)
+nm <- names(pn)
+side <- toupper(substr(nm, nchar(nm), nchar(nm)))   # side is the neuron name's last char (R/L)
+glom <- attr(pn, "df")$Glomerulus
+gloms <- intersect(unique(glom[side == "R"]), unique(glom[side == "L"]))  # DA1, DL3, DP1m, VA1d
+r_glom <- glom[side == "R"]; l_glom <- glom[side == "L"]
+right_nl <- pn[side == "R"]; left_nl <- pn[side == "L"]
+right <- setNames(lapply(gloms, function(g) right_nl[[which(r_glom == g)[1]]]), gloms)
+tgt   <- setNames(lapply(gloms, function(g) left_nl[[which(l_glom == g)[1]]]), gloms)
 ```
 
-## 2. Affine initialisation (Morpho)
+## 2. Reflection + affine initialisation (Morpho)
 
-Bring the flipped-right tracts onto the left cognates with a single affine before
-the diffeomorphism (the flip is only approximately symmetric).
+Reflect the right tracts across the template midline, then a *similarity* transform
+(rotation + uniform scale + translation, from the cognate centroids) refines the
+overlap. We reflect explicitly rather than fit a full affine: from only four
+centroid correspondences a 12-DOF affine is exactly determined and shears the
+tracts apart, whereas the 7-DOF similarity is stable.
 
 ```{r affine}
-P_src <- do.call(rbind, lapply(src, nat::xyzmatrix))
-P_tgt <- do.call(rbind, lapply(tgt, nat::xyzmatrix))
-# a coarse affine from matched glomerular centroids (robust to differing tract lengths)
-c_src <- t(sapply(src, function(n) colMeans(nat::xyzmatrix(n))))
+allm <- do.call(rbind, c(lapply(right, nat::xyzmatrix), lapply(tgt, nat::xyzmatrix)))
+midX <- mean(range(allm[, 1]))
+reflectX <- function(n) { m <- nat::xyzmatrix(n); m[, 1] <- 2 * midX - m[, 1]; nat::xyzmatrix(n) <- m; n }
+right_ref <- lapply(right, reflectX)
+c_src <- t(sapply(right_ref, function(n) colMeans(nat::xyzmatrix(n))))
 c_tgt <- t(sapply(tgt, function(n) colMeans(nat::xyzmatrix(n))))
-aff <- Morpho::computeTransform(c_tgt, c_src, type = "affine")
-src_aff <- lapply(src, function(n) { nat::xyzmatrix(n) <- Morpho::applyTransform(nat::xyzmatrix(n), aff); n })
+aff <- Morpho::computeTransform(c_tgt, c_src, type = "similarity")
+src_aff <- lapply(right_ref, function(n) { nat::xyzmatrix(n) <- Morpho::applyTransform(nat::xyzmatrix(n), aff); n })
+src_aff <- lapply(src_aff, nat::resample, stepsize = 4)   # thin the tracts for a tractable fit
+tgt_rs  <- lapply(tgt, nat::resample, stepsize = 4)
+c_src_aff <- Morpho::applyTransform(c_src, aff)
 ```
 
 ## 3. Multi-object Deformetrica L-R fit (tracts + landmark anchor)
 
-One diffeomorphism over ALL matched tracts at once (`NonOrientedPolyLine` +
-`Varifold`), regularised by a shared neuropil-centroid **landmark** object — the
-`inc_tracts_lmarks` variant from deformetricaLR. Contrast with a
-landmark-free fit (`inc_tracts_no_landmark`) by dropping the `landmarks` argument.
+One diffeomorphism over ALL matched tracts at once (`PolyLine` + `Varifold`),
+regularised by a shared neuropil-centroid **landmark** object — the
+`inc_tracts_lmarks` variant from deformetricaLR. Contrast with a landmark-free fit
+(`inc_tracts_no_landmark`) by dropping the `landmarks` argument. The kernel width is
+set from the combined bounding box so the control-point grid stays bounded.
 
 ```{r fit}
 fit <- deformetrica_register_multi(
-  sources = src_aff, targets = tgt,
-  kernel_width = 20,                       # microns; the deformation length-scale
-  landmarks = list(source = c_src %*% t(aff[1:3, 1:3]) + matrix(aff[1:3, 4], nrow(c_src), 3, byrow = TRUE),
-                   target = c_tgt),
-  data_sigma = 0.5, max_iterations = 200, device = "cuda", verbose = TRUE)
+  sources = src_aff, targets = tgt_rs,
+  kernel_width = 13,                       # ~1/12 of the tract bounding box (microns)
+  landmarks = list(source = c_src_aff, target = c_tgt),
+  data_sigma = 2.0, max_iterations = 100, device = "cuda", verbose = TRUE)
 ```
 
 ## 4. Apply + GIF of the L-R flow

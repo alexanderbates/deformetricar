@@ -27,6 +27,14 @@ diffeomorphism** (surface registration). We validate on **homologous neuropils**
 This mirrors the two-stage recipe in the package's `deform/` scripts: affine
 first, deformable second.
 
+> **Data availability note (2026-07-10).** The Insect Brain Database currently
+> returns `AllAccessDisabled` for the Aedes reconstruction's mesh objects on its S3
+> store, so `insectbraindb_read_brain()` cannot download them at the moment (this is
+> an IBdb hosting issue, not a package one; the sex-matching bug that returned NULL
+> is fixed on the `insectbrainr` `dev` branch). Until IBdb re-enables access, run the
+> package's **[FAFB left-right](fafb-left-right.html)** vignette for a fully
+> reproducible end-to-end registration + GIF (it uses only `nat`-packaged data).
+
 ```{r setup}
 library(deformetricar)
 library(nat)
@@ -46,8 +54,11 @@ fly <- as.mesh3d(nat.flybrains::JRC2018U)
 ## Source: Aedes aegypti standard brain from the Insect Brain Database.
 ## insectbrainr exports (verified): insectbraindb_species_info() (no args),
 ## insectbraindb_read_brain(species=, brain.sex=), insectbraindb_read_neurons().
-## The brain is a neuronlist of neuropil sub-surfaces; the union is the whole brain.
-aedes_brain <- insectbraindb_read_brain(species = "Aedes aegypti")   # neuropil sub-meshes
+## The brain is an hxsurf of neuropil sub-surfaces. Aedes has a FEMALE-only
+## reconstruction, so pass brain.sex="FEMALE" (the released package's default
+## "UNKNOWN" returns NULL for single-sex species — fixed on the insectbrainr dev
+## branch so a bare species= call works).
+aedes_brain <- insectbraindb_read_brain(species = "Aedes aegypti", brain.sex = "FEMALE")
 aedes <- as.mesh3d(aedes_brain)                                      # whole-brain union
 ```
 
