@@ -28,64 +28,63 @@ vignette, driven by the live VFB dataset rather than a bundled transform.
 
 ![Right L1 neurons (red) flowing onto their left cognates (grey) under the symmetrising diffeomorphism.](../man/figures/l1_symmetrise.gif)
 
-## 1. Fetch L1 neurons from Virtual Fly Brain (CATMAID)
+## 1. Fetch the L1 brain-hemisphere volumes (CATMAID)
 
-The L1 larval CATMAID is public and read-only (project id 1, no token needed).
+The L1 larval CATMAID is public and read-only. It ships bilateral neuropil
+**volumes** — including the two brain hemispheres — which are the natural anchors
+for a symmetrising registration (the modern stand-in for the old bundled
+`symmetry_transform`).
 
 ```{r fetch}
 library(deformetricar)
 library(nat)
 library(catmaid)          # aka rcatmaid
-library(nat.nblast)
-library(Morpho)
+library(Rvcg)             # mesh clean / decimate
 
 l1 <- catmaid_connection(server = "https://l1em.catmaid.virtualflybrain.org/")
-
-## Pull a bilateral, well-annotated set — e.g. the mushroom-body Kenyon cells.
-skids <- catmaid_skids("annotation:^Kenyon cell$", conn = l1)
-nrns  <- read.neurons.catmaid(skids, conn = l1)          # a nat neuronlist
-
-## L1 neuron names carry a side tag; split into left / right.
-side  <- ifelse(grepl("right|_r$| r$", names(nrns), ignore.case = TRUE), "R",
-         ifelse(grepl("left|_l$| l$",  names(nrns), ignore.case = TRUE), "L", NA))
-right <- nrns[which(side == "R")]
-left  <- nrns[which(side == "L")]
+vl <- catmaid_get_volumelist(conn = l1)
+hemi <- function(name) Rvcg::vcgClean(
+  as.mesh3d(catmaid_get_volume(vl$id[vl$name == name], conn = l1, rval = "mesh3d")),
+  sel = 0:6, silent = TRUE)
+left  <- hemi("Brain Hemisphere left")
+right <- hemi("Brain Hemisphere right")
 ```
 
-## 2. Mirror + affine, then a Deformetrica symmetrising warp
+## 2. Build the symmetrising diffeomorphism from the hemispheres
 
-Reflect the right neurons across the CNS midline, affine-align to the left set,
-then fit ONE diffeomorphism over the matched cognate tracts (the `deformetricaLR`
-recipe) with [`deformetrica_register_multi()`].
+Reflect the right hemisphere across the CNS midline, affine-align it onto the left
+with `affine_prealign()`, then fit ONE surface diffeomorphism (`mesh3d` in →
+SurfaceMesh + Current). Registering the *hemisphere surfaces* is robust and cheap;
+the fitted transform is what symmetrises everything else.
 
 ```{r warp}
-## reflect right across the midline (x) and similarity-align to the left set
-allm  <- nat::xyzmatrix(c(right, left)); midX <- mean(range(allm[, 1]))
-reflectX <- function(n) { m <- nat::xyzmatrix(n); m[, 1] <- 2 * midX - m[, 1]; nat::xyzmatrix(n) <- m; n }
-right_ref <- nat::nlapply(right, reflectX)
-aff <- Morpho::computeTransform(
-  t(sapply(left,      \(n) colMeans(nat::xyzmatrix(n)))),
-  t(sapply(right_ref, \(n) colMeans(nat::xyzmatrix(n)))), type = "similarity")
-right_aff <- nat::nlapply(right_ref, \(n) { nat::xyzmatrix(n) <- Morpho::applyTransform(nat::xyzmatrix(n), aff); n })
+V <- t(left$vb[1:3, ]); midX <- mean(range(cbind(left$vb[1, ], right$vb[1, ])))
+mir <- right; mir$vb[1, ] <- 2 * midX - right$vb[1, ]; mir$it <- mir$it[c(2, 1, 3), ]  # reflect + fix winding
+pre <- affine_prealign(mir, left, type = "rigid")
 
-## one diffeomorphism from the matched cognate tracts (resample first)
-ids <- intersect(names(right_aff), names(left))        # or match by a shared type annotation
-src <- setNames(nat::nlapply(right_aff[ids], nat::resample, stepsize = 1000), ids)
-tgt <- setNames(nat::nlapply(left[ids],      nat::resample, stepsize = 1000), ids)
-fit <- deformetrica_register_multi(src, tgt, kernel_width = 15, device = "cuda", verbose = TRUE)
+kw  <- sqrt(sum((apply(V, 2, max) - apply(V, 2, min))^2)) / 11
+fit <- deformetrica_register(pre$aligned, left, kernel_width = kw,
+                             timepoints = 15, max_iterations = 60, device = "cuda")
 ```
 
-## 3. Animate the symmetrising flow
+## 3. Symmetrise neurons and animate the flow
 
-`deformetrica_shoot(..., flow = TRUE)` returns every geodesic timepoint; because a
-`neuronlist` is warped as one object, this animates the whole right hemisphere
-sweeping onto the left with `ggplot_flow_gif()`.
+The hemisphere fit gives the transform; the *neurons* are what we actually want to
+compare left-to-right. Fetch a bilateral set (here the mushroom-body Kenyon cells),
+mirror and affine-align the right ones exactly as the hemisphere, then
+`deformetrica_shoot()` them through the transform — cheap, so we take every
+timepoint (`flow = TRUE`) and animate it with `ggplot_flow_gif()`.
 
 ```{r animate}
+right_kc <- read.neurons.catmaid(catmaid_skids("annotation:Kenyon Cell right", conn = l1), conn = l1)
+right_kc <- nat::nlapply(right_kc, nat::resample, stepsize = 1000)
+reflectX <- function(n) { m <- nat::xyzmatrix(n); m[, 1] <- 2 * midX - m[, 1]; nat::xyzmatrix(n) <- m; n }
+right_aff <- nat::nlapply(nat::nlapply(right_kc, reflectX), pre$apply)  # mirror + same affine
+
 flow <- deformetrica_shoot(right_aff, fit$control_points, fit$momenta,
                            kernel_width = fit$kernel_width, flow = TRUE)  # list of neuronlists
-ggplot_flow_gif(list(right = flow), cols = c(right = "#C1121F"),
-                volume = left, file = "l1_symmetrise.gif")   # grey left cognates for reference
+ggplot_flow_gif(list(neurons = flow), cols = c(neurons = "#C1121F"),
+                volume = left, file = "l1_symmetrise.gif")   # translucent left hemisphere
 ```
 
 ## 4. Symmetrise, then find cognates by NBLAST
@@ -95,12 +94,17 @@ top NBLAST hit is its putative left cognate. Symmetrisation should make the corr
 cognate the clear winner.
 
 ```{r cognates}
+library(nat.nblast)
+left_kc <- read.neurons.catmaid(catmaid_skids("annotation:Kenyon Cell left", conn = l1), conn = l1)
+left_kc <- nat::nlapply(left_kc, nat::resample, stepsize = 1000)
+
+# symmetrise every right Kenyon cell (final warped position) and NBLAST vs the left set
 right_sym <- nat::nlapply(right_aff, deformetrica_shoot,
                           control_points = fit$control_points, momenta = fit$momenta,
                           kernel_width = fit$kernel_width)
 
-dp <- function(nl) nat::dotprops(nl / 1e3, resample = 1, k = 5)
-scores <- nat.nblast::nblast(dp(right_sym), dp(left), normalised = TRUE)
+dp <- function(nl) nat::dotprops(nl / 1e3, resample = 1, k = 5)   # nm -> microns
+scores <- nat.nblast::nblast(dp(right_sym), dp(left_kc), normalised = TRUE)
 cognate <- apply(scores, 2, \(s) names(which.max(s)))   # best right match per left neuron
 head(data.frame(left = colnames(scores), cognate))
 ```
