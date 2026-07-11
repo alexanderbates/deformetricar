@@ -2,13 +2,17 @@
 % Please edit documentation in R/readwriteVTK.R
 \name{read.points}
 \alias{read.points}
-\title{Read txt files}
+\title{Read a Deformetrica control-points / momenta txt file}
 \usage{
 read.points(filename)
 }
 \arguments{
 \item{filename}{read CPS or MOM .txt file}
 }
-\description{
-Read txt files
+\value{
+An N x 3 matrix.
 }
+\description{
+Read a Deformetrica control-points / momenta txt file
+}
+\keyword{internal}

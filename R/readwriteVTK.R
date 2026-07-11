@@ -151,11 +151,11 @@ write.vtk <-function(points, filename, polygons = NULL, normals = NULL,
 }
 
 
-#' Read txt files
+#' Read a Deformetrica control-points / momenta txt file
 #'
 #' @param filename read CPS or MOM .txt file
-#'
-#'
+#' @return An N x 3 matrix.
+#' @keywords internal
 read.points<-function(filename){
   if(!file.exists(filename)) stop("Cannot read: ",filename)
   con=file(filename,open='rb',encoding='txt')
