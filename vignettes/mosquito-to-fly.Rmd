@@ -66,7 +66,10 @@ carried into the aligned frame consistently.
 
 ```{r affine}
 pre <- affine_prealign(as.mesh3d(aedes_brain), fly, type = "rigid")
-amesh <- function(region) pre$apply(as.mesh3d(subset(aedes_brain, region)))
+# Keep only each neuropil's largest connected component: some Insect Brain Database
+# surfaces carry a stray detached fragment that cannot warp onto the compact fly
+# target and would poke out of the brain.
+amesh <- function(region) pre$apply(Rvcg::vcgIsolated(as.mesh3d(subset(aedes_brain, region))))
 fmesh <- function(region) as.mesh3d(subset(fly_np, region))
 ```
 
@@ -87,7 +90,11 @@ paired <- list(
   PED_L= c("^PED_LEFT","MB_PED_L"),PED_R=c("^PED_RIGHT","MB_PED_R"),
   ML_L = c("^ML_LEFT","MB_ML_L"),ML_R = c("^ML_RIGHT","MB_ML_R"),
   VL_L = c("^VL_LEFT","MB_VL_L"),VL_R = c("^VL_RIGHT","MB_VL_R"),
-  AL_L = c("^AL_LEFT","AL_L"),   AL_R = c("^AL_RIGHT","AL_R"))
+  AL_L = c("^AL_LEFT","AL_L"),   AL_R = c("^AL_RIGHT","AL_R"),
+  AMMC_L=c("^AMMC_LEFT","AMMC_L"),AMMC_R=c("^AMMC_RIGHT","AMMC_R"),
+  LAL_L= c("^LAL_LEFT","LAL_L"), LAL_R= c("^LAL_RIGHT","LAL_R"),
+  GA_L = c("^GA_LEFT","GA_L"),   GA_R = c("^GA_RIGHT","GA_R"),
+  AOTU_L=c("^AOTU-UU_LEFT","AOTU_L"),AOTU_R=c("^AOTU-UU_RIGHT","AOTU_R"))
 first <- function(hx, pat) grep(pat, hx$RegionList, value = TRUE)[1]
 srcs <- tgts <- list()
 for (nm in names(paired)) {
@@ -149,11 +156,16 @@ tgts$outer <- Rvcg::vcgQEdecim(fly,         tarface = 12000L)
 # ellipsoid body is not forced into the fly's ring and over-distorted. (These
 # values were tuned by iterating on the result — see the article notes.)
 sigma <- setNames(rep(3.0, length(srcs)), names(srcs))  # neuropils: strong
-sigma["outer"] <- 12.0                                  # hull: weak
-sigma[grep("^(FB|EB|PB|NO)_", names(sigma))] <- 6.0     # central complex: moderate
+sigma["outer"] <- 5.0                                   # hull: weaker but consequential
+sigma[grep("^(VL|ML|PED)_", names(sigma))] <- 1.5       # MB lobes: strongest (contain the vertical lobe)
+sigma[grep("^(FB|EB|PB|NO)_", names(sigma))] <- 7.0     # central complex: gentle (ring vs arch)
 
+# A larger kernel width gives a stiffer, more GLOBAL warp, so elongated structures
+# (peduncle, vertical lobe) move coherently onto their target instead of leaving a
+# distal part behind. Set it from the target bounding box (~diagonal / 11).
+kw <- sqrt(sum((apply(xyzmatrix(fly), 2, max) - apply(xyzmatrix(fly), 2, min))^2)) / 11
 fit <- deformetrica_register_multi(
-  srcs, tgts, kernel_width = 43, data_sigma = sigma,
+  srcs, tgts, kernel_width = kw, data_sigma = sigma,
   timepoints = 15L, max_iterations = 60L, device = "cuda")
 ```
 
@@ -164,19 +176,25 @@ fit <- deformetrica_register_multi(
 over a translucent fly brain, and assembles a GIF.
 
 ```{r animate}
-show <- c("ME_L","ME_R","LO_L","LO_R","AL_L","AL_R","CA_L","CA_R",
-          "FB_L","FB_R","EB_L","EB_R","PB_L","PB_R","NO_L","NO_R")
+show  <- setdiff(names(srcs), "outer")            # every cross-identified neuropil
 flows <- lapply(srcs[show], deformetrica_shoot,
                 control_points = fit$control_points, momenta = fit$momenta,
                 kernel_width = fit$kernel_width, timepoints = 15L,
                 device = "cuda", flow = TRUE)
-cols <- c(ME="#2E86AB", LO="#2E86AB", AL="#F3A712", CA="#3B7A57",
-          FB="#E4572E", EB="#C1121F", PB="#8E44AD", NO="#17A398")
-cols <- setNames(cols[sub("_[LR]$","", show)], show)
+# Family hues (optic = blue, MB = green, AL = gold, CX = warm/purple), separated
+# within a family by lightness so ME/LO/LOP and CA/PED/VL/ML each read distinctly.
+pal <- c(ME="#1B4F72", LO="#2E86AB", LOP="#7FB3D5",
+         CA="#196F3D", PED="#28B463", VL="#7DCEA0", ML="#A9DFBF", AL="#F39C12",
+         AMMC="#CA6F1E", LAL="#566573", GA="#C39BD3", AOTU="#45B39D",
+         FB="#E74C3C", EB="#E27396", PB="#8E44AD", NO="#16A085")
+cols <- setNames(pal[sub("_[LR]$", "", show)], show)
 
 ggplot_flow_gif(flows, cols = cols, volume = fly,
                 file = "mosquito_to_fly.gif")   # needs the gifski package
 ```
+
+For a central-complex close-up (`mosquito_cx_to_fly.gif`), animate just the
+`FB`/`EB`/`PB`/`NO` (and the gall `GA`) objects over the merged fly CX as the volume.
 
 ## 6. Validation — do the neuropils land on their counterparts?
 
