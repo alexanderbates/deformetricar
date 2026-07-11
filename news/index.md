@@ -51,6 +51,16 @@ Deformetrica (\>= 4.3), meeting current R package standards.
 
 ### Breaking changes
 
+- `read.vtk()` /
+  [`write.vtk()`](https://rdrr.io/pkg/nat/man/write.vtk.html) renamed to
+  [`read_vtk()`](https://alexanderbates.github.io/deformetricar/reference/read_vtk.md)
+  /
+  [`write_vtk()`](https://alexanderbates.github.io/deformetricar/reference/write_vtk.md)
+  so they no longer shadow
+  [`nat::write.vtk()`](https://rdrr.io/pkg/nat/man/write.vtk.html) (an
+  S3 generic). `nat`’s neuron VTK writes multi-point polylines, whereas
+  Deformetrica 4 needs 2-point line segments, so the two cannot share a
+  method — hence the distinct names.
 - Removed the defunct Deformetrica 2.1 `shootflow()` / `ShootAndFlow3`
   path — use
   [`deformetrica_shoot()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_shoot.md).

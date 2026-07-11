@@ -129,9 +129,9 @@ Read and write neurons, meshes and point sets as VTK.
 
 - [`write_neuron_vtk()`](https://alexanderbates.github.io/deformetricar/reference/write_neuron_vtk.md)
   : Write a neuron as a VTK NonOrientedPolyLine
-- [`read.vtk()`](https://alexanderbates.github.io/deformetricar/reference/read.vtk.md)
+- [`read_vtk()`](https://alexanderbates.github.io/deformetricar/reference/read_vtk.md)
   : Read a VTK format file
-- [`write.vtk()`](https://alexanderbates.github.io/deformetricar/reference/write.vtk.md)
+- [`write_vtk()`](https://alexanderbates.github.io/deformetricar/reference/write_vtk.md)
   : Write VTK file
 - [`transform_vtk()`](https://alexanderbates.github.io/deformetricar/reference/transform_vtk.md)
   : Transform a .vtk object

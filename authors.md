@@ -10,7 +10,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/alexanderbates/deformetricar/blob/master/inst/CITATION)
+[`inst/CITATION`](https://github.com/alexanderbates/deformetricar/blob/dev/inst/CITATION)
 
 Bates AS, Jefferis GSXE (2026). deformetricar: R Client for the
 Deformetrica Shape Registration Toolkit. R package version 0.2.0.9000.

@@ -32,7 +32,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/alexanderbates/deformetricar/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/alexanderbates/deformetricar/blob/dev/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
@@ -61,7 +61,9 @@
 </ul></div>
 <div class="section level3">
 <h3 id="breaking-changes-0-2-0-9000">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-0-2-0-9000"></a></h3>
-<ul><li>Removed the defunct Deformetrica 2.1 <code>shootflow()</code> / <code>ShootAndFlow3</code> path — use <code><a href="../reference/deformetrica_shoot.html">deformetrica_shoot()</a></code>.</li>
+<ul><li>
+<code>read.vtk()</code> / <code><a href="https://rdrr.io/pkg/nat/man/write.vtk.html" class="external-link">write.vtk()</a></code> renamed to <code><a href="../reference/read_vtk.html">read_vtk()</a></code> / <code><a href="../reference/write_vtk.html">write_vtk()</a></code> so they no longer shadow <code><a href="https://rdrr.io/pkg/nat/man/write.vtk.html" class="external-link">nat::write.vtk()</a></code> (an S3 generic). <code>nat</code>’s neuron VTK writes multi-point polylines, whereas Deformetrica 4 needs 2-point line segments, so the two cannot share a method — hence the distinct names.</li>
+<li>Removed the defunct Deformetrica 2.1 <code>shootflow()</code> / <code>ShootAndFlow3</code> path — use <code><a href="../reference/deformetrica_shoot.html">deformetrica_shoot()</a></code>.</li>
 <li>Removed the L1 larval mirroring / cognate helpers (<code>symmetrisel1()</code>, <code>apply.mirror.affine()</code>, <code>otherside()</code>, <code>findcognate()</code> and friends) and their bundled transforms. That scientific workflow now lives in the <em>l1-symmetrise-cognates</em> vignette, driven by the live VFB dataset.</li>
 </ul></div>
 <div class="section level3">
