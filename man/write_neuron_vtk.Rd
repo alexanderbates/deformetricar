@@ -7,7 +7,8 @@
 write_neuron_vtk(x, file)
 }
 \arguments{
-\item{x}{A \code{nat} neuron (or anything with \code{xyzmatrix} + a \code{SegList}).}
+\item{x}{A \code{nat} neuron, or a \code{neuronlist} (all backbones are written into one
+VTK, so a whole set of neurons can be registered as a single PolyLine object).}
 
 \item{file}{Output path.}
 }

@@ -8,7 +8,7 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", eval = FALSE)
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", eval = FALSE, purl = FALSE)
 # Needs a live CATMAID/VFB connection and a Deformetrica (>= 4.3) install, so the
 # chunks are eval=FALSE. Run them locally.
 ```

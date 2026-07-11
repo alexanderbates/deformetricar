@@ -277,18 +277,33 @@ deformetrica_register <- function(source, target, kernel_width,
 #' Neuron backbones are the natural registration object for connectome work
 #' (cf. the FAFB left-right bridging registration in flyconnectome/deformetricaLR).
 #'
-#' @param x A `nat` neuron (or anything with `xyzmatrix` + a `SegList`).
+#' @param x A `nat` neuron, or a `neuronlist` (all backbones are written into one
+#'   VTK, so a whole set of neurons can be registered as a single PolyLine object).
 #' @param file Output path.
 #' @return "complete" (invisibly via the file written).
 #' @export
 write_neuron_vtk <- function(x, file) {
-  pts <- nat::xyzmatrix(x)
-  sl <- x$SegList
-  if (is.null(sl)) sl <- nat::as.seglist(x)
+  # Points + consecutive-vertex edges for one neuron.
+  one <- function(n) {
+    sl <- n$SegList; if (is.null(sl)) sl <- nat::as.seglist(n)
+    list(pts = nat::xyzmatrix(n),
+         edges = do.call(rbind, lapply(sl, function(s)
+           if (length(s) >= 2L) cbind(s[-length(s)], s[-1L]) else NULL)))
+  }
+  if (inherits(x, "neuronlist")) {
+    # Concatenate every neuron, offsetting each one's vertex indices.
+    pts <- list(); edges <- list(); off <- 0L
+    for (n in x) {
+      p <- one(n); pts[[length(pts) + 1L]] <- p$pts
+      if (!is.null(p$edges)) edges[[length(edges) + 1L]] <- p$edges + off
+      off <- off + nrow(p$pts)
+    }
+    pts <- do.call(rbind, pts); edges <- do.call(rbind, edges)
+  } else {
+    p <- one(x); pts <- p$pts; edges <- p$edges
+  }
   # Deformetrica 4 reads VTK LINES as 2-point segments ([2 i j], reshaped to (-1,3)),
   # so split each backbone path into consecutive edges rather than one long polyline.
-  edges <- do.call(rbind, lapply(sl, function(s)
-    if (length(s) >= 2L) cbind(s[-length(s)], s[-1L]) else NULL))
   ne <- nrow(edges)
   con <- file(file, "w"); on.exit(close(con))
   writeLines(c("# vtk DataFile Version 2.0", "deformetricar polyline", "ASCII",
