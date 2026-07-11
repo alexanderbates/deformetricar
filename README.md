@@ -5,7 +5,7 @@
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
-# deformetricar <img src="man/figures/logo.png" align="right" height="139" alt="" />
+# deformetricar
 
 **deformetricar** is an R client for the [Deformetrica](https://www.deformetrica.org)
 shape-registration toolkit (`>= 4.3`). It lets you **fit** diffeomorphisms between
@@ -16,6 +16,16 @@ fly connectome neurons. It also reads and writes VTK object formats.
 Deformetrica 4 replaced the old `ShootAndFlow3` C++ binaries with a single
 `deformetrica` CLI (`estimate` / `compute`); `deformetricar` wraps that modern
 interface.
+
+<p align="center">
+<img src="man/figures/mosquito_to_fly.gif" width="49%" alt="Aedes mosquito brain warping onto the Drosophila brain"/>
+<img src="man/figures/mosquito_cx_to_fly.gif" width="49%" alt="Mosquito central complex warping onto the fly central complex"/>
+</p>
+
+*Left: the whole **Aedes aegypti** brain surface warped onto the **Drosophila**
+JRC2018F template. Right: just the central complex — the mosquito's CBU/CBL onto the
+fly's fan-shaped and ellipsoid bodies. Both are produced end-to-end by the
+[mosquito-to-fly vignette](https://alexanderbates.github.io/deformetricar/articles/mosquito-to-fly.html).*
 
 ## Installation
 

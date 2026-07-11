@@ -31,6 +31,16 @@ roughly halved, ~9 → ~4 µm):
 
 ![Aedes aegypti brain surface warping onto the Drosophila JRC2018F brain.](../man/figures/mosquito_to_fly.gif)
 
+The whole-brain warp is guided by a **multi-object** fit — the outer brain surface
+plus weighted homologous neuropil groups (optic lobe, mushroom body, antennal lobe,
+central complex) — so those regions steer the deformation. The mosquito optic lobes
+stay a little larger than the fly's: that is genuine biology (mosquito optic lobes
+are proportionally big), which a diffeomorphism guides but cannot fully equalise.
+Restricting the fit to a single homologous region — here the **central complex**,
+handling the CBU/CBL-vs-FB/EB naming difference across taxa — gives a tighter match:
+
+![Mosquito central complex (CBU/CBL/PB/NO) warping onto the fly central complex (FB/EB/PB/NO).](../man/figures/mosquito_cx_to_fly.gif)
+
 > **insectbrainr note.** The Insect Brain Database moved its file store to a private
 > bucket, so the released `insectbraindb_read_brain()` fails (dead S3 path →
 > `AllAccessDisabled`). The fix — resolving signed download URLs, plus a
