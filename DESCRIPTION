@@ -20,10 +20,12 @@ BugReports: https://github.com/alexanderbates/deformetricar/issues
 Depends: R (>= 4.1)
 Imports: nat, Morpho
 Suggests:
+    reticulate,
     Rvcg,
     ggplot2,
     nat.ggplot,
     gifski,
+    magick,
     nat.templatebrains,
     nat.flybrains,
     nat.jrcbrains,
@@ -50,3 +52,4 @@ Config/testthat/edition: 3
 Config/Needs/website: pkgdown
 VignetteBuilder: knitr
 Config/roxygen2/version: 8.0.0
+RoxygenNote: 7.3.3

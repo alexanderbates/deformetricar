@@ -20,6 +20,7 @@ reference:
 - title: Deformetrica 4 client
   desc: Fit and apply diffeomorphisms with a modern Deformetrica (>= 4.3) install.
   contents:
+  - install_deformetrica
   - find_deformetrica
   - deformetrica_register
   - deformetrica_register_multi

@@ -33,7 +33,6 @@ a conda environment.}
 
 Authors:
 \itemize{
-  \item Alexander Bates \email{alexander.shakeel.bates@gmail.com}
   \item Gregory Jefferis \email{jefferis@gmail.com} (\href{https://orcid.org/0000-0002-0587-9355}{ORCID})
 }
 

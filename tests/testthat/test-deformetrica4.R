@@ -35,11 +35,11 @@ test_that("write_vtk / read_vtk round-trips a triangular surface mesh", {
 
 test_that("find_deformetrica errors informatively when nothing is available", {
   withr::local_options(deformetricar.exe = "/no/such/deformetrica/binary")
-  # Only assert the error path when there is genuinely no deformetrica on this host.
-  if (nzchar(Sys.which("deformetrica")) ||
-      file.exists(path.expand("~/.conda/envs/deformetrica/bin/deformetrica"))) {
-    skip("a real deformetrica is installed on this host")
-  }
+  # Only assert the error path when there is genuinely no deformetrica resolvable on
+  # this host (PATH, a managed reticulate/conda env, ...) -- find_deformetrica() knows
+  # all its own search locations, so ask it rather than re-enumerate them here.
+  if (!is.null(tryCatch(find_deformetrica(), error = function(e) NULL)))
+    skip("a real deformetrica is resolvable on this host")
   expect_error(find_deformetrica(), "Cannot find")
 })
 
@@ -51,7 +51,10 @@ test_that("deformetrica_register + deformetrica_shoot recover a known translatio
   src <- src[seq_len(min(60L, nrow(src))), , drop = FALSE]
   shift <- matrix(rep(c(3, -2, 1), each = nrow(src)), ncol = 3)  # a small rigid-ish move
   tgt <- src + shift
-  fit <- deformetrica_register(src, tgt, kernel_width = 20, max_iterations = 40, device = "auto")
+  # kernel_width must be smaller than this 60-point subset's ~16um extent, or the fit
+  # lays down a single control point that Deformetrica cannot shoot (see the guard in
+  # deformetrica_shoot()).
+  fit <- deformetrica_register(src, tgt, kernel_width = 8, max_iterations = 40, device = "auto")
   expect_true(file.exists(fit$control_points) && file.exists(fit$momenta))
   warped <- deformetrica_shoot(src, fit$control_points, fit$momenta,
                                kernel_width = fit$kernel_width, device = "auto")

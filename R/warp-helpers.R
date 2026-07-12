@@ -155,16 +155,27 @@ mirror_lr_split <- function(x, axis = c("X", "Y", "Z"), mid = NULL, refine = FAL
 #' @param cols Named vector of colours (one per `flows` entry); recycled from a
 #'   default palette if `NULL`.
 #' @param volume Optional fixed reference object drawn translucent under every frame
-#'   (e.g. the target brain surface).
-#' @param volume_alpha,alpha Alphas for the reference volume and the flow objects.
+#'   (e.g. the target brain hull).
+#' @param volume_col Colour of the reference volume (default `"grey80"`; pass e.g. a
+#'   light pink to render the brain hull as a soft envelope).
+#' @param targets Optional named list of fixed reference objects drawn translucent
+#'   *above* the volume but *below* the flow (e.g. the matched target neuropils each
+#'   warping object should land on). Static across frames.
+#' @param target_cols Named vector of colours for `targets` (one per entry); defaults
+#'   to a transparent greyscale ramp so the coloured flow reads clearly on top.
+#' @param volume_alpha,target_alpha,alpha Alphas for the reference volume, the target
+#'   objects and the flow objects.
 #' @param rotation_matrix Optional 4x4 view matrix (as `nat.ggplot`/`rgl` use).
 #' @param file Output GIF path. Frames are written next to it.
 #' @param width,height,delay,dpi GIF frame size (px), per-frame delay (s) and dpi.
-#' @return The GIF path if written (needs `gifski`), else the vector of frame PNGs.
+#' @return The GIF path if written (needs `gifski`, or falls back to `magick`), else
+#'   the vector of frame PNGs.
 #' @export
 ggplot_flow_gif <- function(flows, cols = NULL, volume = NULL, volume_alpha = 0.12,
-                            alpha = 0.6, rotation_matrix = NULL, file = NULL,
-                            width = 900, height = 800, delay = 0.14, dpi = 96) {
+                            volume_col = "grey80", targets = NULL, target_cols = NULL,
+                            target_alpha = 0.18, alpha = 0.6, rotation_matrix = NULL,
+                            file = NULL, width = 900, height = 800, delay = 0.14,
+                            dpi = 96) {
   if (!requireNamespace("nat.ggplot", quietly = TRUE) ||
       !requireNamespace("ggplot2", quietly = TRUE))
     stop("ggplot_flow_gif() needs 'nat.ggplot' and 'ggplot2'.", call. = FALSE)
@@ -174,6 +185,12 @@ ggplot_flow_gif <- function(flows, cols = NULL, volume = NULL, volume_alpha = 0.
              "#17A398", "#C1121F", "#5B8C5A", "#E27396", "#7D4F50")
     cols <- stats::setNames(rep(pal, length.out = nstruct), names(flows))
   }
+  # Static target objects (e.g. the fly neuropils each flow lands on) default to a
+  # transparent greyscale ramp so the coloured, moving flow reads clearly on top.
+  if (!is.null(targets) && is.null(target_cols))
+    target_cols <- stats::setNames(
+      grDevices::grey.colors(length(targets), start = 0.4, end = 0.75),
+      names(targets))
   nt <- length(flows[[1]])
   frames <- character(nt)
   fdir <- if (is.null(file)) tempdir() else dirname(file)
@@ -183,7 +200,11 @@ ggplot_flow_gif <- function(flows, cols = NULL, volume = NULL, volume_alpha = 0.
     p <- ggplot2::ggplot()
     if (!is.null(volume))
       p <- p + nat.ggplot::geom_neuron(volume, rotation_matrix = rotation_matrix,
-                                       cols = c("grey80", "grey80"), alpha = volume_alpha)
+                                       cols = rep(volume_col, 2), alpha = volume_alpha)
+    if (!is.null(targets))
+      for (nm in names(targets))
+        p <- p + nat.ggplot::geom_neuron(targets[[nm]], rotation_matrix = rotation_matrix,
+                                         cols = rep(target_cols[[nm]], 2), alpha = target_alpha)
     for (nm in names(flows))
       p <- p + nat.ggplot::geom_neuron(flows[[nm]][[t]], rotation_matrix = rotation_matrix,
                                        cols = rep(cols[[nm]], 2), alpha = alpha)
@@ -193,10 +214,23 @@ ggplot_flow_gif <- function(flows, cols = NULL, volume = NULL, volume_alpha = 0.
     ggplot2::ggsave(frames[t], p, width = width / dpi, height = height / dpi,
                     dpi = dpi, bg = "white")
   }
-  if (!is.null(file) && requireNamespace("gifski", quietly = TRUE)) {
+  if (!is.null(file)) {
     seq <- c(frames, rev(frames)[-c(1, nt)])          # ping-pong
-    gifski::gifski(seq, file, width = width, height = height, delay = delay)
-    return(file)
+    if (requireNamespace("gifski", quietly = TRUE)) {
+      gifski::gifski(seq, file, width = width, height = height, delay = delay)
+      return(file)
+    }
+    # gifski needs Rust to build; fall back to the magick package if present so the
+    # GIF still assembles (e.g. on machines without a Rust toolchain).
+    if (requireNamespace("magick", quietly = TRUE)) {
+      valid <- c(1, 2, 4, 5, 10, 20, 25, 50, 100)     # magick fps must divide 100
+      fps <- valid[which.min(abs(valid - 1 / delay))]
+      anim <- magick::image_animate(magick::image_read(seq), fps = fps, optimize = TRUE)
+      magick::image_write(anim, file)
+      return(file)
+    }
+    message("ggplot_flow_gif(): install 'gifski' or 'magick' to assemble the GIF; ",
+            "returning frame paths instead.")
   }
   frames
 }

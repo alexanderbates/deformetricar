@@ -8,10 +8,13 @@
 #' Locate the Deformetrica (>= 4.3) command-line executable
 #'
 #' Searches, in order: `options(deformetricar.exe=)`, the `deformetrica` on the
-#' `PATH`, then the common conda location `~/.conda/envs/deformetrica/bin/deformetrica`.
+#' `PATH`, the reticulate-managed environments [install_deformetrica()] creates
+#' (`"deformetrica"` then `"r-reticulate"`), then the common conda location
+#' `~/.conda/envs/deformetrica/bin/deformetrica`.
 #'
 #' @param deformetrica Optional explicit path to (or name of) the executable.
 #' @return The resolved executable path.
+#' @seealso [install_deformetrica()] to set one up from R.
 #' @export
 find_deformetrica <- function(deformetrica = getOption("deformetricar.exe")) {
   if (!is.null(deformetrica)) {
@@ -21,11 +24,17 @@ find_deformetrica <- function(deformetrica = getOption("deformetricar.exe")) {
   }
   w <- Sys.which("deformetrica")
   if (nzchar(w)) return(unname(w))
+  # Environments created by install_deformetrica() (reticulate optional -> NULL).
+  for (env in c("deformetrica", "r-reticulate")) {
+    exe <- .deformetrica_env_exe(env)
+    if (!is.null(exe)) return(exe)
+  }
   cand <- path.expand("~/.conda/envs/deformetrica/bin/deformetrica")
   if (file.exists(cand)) return(cand)
-  stop("Cannot find the 'deformetrica' (>= 4.3) executable. Install Deformetrica, ",
-       "set options(deformetricar.exe = '/path/to/deformetrica'), or activate its ",
-       "conda environment before starting R.", call. = FALSE)
+  stop("Cannot find the 'deformetrica' (>= 4.3) executable. Run install_deformetrica() ",
+       "to set it up in a managed Python environment, set ",
+       "options(deformetricar.exe = '/path/to/deformetrica'), or add it to your PATH.",
+       call. = FALSE)
 }
 
 #' Apply a fitted Deformetrica diffeomorphism to 3D points (geodesic shooting)
@@ -69,6 +78,15 @@ deformetrica_shoot <- function(x, control_points, momenta, kernel_width,
 
   cp  <- .dfca_as_txt(control_points, file.path(workdir, "control_points.txt"))
   mom <- .dfca_as_txt(momenta,        file.path(workdir, "momenta.txt"))
+  # A single control point makes Deformetrica's torch kernel convolve a 1-D array and
+  # die with a cryptic "Dimension out of range" IndexError. Catch it here with an
+  # actionable message: it means the fit's kernel_width exceeded the object's extent
+  # (control points sit on a grid spaced by kernel_width), so too few were laid down.
+  if (nrow(utils::read.table(cp)) < 2L)
+    stop("The fitted diffeomorphism has fewer than 2 control points, which ",
+         "Deformetrica cannot shoot. Refit with a smaller `kernel_width` (it must be ",
+         "smaller than the object's spatial extent so more than one control point is ",
+         "placed).", call. = FALSE)
   write_vtk(pts, file.path(workdir, "points.vtk"))
   .dfca_write_shooting_model(file.path(workdir, "model.xml"),
     points_file = "points.vtk",

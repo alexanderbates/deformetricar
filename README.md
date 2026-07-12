@@ -5,7 +5,7 @@
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
-# deformetricar
+# deformetricar <img src="man/figures/logo.png" align="right" height="139" alt="" />
 
 **deformetricar** is an R client for the [Deformetrica](https://www.deformetrica.org)
 shape-registration toolkit (`>= 4.3`). It lets you **fit** diffeomorphisms between
@@ -34,9 +34,29 @@ fly's fan-shaped and ellipsoid bodies. Both are produced end-to-end by the
 remotes::install_github("alexanderbates/deformetricar")
 ```
 
-You also need a working [Deformetrica (>= 4.3)](https://gitlab.com/icm-institute/aramislab/deformetrica)
-install (e.g. in a conda environment). `find_deformetrica()` locates it on the
-`PATH`, at `options(deformetricar.exe=)`, or in `~/.conda/envs/deformetrica/`.
+### Installing Deformetrica
+
+`deformetricar` shells out to the [Deformetrica (>= 4.3)](https://gitlab.com/icm-institute/aramislab/deformetrica)
+command-line tool, so you need that available once. The smooth path is to let the
+package set it up in a managed Python environment (uses
+[reticulate](https://rstudio.github.io/reticulate/) + conda):
+
+```r
+# one-time; pulls torch/vtk into a dedicated "deformetrica" conda env
+deformetricar::install_deformetrica()
+```
+
+After that `find_deformetrica()` resolves the executable automatically. It searches,
+in order: `options(deformetricar.exe=)`, the `PATH`, the managed environment above,
+then `~/.conda/envs/deformetrica/`. If you already have Deformetrica elsewhere, just
+point at it with `options(deformetricar.exe = "/path/to/deformetrica")`.
+
+> **Apple Silicon (arm64 macOS):** Deformetrica 4.3 pins `torch==1.6`, which has no
+> native arm64 wheels. `install_deformetrica()` handles this automatically — on an
+> M-series Mac it builds an `osx-64` conda env (Python 3.8) that runs under Rosetta
+> and pulls the x86-64 wheels (verified end-to-end here). You just need Rosetta
+> (`softwareupdate --install-rosetta`) and a conda binary. Linux and Intel macOS
+> install natively. See `?install_deformetrica`.
 
 ## Quick start
 

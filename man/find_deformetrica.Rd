@@ -14,5 +14,10 @@ The resolved executable path.
 }
 \description{
 Searches, in order: \code{options(deformetricar.exe=)}, the \code{deformetrica} on the
-\code{PATH}, then the common conda location \verb{~/.conda/envs/deformetrica/bin/deformetrica}.
+\code{PATH}, the reticulate-managed environments \code{\link[=install_deformetrica]{install_deformetrica()}} creates
+(\code{"deformetrica"} then \code{"r-reticulate"}), then the common conda location
+\verb{~/.conda/envs/deformetrica/bin/deformetrica}.
+}
+\seealso{
+\code{\link[=install_deformetrica]{install_deformetrica()}} to set one up from R.
 }

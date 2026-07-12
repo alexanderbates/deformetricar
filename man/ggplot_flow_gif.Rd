@@ -9,6 +9,10 @@ ggplot_flow_gif(
   cols = NULL,
   volume = NULL,
   volume_alpha = 0.12,
+  volume_col = "grey80",
+  targets = NULL,
+  target_cols = NULL,
+  target_alpha = 0.18,
   alpha = 0.6,
   rotation_matrix = NULL,
   file = NULL,
@@ -26,9 +30,20 @@ one structure (all lists the same length). Colours are taken per structure.}
 default palette if \code{NULL}.}
 
 \item{volume}{Optional fixed reference object drawn translucent under every frame
-(e.g. the target brain surface).}
+(e.g. the target brain hull).}
 
-\item{volume_alpha, alpha}{Alphas for the reference volume and the flow objects.}
+\item{volume_alpha, target_alpha, alpha}{Alphas for the reference volume, the target
+objects and the flow objects.}
+
+\item{volume_col}{Colour of the reference volume (default \code{"grey80"}; pass e.g. a
+light pink to render the brain hull as a soft envelope).}
+
+\item{targets}{Optional named list of fixed reference objects drawn translucent
+\emph{above} the volume but \emph{below} the flow (e.g. the matched target neuropils each
+warping object should land on). Static across frames.}
+
+\item{target_cols}{Named vector of colours for \code{targets} (one per entry); defaults
+to a transparent greyscale ramp so the coloured flow reads clearly on top.}
 
 \item{rotation_matrix}{Optional 4x4 view matrix (as \code{nat.ggplot}/\code{rgl} use).}
 
@@ -37,7 +52,8 @@ default palette if \code{NULL}.}
 \item{width, height, delay, dpi}{GIF frame size (px), per-frame delay (s) and dpi.}
 }
 \value{
-The GIF path if written (needs \code{gifski}), else the vector of frame PNGs.
+The GIF path if written (needs \code{gifski}, or falls back to \code{magick}), else
+the vector of frame PNGs.
 }
 \description{
 Renders a set of warping objects across the timepoints of a geodesic flow (as
