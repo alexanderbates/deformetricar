@@ -37,13 +37,24 @@ Deformetrica (\>= 4.3), meeting current R package standards.
   labels each point by its travel toward its mirror partner.
 - [`ggplot_flow_gif()`](https://alexanderbates.github.io/deformetricar/reference/ggplot_flow_gif.md):
   animate a geodesic flow as a `nat.ggplot` GIF, each object coloured
-  over a translucent reference volume.
-- [`transform_vtk()`](https://alexanderbates.github.io/deformetricar/reference/transform_vtk.md)
+  over a translucent reference volume. It now also takes a `volume_col`
+  (draw the brain hull as a soft coloured envelope, e.g. light pink) and
+  a set of static `targets` drawn beneath the flow in a transparent
+  greyscale ramp — so the coloured moving structures can be read landing
+  on the fixed targets they should match.
+- [`install_deformetrica()`](https://alexanderbates.github.io/deformetricar/reference/install_deformetrica.md):
+  one-call setup of the Deformetrica (\>= 4.3) CLI in a
+  reticulate-managed conda env / virtualenv;
+  [`find_deformetrica()`](https://alexanderbates.github.io/deformetricar/reference/find_deformetrica.md)
+  then resolves it automatically.
+  [`transform_vtk()`](https://alexanderbates.github.io/deformetricar/reference/transform_vtk.md)
   (renamed from the unexported `transform.vtk`, which R mistook for an
   S3 method) is now exported.
 - [`find_deformetrica()`](https://alexanderbates.github.io/deformetricar/reference/find_deformetrica.md)
   locates the executable on the `PATH`, via
-  `options(deformetricar.exe=)`, or in a conda environment.
+  `options(deformetricar.exe=)`, in an
+  [`install_deformetrica()`](https://alexanderbates.github.io/deformetricar/reference/install_deformetrica.md)
+  environment, or in a conda environment.
 - Vignettes, each with GIFs: *mosquito-to-fly* (Aedes → Drosophila
   JRC2018F, whole-brain + central complex), *fafb-left-right* (FAFB
   brain mirror registration), and *l1-symmetrise-cognates* (symmetrise

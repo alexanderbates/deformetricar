@@ -31,12 +31,37 @@ vignette](https://alexanderbates.github.io/deformetricar/articles/mosquito-to-fl
 remotes::install_github("alexanderbates/deformetricar")
 ```
 
-You also need a working [Deformetrica (\>=
-4.3)](https://gitlab.com/icm-institute/aramislab/deformetrica) install
-(e.g. in a conda environment).
+### Installing Deformetrica
+
+`deformetricar` shells out to the [Deformetrica (\>=
+4.3)](https://gitlab.com/icm-institute/aramislab/deformetrica)
+command-line tool, so you need that available once. The smooth path is
+to let the package set it up in a managed Python environment (uses
+[reticulate](https://rstudio.github.io/reticulate/) + conda):
+
+``` r
+
+# one-time; pulls torch/vtk into a dedicated "deformetrica" conda env
+deformetricar::install_deformetrica()
+```
+
+After that
 [`find_deformetrica()`](https://alexanderbates.github.io/deformetricar/reference/find_deformetrica.md)
-locates it on the `PATH`, at `options(deformetricar.exe=)`, or in
-`~/.conda/envs/deformetrica/`.
+resolves the executable automatically. It searches, in order:
+`options(deformetricar.exe=)`, the `PATH`, the managed environment
+above, then `~/.conda/envs/deformetrica/`. If you already have
+Deformetrica elsewhere, just point at it with
+`options(deformetricar.exe = "/path/to/deformetrica")`.
+
+> **Apple Silicon (arm64 macOS):** Deformetrica 4.3 pins `torch==1.6`,
+> which has no native arm64 wheels.
+> [`install_deformetrica()`](https://alexanderbates.github.io/deformetricar/reference/install_deformetrica.md)
+> handles this automatically — on an M-series Mac it builds an `osx-64`
+> conda env (Python 3.8) that runs under Rosetta and pulls the x86-64
+> wheels (verified end-to-end here). You just need Rosetta
+> (`softwareupdate --install-rosetta`) and a conda binary. Linux and
+> Intel macOS install natively. See
+> [`?install_deformetrica`](https://alexanderbates.github.io/deformetricar/reference/install_deformetrica.md).
 
 ## Quick start
 

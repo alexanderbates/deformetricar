@@ -30,7 +30,5 @@ geodesic shooting. It also reads and writes VTK object formats.
 
 Authors:
 
-- Alexander Bates <alexander.shakeel.bates@gmail.com>
-
 - Gregory Jefferis <jefferis@gmail.com>
   ([ORCID](https://orcid.org/0000-0002-0587-9355))

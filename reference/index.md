@@ -5,6 +5,8 @@
 Fit and apply diffeomorphisms with a modern Deformetrica (\>= 4.3)
 install.
 
+- [`install_deformetrica()`](https://alexanderbates.github.io/deformetricar/reference/install_deformetrica.md)
+  : Install Deformetrica into a managed Python environment
 - [`find_deformetrica()`](https://alexanderbates.github.io/deformetricar/reference/find_deformetrica.md)
   : Locate the Deformetrica (\>= 4.3) command-line executable
 - [`deformetrica_register()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_register.md)

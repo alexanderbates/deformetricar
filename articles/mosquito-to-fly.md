@@ -10,11 +10,13 @@ bilateral symmetry. Everything below is plain R built from
 `deformetricar` helpers.
 
 ![The mosquito neuropils (coloured by homology) warping onto their fly
-counterparts over the translucent fly
-brain.](../reference/figures/mosquito_to_fly.gif)
+counterparts — each matched fly neuropil drawn in transparent greyscale,
+inside the fly brain hull as a translucent light-pink
+envelope.](../reference/figures/mosquito_to_fly.gif)
 
 The mosquito neuropils (coloured by homology) warping onto their fly
-counterparts over the translucent fly brain.
+counterparts — each matched fly neuropil drawn in transparent greyscale,
+inside the fly brain hull as a translucent light-pink envelope.
 
 The recipe is the one a good bridging registration uses:
 
@@ -32,10 +34,25 @@ The recipe is the one a good bridging registration uses:
 library(deformetricar)
 library(nat)
 library(nat.flybrains)   # JRC2018F template + JFRC2NP neuropils
+library(nat.jrcbrains)   # JFRC2 <-> JRC2018F bridging registration (for xform_brain below)
 library(Rvcg)            # mesh decimation
 # remotes::install_github("natverse/insectbrainr")
 library(insectbrainr)    # Aedes brain from the Insect Brain Database
+
+# One-time: set up the Deformetrica CLI this package wraps, in a managed conda env.
+# (Skip if find_deformetrica() already resolves, e.g. options(deformetricar.exe=).)
+# install_deformetrica()
+
+# One-time: the JFRC2 -> JRC2018F step below needs the Saalfeld-lab bridging
+# registrations (a few hundred MB). Loading nat.jrcbrains registers them; download
+# them once with:
+# nat.jrcbrains::download_saalfeldlab_registrations(filenames = "JRC2018F_JFRC2013.h5")
 ```
+
+Everything below runs locally on a CPU — no GPU required.
+`device = "auto"` uses a CUDA GPU if one is present and transparently
+falls back to CPU (the whole-brain fit takes a few minutes on a CPU,
+longer than on a GPU but perfectly usable).
 
 ## 1. The two brains and their neuropils
 
@@ -148,6 +165,29 @@ srcs$NO_R <- amesh("^NO_RIGHT"); tgts$NO_R <- fno$R
 > [`split_mesh_lr()`](https://alexanderbates.github.io/deformetricar/reference/split_mesh_lr.md)
 > above is the flat-plane special case.
 
+### Refine the affine on neuropil centroids
+
+The whole-brain rigid affine of step 2 aligns the two *hulls*, but the
+mosquito’s internal neuropils still sit systematically **ventral** of
+their fly counterparts (here by ~26 µm in Y) — the brains pack their
+interiors differently. A diffeomorphism *can* absorb that, but a stiff,
+global kernel will drag small structures (galls, noduli, ellipsoid body)
+only part of the way. So we refine the init with a second **similarity**
+affine fit to the matched neuropil **centroids**, which removes the
+gross offset and lets the warp do local, not gross, work. We carry every
+source neuropil *and* the outer hull through the identical map so the
+whole template stays in one frame.
+
+``` r
+
+ctr    <- function(m) colMeans(xyzmatrix(m))
+M      <- Morpho::computeTransform(t(sapply(tgts, ctr)), t(sapply(srcs, ctr)),
+                                   type = "similarity")
+applyM <- function(m) { xyzmatrix(m) <- Morpho::applyTransform(xyzmatrix(m), M); m }
+srcs        <- lapply(srcs, applyM)
+pre$aligned <- applyM(pre$aligned)   # the outer hull rides the same refinement
+```
+
 ## 4. One diffeomorphism for the whole matched set
 
 [`deformetrica_register_multi()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_register_multi.md)
@@ -163,14 +203,19 @@ tgts <- lapply(tgts, Rvcg::vcgQEdecim, tarface = 4000L)
 srcs$outer <- Rvcg::vcgQEdecim(pre$aligned, tarface = 12000L)
 tgts$outer <- Rvcg::vcgQEdecim(fly,         tarface = 12000L)
 
-# noise-std: SMALLER = stronger attachment. Neuropils strongest; the outer hull is
-# only a weak global guide; the ring-vs-arch central complex is gentler so the
-# ellipsoid body is not forced into the fly's ring and over-distorted. (These
-# values were tuned by iterating on the result — see the article notes.)
+# noise-std: SMALLER = stronger attachment. Neuropils strong; the outer hull is only
+# a weak global guide; and — now the centroid refinement has removed the gross offset
+# — the central complex is weighted PART BY PART to fix its specific shape mismatches:
+# the ellipsoid body strongest (to circularise the open aedes CBL onto the fly ring),
+# the fan-shaped and protocerebral bridges stronger (to match their curvature), and
+# the galls strongest of all (to snap onto the small fly GA). (Tuned by iterating.)
 sigma <- setNames(rep(3.0, length(srcs)), names(srcs))  # neuropils: strong
-sigma["outer"] <- 5.0                                   # hull: weaker but consequential
+sigma["outer"] <- 4.0                                   # hull: weak global envelope (contains the MB lobes)
 sigma[grep("^(VL|ML|PED)_", names(sigma))] <- 1.0       # MB lobes: strongest (compress the elongated vertical lobe)
-sigma[grep("^(FB|EB|PB|NO)_", names(sigma))] <- 5.0     # central complex: fairly strong, to sit close to the fly
+sigma[grep("^EB_", names(sigma))] <- 2.0                # ellipsoid body: circularise the open arch onto the ring
+sigma[grep("^(FB|PB)_", names(sigma))] <- 3.0           # fan-shaped body / protocerebral bridge: match curvature
+sigma[grep("^GA_", names(sigma))] <- 1.5                # galls: snap onto the small fly GA
+sigma[grep("^NO_", names(sigma))] <- 2.5                # noduli: land + resolve left/right
 
 # A larger kernel width gives a stiffer, more GLOBAL warp, so elongated structures
 # (peduncle, vertical lobe) move coherently onto their target instead of leaving a
@@ -178,7 +223,7 @@ sigma[grep("^(FB|EB|PB|NO)_", names(sigma))] <- 5.0     # central complex: fairl
 kw <- sqrt(sum((apply(xyzmatrix(fly), 2, max) - apply(xyzmatrix(fly), 2, min))^2)) / 11
 fit <- deformetrica_register_multi(
   srcs, tgts, kernel_width = kw, data_sigma = sigma,
-  timepoints = 15L, max_iterations = 60L, device = "cuda")
+  timepoints = 15L, max_iterations = 60L, device = "auto")
 ```
 
 ## 5. Animate the flow, coloured by homology
@@ -195,7 +240,7 @@ show  <- setdiff(names(srcs), "outer")            # every cross-identified neuro
 flows <- lapply(srcs[show], deformetrica_shoot,
                 control_points = fit$control_points, momenta = fit$momenta,
                 kernel_width = fit$kernel_width, timepoints = 15L,
-                device = "cuda", flow = TRUE)
+                device = "auto", flow = TRUE)
 # Family hues (optic = blue, MB = green, AL = gold, CX = warm/purple), separated
 # within a family by lightness so ME/LO/LOP and CA/PED/VL/ML each read distinctly.
 pal <- c(ME="#1B4F72", LO="#2E86AB", LOP="#7FB3D5",
@@ -204,13 +249,30 @@ pal <- c(ME="#1B4F72", LO="#2E86AB", LOP="#7FB3D5",
          FB="#E74C3C", EB="#E27396", PB="#8E44AD", NO="#16A085")
 cols <- setNames(pal[sub("_[LR]$", "", show)], show)
 
-ggplot_flow_gif(flows, cols = cols, volume = fly,
+# Fly context for the GIF: the whole brain hull as a very translucent light-pink
+# envelope, and each matched fly *target* neuropil in a transparent greyscale, so the
+# coloured mosquito neuropils can be read landing on their fly counterparts.
+ggplot_flow_gif(flows, cols = cols,
+                volume = fly, volume_col = "lightpink", volume_alpha = 0.08,
+                targets = tgts[show], target_alpha = 0.18,
                 file = "mosquito_to_fly.gif")   # needs the gifski package
 ```
 
 For a central-complex close-up (`mosquito_cx_to_fly.gif`), animate just
 the `FB`/`EB`/`PB`/`NO` (and the gall `GA`) objects over the merged fly
-CX as the volume.
+central complex — the fly CX neuropils merged into one light-pink
+volume, each individual fly CX target still drawn in transparent
+greyscale underneath.
+
+``` r
+
+cxn    <- grep("^(FB|EB|PB|NO|GA)_", show, value = TRUE)
+cxvol  <- Rvcg::vcgClean(Morpho::mergeMeshes(unname(tgts[cxn])), sel = 0)  # merged fly CX
+ggplot_flow_gif(flows[cxn], cols = cols[cxn],
+                volume = cxvol, volume_col = "lightpink", volume_alpha = 0.06,
+                targets = tgts[cxn], target_alpha = 0.22,
+                file = "mosquito_cx_to_fly.gif")
+```
 
 ## 6. Validation — do the neuropils land on their counterparts?
 

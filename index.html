@@ -13,6 +13,7 @@
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="R Client for the Deformetrica Shape Registration Toolkit">
 <meta name="description" content="Wraps the Deformetrica (&gt;= 4.3) command-line tools so that 3D coordinates and neuron objects can be transformed by fitted diffeomorphisms via geodesic shooting and flow. Reads and writes VTK object formats and provides sensible defaults for registering fly connectome neurons.">
 <meta property="og:description" content="Wraps the Deformetrica (&gt;= 4.3) command-line tools so that 3D coordinates and neuron objects can be transformed by fitted diffeomorphisms via geodesic shooting and flow. Reads and writes VTK object formats and provides sensible defaults for registering fly connectome neurons.">
+<meta property="og:image" content="https://alexanderbates.github.io/deformetricar/logo.png">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -52,8 +53,10 @@
 <div class="row">
   <main id="main" class="col-md-9">
 <div class="section level1">
-<div class="page-header"><h1 id="deformetricar">deformetricar<a class="anchor" aria-label="anchor" href="#deformetricar"></a>
-</h1></div>
+<div class="page-header">
+<img src="logo.png" class="logo" alt=""><h1 id="deformetricar-">deformetricar <a class="anchor" aria-label="anchor" href="#deformetricar-"></a>
+</h1>
+</div>
 <p><strong>deformetricar</strong> is an R client for the <a href="https://www.deformetrica.org" class="external-link">Deformetrica</a> shape-registration toolkit (<code>&gt;= 4.3</code>). It lets you <strong>fit</strong> diffeomorphisms between 3D shapes — point clouds, neuron backbones and surface meshes — and <strong>apply</strong> them (geodesic shooting) to arbitrary objects, with sensible defaults for registering fly connectome neurons. It also reads and writes VTK object formats.</p>
 <p>Deformetrica 4 replaced the old <code>ShootAndFlow3</code> C++ binaries with a single <code>deformetrica</code> CLI (<code>estimate</code> / <code>compute</code>); <code>deformetricar</code> wraps that modern interface.</p>
 <p align="center">
@@ -65,12 +68,23 @@
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("remotes")</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"alexanderbates/deformetricar"</span><span class="op">)</span></span></code></pre></div>
-<p>You also need a working <a href="https://gitlab.com/icm-institute/aramislab/deformetrica" class="external-link">Deformetrica (&gt;= 4.3)</a> install (e.g. in a conda environment). <code><a href="reference/find_deformetrica.html">find_deformetrica()</a></code> locates it on the <code>PATH</code>, at <code>options(deformetricar.exe=)</code>, or in <code>~/.conda/envs/deformetrica/</code>.</p>
+<div class="section level3">
+<h3 id="installing-deformetrica">Installing Deformetrica<a class="anchor" aria-label="anchor" href="#installing-deformetrica"></a>
+</h3>
+<p><code>deformetricar</code> shells out to the <a href="https://gitlab.com/icm-institute/aramislab/deformetrica" class="external-link">Deformetrica (&gt;= 4.3)</a> command-line tool, so you need that available once. The smooth path is to let the package set it up in a managed Python environment (uses <a href="https://rstudio.github.io/reticulate/" class="external-link">reticulate</a> + conda):</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># one-time; pulls torch/vtk into a dedicated "deformetrica" conda env</span></span>
+<span><span class="fu">deformetricar</span><span class="fu">::</span><span class="fu"><a href="reference/install_deformetrica.html">install_deformetrica</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p>After that <code><a href="reference/find_deformetrica.html">find_deformetrica()</a></code> resolves the executable automatically. It searches, in order: <code>options(deformetricar.exe=)</code>, the <code>PATH</code>, the managed environment above, then <code>~/.conda/envs/deformetrica/</code>. If you already have Deformetrica elsewhere, just point at it with <code>options(deformetricar.exe = "/path/to/deformetrica")</code>.</p>
+<blockquote>
+<p><strong>Apple Silicon (arm64 macOS):</strong> Deformetrica 4.3 pins <code>torch==1.6</code>, which has no native arm64 wheels. <code><a href="reference/install_deformetrica.html">install_deformetrica()</a></code> handles this automatically — on an M-series Mac it builds an <code>osx-64</code> conda env (Python 3.8) that runs under Rosetta and pulls the x86-64 wheels (verified end-to-end here). You just need Rosetta (<code>softwareupdate --install-rosetta</code>) and a conda binary. Linux and Intel macOS install natively. See <code><a href="reference/install_deformetrica.html">?install_deformetrica</a></code>.</p>
+</blockquote>
+</div>
 </div>
 <div class="section level2">
 <h2 id="quick-start">Quick start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
 </h2>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/alexanderbates/deformetricar" class="external-link">deformetricar</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Fit a diffeomorphism between two corresponding point sets ...</span></span>
