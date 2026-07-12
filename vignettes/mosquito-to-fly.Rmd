@@ -196,10 +196,10 @@ tgts$outer <- Rvcg::vcgQEdecim(fly,         tarface = 12000L)
 sigma <- setNames(rep(3.0, length(srcs)), names(srcs))  # neuropils: strong
 sigma["outer"] <- 4.0                                   # hull: weak global envelope (contains the MB lobes)
 sigma[grep("^(VL|ML|PED)_", names(sigma))] <- 1.0       # MB lobes: strongest (compress the elongated vertical lobe)
-sigma[grep("^EB_", names(sigma))] <- 2.0                # ellipsoid body: circularise the open arch onto the ring
-sigma[grep("^(FB|PB)_", names(sigma))] <- 3.0           # fan-shaped body / protocerebral bridge: match curvature
-sigma[grep("^GA_", names(sigma))] <- 1.5                # galls: snap onto the small fly GA
-sigma[grep("^NO_", names(sigma))] <- 2.5                # noduli: land + resolve left/right
+sigma[grep("^EB_", names(sigma))] <- 1.5                # ellipsoid body: circularise the open arch onto the ring
+sigma[grep("^(FB|PB)_", names(sigma))] <- 2.0           # fan-shaped body / protocerebral bridge: match curvature
+sigma[grep("^GA_", names(sigma))] <- 1.0                # galls: snap onto the small fly GA
+sigma[grep("^NO_", names(sigma))] <- 1.5                # noduli: land + resolve left/right
 
 # A larger kernel width gives a stiffer, more GLOBAL warp, so elongated structures
 # (peduncle, vertical lobe) move coherently onto their target instead of leaving a
@@ -232,11 +232,14 @@ cols <- setNames(pal[sub("_[LR]$", "", show)], show)
 
 # Fly context for the GIF: the whole brain hull as a very translucent light-pink
 # envelope, and each matched fly *target* neuropil in a transparent greyscale, so the
-# coloured mosquito neuropils can be read landing on their fly counterparts.
-ggplot_flow_gif(flows, cols = cols,
+# coloured mosquito neuropils can be read landing on their fly counterparts. The
+# rotation flips Y to the canonical frontal view (dorsal up); the raw X-Y projection
+# is upside down.
+rmat <- diag(c(1, -1, 1, 1))
+ggplot_flow_gif(flows, cols = cols, rotation_matrix = rmat,
                 volume = fly, volume_col = "lightpink", volume_alpha = 0.08,
                 targets = tgts[show], target_alpha = 0.18,
-                file = "mosquito_to_fly.gif")   # needs the gifski package
+                file = "mosquito_to_fly.gif")   # needs the gifski (or magick) package
 ```
 
 For a central-complex close-up (`mosquito_cx_to_fly.gif`), animate just the
@@ -247,7 +250,7 @@ still drawn in transparent greyscale underneath.
 ```{r cx-gif}
 cxn    <- grep("^(FB|EB|PB|NO|GA)_", show, value = TRUE)
 cxvol  <- Rvcg::vcgClean(Morpho::mergeMeshes(unname(tgts[cxn])), sel = 0)  # merged fly CX
-ggplot_flow_gif(flows[cxn], cols = cols[cxn],
+ggplot_flow_gif(flows[cxn], cols = cols[cxn], rotation_matrix = rmat,
                 volume = cxvol, volume_col = "lightpink", volume_alpha = 0.06,
                 targets = tgts[cxn], target_alpha = 0.22,
                 file = "mosquito_cx_to_fly.gif")
