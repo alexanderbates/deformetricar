@@ -15,6 +15,9 @@ ggplot_flow_gif(
   target_alpha = 0.18,
   alpha = 0.6,
   rotation_matrix = NULL,
+  points = NULL,
+  point_cols = NULL,
+  point_size = 3,
   file = NULL,
   width = 900,
   height = 800,
@@ -46,6 +49,13 @@ warping object should land on). Static across frames.}
 to a transparent greyscale ramp so the coloured flow reads clearly on top.}
 
 \item{rotation_matrix}{Optional 4x4 view matrix (as \code{nat.ggplot}/\code{rgl} use).}
+
+\item{points}{Optional named list of point sets drawn as circles on top of the
+neurons — e.g. neuron root points / somata. Each entry is either a static N x 3
+matrix or a per-timepoint list of matrices (circles that move with the warp),
+forwarded to \code{\link[nat.ggplot:ggneuron_gif]{nat.ggplot::ggneuron_gif()}}.}
+
+\item{point_cols}{Named colours for \code{points}; \code{point_size} the circle size.}
 
 \item{file}{Output GIF path. Frames are written next to it.}
 

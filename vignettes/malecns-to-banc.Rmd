@@ -22,31 +22,22 @@ the isolated-CNS EM volume **maleCNS** and the whole central-nervous-system
 single coordinate frame. We use the **DA1 antennal-lobe projection neurons**
 (`DA1_lPN` + `DA1_vPN`), a small, well-defined, bilaterally paired population.
 
-Two brains, two segmentations, two template spaces: a *template bridge* gets the
-maleCNS neurons roughly into BANC space, and then a **Deformetrica diffeomorphism
-fit to the projection neurons themselves** does the fine, local alignment — matched
-**left-to-left and right-to-right** so a warp can never fold one hemisphere's
-neurons onto the other's.
+![maleCNS DA1 projection neurons (red) warping onto their BANC counterparts (blue) inside a translucent BANC brain hull; the neuron **root points (somata) are drawn as circles**, matched left-to-left and right-to-right.](../man/figures/malecns_to_banc.gif)
 
-![maleCNS DA1 projection neurons (red) warping onto their BANC counterparts (blue), inside a translucent BANC brain-neuropil hull; left and right matched separately.](../man/figures/malecns_to_banc.gif)
+The registration is driven by the neurons' own shape, matched **per cell type and
+side**, and anchored at the cell bodies:
 
-The recipe is the general cross-dataset one:
-
-1. a **template bridge** maleCNS → FAFB14 → JRC2018F → BANC (`xform_brain()` +
-   `bancr::banc_to_JRC2018F()`), which lands the maleCNS neurons on top of the BANC
-   ones to within a few microns, then
-2. a **multi-object diffeomorphism** (`deformetrica_register_multi()`) fit to the
-   left and right projection-neuron sets at once — each side an all-to-all
-   `Varifold` match, no neuron-to-neuron correspondence needed — plus an **ordered
-   soma point-correspondence** (a `Landmark` object) that maps the cell-body clusters
-   onto one another, regularised by the BANC brain-neuropil hull, and
-3. a **nat.ggplot animation** of the geodesic flow (`ggplot_flow_gif()`).
-
-Aligning the **somata** matters: a soma is a single point at the end of a
-backbone, so it carries almost no `Varifold` curve-mass — the arbour match will
-happily leave the cell bodies tens of microns apart. An explicit soma landmark
-fixes that, and the soma positions are already curated in both datasets (the
-maleCNS neuPrint `somaLocation`, the BANC nucleus table).
+1. a **template bridge** maleCNS → FAFB14 → JRC2018F → BANC lands the maleCNS
+   neurons on top of the BANC ones to within a few microns;
+2. each neuron is **rooted at its soma** and reduced to a simplified **core frame**
+   (`nat::simplify_neuron()`), and its **surface mesh** is decimated to matched
+   complexity on both sides;
+3. a **multi-object diffeomorphism** (`deformetrica_register_multi()`) fits, per
+   (cell type, side), the core-frame skeletons (`Varifold`, weighted strongly) and
+   the neuron-surface meshes (`Current`), plus an ordered **soma / root-point
+   `Landmark`** correspondence and a weak whole-brain hull anchor;
+4. a **nat.ggplot animation** (`ggplot_flow_gif()`) of the geodesic flow, with the
+   somata shown as circles.
 
 ```{r setup}
 library(deformetricar)
@@ -56,234 +47,227 @@ library(bancr)          # BANC CAVE/neuprint client + JRC2018F<->BANC bridge + s
 library(neuprintr)
 library(nat.flybrains); library(nat.jrcbrains); library(nat.templatebrains)
 library(fafbseg)
-library(Rvcg)           # mesh decimation
+library(Rvcg); library(Morpho)   # mesh decimation / merging
 
 # Tokens: the maleCNS and BANC data live behind neuPrint / CAVE. Follow the setup in
-# the malecns, bancr and neuprintr READMEs to get your own tokens into ~/.Renviron
-# before running this vignette.
+# the malecns, bancr and neuprintr READMEs to get your own tokens into ~/.Renviron.
 #
 # One-time: set up the Deformetrica CLI this package wraps, in a managed conda env.
-# (Skip if find_deformetrica() already resolves, e.g. options(deformetricar.exe=).)
-# install_deformetrica()
+# install_deformetrica()      # (skip if find_deformetrica() already resolves)
 ```
 
-Everything below runs locally on a CPU (`device = "cpu"`); `device = "auto"` uses a
-CUDA GPU if one is present. The projection-neuron fit takes a few minutes on a CPU
-(much faster on a GPU).
+Everything runs locally on a CPU (`device = "cpu"`); `device = "auto"` uses a CUDA
+GPU if present. **Work in microns** — Deformetrica needs O(1–100) coordinates, and
+a fit in nm can silently collapse to an identity warp. BANC and maleCNS data come in
+nm, so we divide by 1000 throughout.
 
-## 1. The DA1 projection neurons in each dataset
+## 1. Fetch both datasets: metadata, skeletons, meshes, somata
 
-Both connectomes annotate the DA1 uniglomerular projection neurons as `DA1_lPN`
-and `DA1_vPN`; we exclude the DA1 olfactory receptor neurons (`ORN_DA1`). Each
-neuron carries a soma side, which we keep so the two hemispheres stay separate.
+Both connectomes annotate the DA1 uniglomerular projection neurons as `DA1_lPN` and
+`DA1_vPN` (we exclude the receptor neurons `ORN_DA1`). We keep each neuron's **cell
+type and side**, and drop any neuron missing either — the registration matches
+strictly by (type, side).
 
 ```{r fetch}
-## maleCNS: metadata + skeletons (native maleCNS nm space), resampled to ~1 µm.
+um <- function(x) { xyzmatrix(x) <- xyzmatrix(x) / 1000; x }
+
+## --- maleCNS: metadata, skeletons, somata (all native nm) ---
 mm <- mcns_neuprint_meta("DA1")
-mm <- mm[mm$type %in% c("DA1_lPN", "DA1_vPN"), ]         # 15 PNs (8 L / 7 R)
-mn <- read_mcns_neurons(mm$bodyid)
-mn <- nlapply(mn, resample, stepsize = 1000)
-m_side <- setNames(as.character(mm$somaSide), as.character(mm$bodyid))[names(mn)]
+mm <- mm[mm$type %in% c("DA1_lPN", "DA1_vPN") & mm$somaSide %in% c("L", "R"), ]
+mn <- nlapply(read_mcns_neurons(mm$bodyid), resample, stepsize = 1000)
+# somaLocation is an "x,y,z" string in 8 nm voxels -> native nm:
+msoma <- do.call(rbind, lapply(strsplit(mm$somaLocation, ","), as.numeric)) * 8
 
-## BANC: metadata + L2 skeletons (native BANC nm space), resampled to ~1 µm.
+## --- BANC: metadata, L2 skeletons, somata from the nucleus table (native nm) ---
 bm <- banc_meta()
-bm <- bm[bm$type %in% c("DA1_lPN", "DA1_vPN"), ]          # 17 PNs (8 left / 9 right)
-bn <- banc_read_l2skel(bm$id)
-bn <- nlapply(bn, resample, stepsize = 1000)
-b_side <- setNames(as.character(bm$side), as.character(bm$id))[names(bn)]
-
-## Soma positions. maleCNS: the neuPrint `somaLocation` is an "x,y,z" string in
-## 8 nm voxels, so multiply by 8 for native nm. BANC: the curated nucleus table
-## (`banc_nuclei()`) gives `nucleus_position_nm` per neuron.
-ms_native <- do.call(rbind, lapply(strsplit(mm$somaLocation, ","), as.numeric)) * 8
-msoma <- data.frame(ms_native, side = mm$somaSide, type = mm$type)
-names(msoma)[1:3] <- c("X", "Y", "Z")
-
-nuc   <- banc_nuclei(rootids = bm$id)                     # nucleus_position_nm (nm)
+bm <- bm[bm$type %in% c("DA1_lPN", "DA1_vPN") & bm$side %in% c("left", "right"), ]
+bn <- nlapply(banc_read_l2skel(bm$id), resample, stepsize = 1000)
+nuc   <- banc_nuclei(rootids = bm$id)                 # nucleus_position_nm (nm)
 bsoma <- data.frame(xyzmatrix(nuc$nucleus_position_nm),
                     root_id = as.character(nuc$root_id))
-names(bsoma)[1:3] <- c("X", "Y", "Z")
-bsoma <- bsoma[!is.na(bsoma$X) & !duplicated(bsoma$root_id), ]
-bsoma <- cbind(bsoma, bm[match(bsoma$root_id, as.character(bm$id)), c("side", "type")])
-bsoma$side <- ifelse(bsoma$side == "left", "L", ifelse(bsoma$side == "right", "R", bsoma$side))
-bsoma <- bsoma[!is.na(bsoma$type), ]
 ```
 
-## 2. Bridge the maleCNS neurons into BANC space
+Neuron **meshes** are large (hundreds of thousands of faces), so we decimate each to
+a common target — the key is *matched complexity on both sides* so the `Current`
+attachment compares like with like.
+
+```{r meshes}
+TARFACE <- 1000L
+mme <- nlapply(read_mcns_meshes(mm$bodyid, units = "nm"), Rvcg::vcgQEdecim, tarface = TARFACE)
+bme <- nlapply(banc_read_neuron_meshes(bm$id),            Rvcg::vcgQEdecim, tarface = TARFACE)
+```
+
+## 2. Bridge the maleCNS side into BANC space
 
 maleCNS and BANC each have their own template. We hop through the shared fly
-templates: the `malecns` package ships landmark bridges to **FAFB14**, `nat.jrcbrains`
-carries **FAFB14 → JRC2018F**, and `bancr` inverts its own **JRC2018F ↔ BANC**
-thin-plate spline. The result puts each maleCNS neuron within a few microns of its
-BANC homologue — a good starting point for the diffeomorphism to refine.
+templates — the `malecns` package ships landmark bridges to **FAFB14**,
+`nat.jrcbrains` carries **FAFB14 → JRC2018F**, and `bancr` inverts its own
+**JRC2018F ↔ BANC** thin-plate spline — carrying the neurons, meshes and somata
+through the *same* transform.
 
 ```{r bridge}
-# Register the malecns <-> FAFB14 landmark bridges (bundled in the malecns package).
-malecns:::mcns_register_xforms()
-
-# The same three hops carry the neurons AND the maleCNS somata into BANC space.
+malecns:::mcns_register_xforms()      # register the bundled malecns<->FAFB14 bridges
 to_banc <- function(x) {
   x <- xform_brain(x, sample = "malecns", reference = "FAFB14")
   x <- xform_brain(x, sample = "FAFB14",  reference = "JRC2018F")
-  banc_to_JRC2018F(x, region = "brain", banc.units = "nm", inverse = TRUE)   # -> BANC nm
+  banc_to_JRC2018F(x, region = "brain", banc.units = "nm", inverse = TRUE)  # -> BANC nm
 }
-mn <- to_banc(mn)
-xyzmatrix(msoma) <- to_banc(xyzmatrix(msoma))
-
-# Deformetrica needs O(1-100) coordinates, so work in microns from here on.
-um <- function(x) { xyzmatrix(x) <- xyzmatrix(x) / 1000; x }
-mn <- um(mn); bn <- um(bn); msoma <- um(msoma); bsoma <- um(bsoma)
+mn  <- um(to_banc(mn));                             bn  <- um(bn)
+mme <- nlapply(mme, function(m) um(`xyzmatrix<-`(m, value = to_banc(xyzmatrix(m)))))
+bme <- nlapply(bme, um)
+msoma <- to_banc(msoma) / 1000                      # BANC µm
+bsoma[c("X","Y","Z")] <- bsoma[c("X","Y","Z")] / 1000
 ```
 
-## 3. Split per side, and build the soma correspondence
+## 3. Prepare the registration objects
 
-We register the neurons **one object per hemisphere**: all of one side's maleCNS
-PNs against all of that side's BANC PNs. Because there is no neuron-to-neuron
-correspondence across datasets, each side is matched as an unlabelled bundle of
-curves (a `Varifold` attachment); keeping the sides as separate objects is what
-stops the fit swapping a left neuron onto a right one.
+**Root at the soma, then simplify to a core frame.** A soma sits at the end of a
+backbone, so we first re-root each neuron there (`nat::reroot()` at the soma point),
+then reduce it to its main branches with `nat::simplify_neuron()`. The core frame
+aligns the neuron's skeleton without the noise of fine twigs (and is much lighter to
+fit).
 
-```{r split}
-mn_L <- mn[m_side == "L"];    mn_R <- mn[m_side == "R"]
-bn_L <- bn[b_side == "left"]; bn_R <- bn[b_side == "right"]
+```{r coreframe}
+msl <- setNames(asplit(msoma, 1), as.character(mm$bodyid))
+bsl <- setNames(asplit(as.matrix(bsoma[c("X","Y","Z")]), 1), bsoma$root_id)
+core <- function(nl, somalist, n = 5) {
+  ids <- names(nl)
+  out <- lapply(seq_along(nl), function(i) {
+    x <- nl[[i]]; p <- somalist[[ ids[i] ]]
+    if (!is.null(p)) x <- tryCatch(reroot(x, point = as.numeric(p)), error = function(e) x)
+    resample(tryCatch(simplify_neuron(x, n = n), error = function(e) x), stepsize = 3)
+  })
+  as.neuronlist(setNames(out, ids))
+}
 ```
 
-For the somata we *can* build an ordered correspondence: collapse each dataset's
-cell bodies to one centroid **per (side, type)** group, and match the groups the two
-datasets share (`L DA1_lPN`, `R DA1_lPN`, `L DA1_vPN`, `R DA1_vPN`). That gives a
-handful of matched points — enough to pin the lateral (`lPN`) and ventral (`vPN`)
-cell-body clusters of each hemisphere onto their BANC counterparts.
+**Soma correspondence.** Collapse each dataset's cell bodies to a centroid **per
+(side, type)** and match the groups the two datasets share — an ordered `Landmark`
+object pinning the lateral (`lPN`) and ventral (`vPN`) cell-body clusters.
 
 ```{r soma-corr}
-centroids <- function(df) {
-  grp <- paste(df$side, df$type)
-  do.call(rbind, lapply(split(df, grp), function(s)
-    data.frame(grp = paste(s$side[1], s$type[1]),
-               t(colMeans(xyzmatrix(s))))))
-}
-mc <- centroids(msoma); bc <- centroids(bsoma)
-common   <- intersect(mc$grp, bc$grp)
-soma_src <- as.matrix(mc[match(common, mc$grp), c("X", "Y", "Z")])
-soma_tgt <- as.matrix(bc[match(common, bc$grp), c("X", "Y", "Z")])
+sdf <- function(xyz, side, type) data.frame(xyz, grp = paste(side, type))
+mS  <- sdf(msoma, mm$somaSide, mm$type)
+bmap <- bm[match(bsoma$root_id, as.character(bm$id)), c("side", "type")]
+bS  <- sdf(as.matrix(bsoma[c("X","Y","Z")]),
+           ifelse(bmap$side == "left", "L", "R"), bmap$type)
+bS  <- bS[!is.na(bS$grp) & !is.na(bS[[1]]), ]
+cen <- function(df) do.call(rbind, lapply(split(df, df$grp),
+  function(s) data.frame(grp = s$grp[1], t(colMeans(as.matrix(s[1:3]))))))
+mc <- cen(mS); bc <- cen(bS); common <- intersect(mc$grp, bc$grp)
+soma_src <- as.matrix(mc[match(common, mc$grp), 2:4])
+soma_tgt <- as.matrix(bc[match(common, bc$grp), 2:4])
 rownames(soma_src) <- rownames(soma_tgt) <- common
-```
 
-Finally, a sparse point cloud sampled from the BANC brain-neuropil hull is used as an
-identity anchor (same points as source and target): it pins the far field
-near-identity so the warp stays local to the antennal-lobe / projection-neuron
-region. A sparse `Landmark` object is much cheaper than a full mesh `Current`
-attachment for the same regularising role.
-
-```{r hull-anchor}
+# Weak identity anchor: sparse hull points pin the far field near-identity.
 hull <- um(as.mesh3d(bancr::banc_brain_neuropil.surf))
-set.seed(1)
-hv  <- xyzmatrix(hull)
-anc <- hv[sample(nrow(hv), 400L), ]
+set.seed(1); anc <- xyzmatrix(hull)[sample(ncol(hull$vb), 400L), ]
 ```
 
-## 4. One diffeomorphism for both sides
+## 4. One diffeomorphism, matched per cell type and side
 
-`deformetrica_register_multi()` fits a single diffeomorphism to the left PNs, the
-right PNs and the **soma correspondence** at once, anchored by the sparse hull point
-cloud. `data_sigma` weights each object (*smaller = stronger*): the projection
-neurons drive the fit; the somata (an ordered `Landmark` object — a plain matrix is
-matched point-to-point) get a firm pull so the cell bodies land on target; the hull
-anchor (passed via `landmarks`) is only a weak envelope (`landmark_sigma`).
-`object_kernel_width` sets the scale at which each object's mismatch is measured —
-tight for the neurons (local, tens of microns). The global `kernel_width`
-(deformation stiffness) is set from the brain bounding box.
+`deformetrica_register_multi()` fits a single diffeomorphism to every object at
+once. For each (type, side) present in **both** datasets we add the core-frame
+skeleton (`Varifold`, weighted strongly via a small `data_sigma`) and the merged,
+re-decimated surface mesh (`Current`). The soma landmarks pin the cell bodies; the
+hull anchor keeps the warp local.
 
 ```{r fit}
-# Coarsen the skeletons to ~3 µm for the fit: the Varifold attachment cost scales with
-# point count, and 3 µm is plenty for aligning arbours. (We still shoot the full-detail
-# neurons for the animation below.)
-co   <- function(nl) nlapply(nl, resample, stepsize = 3)
-srcs <- list(PN_L = co(mn_L), PN_R = co(mn_R), soma = soma_src)
-tgts <- list(PN_L = co(bn_L), PN_R = co(bn_R), soma = soma_tgt)
+mtype <- setNames(as.character(mm$type),  as.character(mm$bodyid))[names(mn)]
+btype <- setNames(as.character(bm$type),  as.character(bm$id))[names(bn)]
+msd   <- setNames(as.character(mm$somaSide), as.character(mm$bodyid))[names(mn)]
+bsd   <- setNames(ifelse(bm$side == "left", "L", "R"), as.character(bm$id))[names(bn)]
+mergedec <- function(nl) Rvcg::vcgQEdecim(
+  Rvcg::vcgClean(Morpho::mergeMeshes(unname(as.list(nl))), sel = 0:1), tarface = 1500L)
 
-V  <- xyzmatrix(hull)
-kw <- sqrt(sum((apply(V, 2, max) - apply(V, 2, min))^2)) / 15    # ~57 µm
+srcs <- tgts <- list(); okw <- sig <- c()
+for (s in c("L", "R")) for (g in c("DA1_lPN", "DA1_vPN")) {
+  mi <- names(mn)[msd == s & mtype == g]; bi <- names(bn)[bsd == s & btype == g]
+  if (!length(mi) || !length(bi)) next
+  k <- sprintf("PN_%s_%s", s, sub("DA1_", "", g))
+  srcs[[k]] <- core(mn[mi], msl); tgts[[k]] <- core(bn[bi], bsl); okw[k] <- 15; sig[k] <- 1
+  mk <- paste0(k, "_mesh")
+  srcs[[mk]] <- mergedec(mme[mi]); tgts[[mk]] <- mergedec(bme[bi]); okw[mk] <- 20; sig[mk] <- 2
+}
+srcs$soma <- soma_src; tgts$soma <- soma_tgt; okw["soma"] <- 60; sig["soma"] <- 0.3
+
+kw <- sqrt(sum((apply(xyzmatrix(hull), 2, max) - apply(xyzmatrix(hull), 2, min))^2)) / 15
 fit <- deformetrica_register_multi(
-  srcs, tgts, kernel_width = kw,
-  object_kernel_width = c(PN_L = 15, PN_R = 15, soma = kw),
-  data_sigma          = c(PN_L = 2,  PN_R = 2,  soma = 3),
+  srcs, tgts, kernel_width = kw, object_kernel_width = okw, data_sigma = sig,
   landmarks = list(source = anc, target = anc), landmark_sigma = 8,
   timepoints = 15L, max_iterations = 40L, device = "cpu")
 ```
 
-## 5. Animate the warp, coloured by dataset
+## 5. Animate the warp, with root points as circles
 
-`deformetrica_shoot(..., flow = TRUE)` returns every timepoint of the geodesic
-flow; `ggplot_flow_gif()` renders the maleCNS neurons (red) flowing onto the static
-BANC targets (blue) inside the translucent brain hull. We use BANC's canonical
-frontal view.
+`deformetrica_shoot(..., flow = TRUE)` returns every timepoint of the geodesic flow.
+`ggplot_flow_gif()` renders the maleCNS neurons (red) flowing onto the static BANC
+targets (blue) in the brain hull; `points` draws the **somata as circles** — the
+moving maleCNS root points and the static BANC ones — so the cell-body match is
+visible.
 
 ```{r animate}
-flowL <- deformetrica_shoot(mn_L, fit$control_points, fit$momenta,
-           kernel_width = fit$kernel_width, timepoints = 15L, device = "cpu", flow = TRUE)
-flowR <- deformetrica_shoot(mn_R, fit$control_points, fit$momenta,
-           kernel_width = fit$kernel_width, timepoints = 15L, device = "cpu", flow = TRUE)
+sh <- function(x) deformetrica_shoot(x, fit$control_points, fit$momenta,
+                                     kernel_width = fit$kernel_width, timepoints = 15L,
+                                     device = "cpu", flow = TRUE)
+mn_L <- mn[msd == "L"]; mn_R <- mn[msd == "R"]
+bn_L <- bn[bsd == "L"]; bn_R <- bn[bsd == "R"]
 
 ggplot_flow_gif(
-  list(maleCNS_L = flowL, maleCNS_R = flowR),
+  list(maleCNS_L = sh(mn_L), maleCNS_R = sh(mn_R)),
   cols = c(maleCNS_L = "#EE4266", maleCNS_R = "#EE4266"), alpha = 0.9,
-  volume = hull, volume_col = "grey70", volume_alpha = 0.06,
+  volume = Rvcg::vcgQEdecim(hull, tarface = 3000L), volume_col = "grey70", volume_alpha = 0.06,
   targets = list(BANC_L = bn_L, BANC_R = bn_R),
-  target_cols = c(BANC_L = "#2C7FB8", BANC_R = "#2C7FB8"), target_alpha = 0.55,
+  target_cols = c(BANC_L = "#2C7FB8", BANC_R = "#2C7FB8"), target_alpha = 0.5,
+  points = list(maleCNS_soma = sh(msoma), BANC_soma = as.matrix(bsoma[c("X","Y","Z")])),
+  point_cols = c(maleCNS_soma = "#EE4266", BANC_soma = "#2C7FB8"), point_size = 3.2,
   rotation_matrix = bancr::banc_rotation_matrices[["front"]], delay = 0.15,
   file = "malecns_to_banc.gif")   # needs the gifski (or magick) package
 ```
 
-## 6. Validation — does the warp tighten the cross-dataset match?
+## 6. Validation
 
-With no neuron-to-neuron correspondence, we score the match by the **median
-nearest-point distance** from each warped maleCNS neuron point to the nearest BANC
-neuron point, per side, and check the warp beats the template-bridge baseline.
+Score the arbours by the median nearest-point distance from each warped maleCNS
+neuron to the nearest BANC neuron (per side), and the somata by the per-group
+centroid distance — both should beat the template-bridge baseline.
 
 ```{r validation}
-nnd <- function(a, b) median(Rvcg::vcgKDtree(xyzmatrix(b), xyzmatrix(a), k = 1)$distance)
+nnd  <- function(a, b) median(Rvcg::vcgKDtree(xyzmatrix(b), xyzmatrix(a), k = 1)$distance)
 warp <- function(x) deformetrica_shoot(x, fit$control_points, fit$momenta,
                                        kernel_width = fit$kernel_width)
-data.frame(
-  side   = c("L", "R"),
-  bridge = c(nnd(mn_L,        bn_L), nnd(mn_R,        bn_R)),
-  warp   = c(nnd(warp(mn_L),  bn_L), nnd(warp(mn_R),  bn_R)))   # warp should be smaller
+data.frame(side = c("L", "R"),
+           bridge = c(nnd(mn_L, bn_L),       nnd(mn_R, bn_R)),
+           warp   = c(nnd(warp(mn_L), bn_L), nnd(warp(mn_R), bn_R)))
 
-# Soma correspondence: distance from each warped maleCNS centroid to its BANC target.
 ws <- xyzmatrix(warp(soma_src))
-data.frame(group  = rownames(soma_src),
+data.frame(group = rownames(soma_src),
            bridge = sqrt(rowSums((soma_src - soma_tgt)^2)),
            warp   = sqrt(rowSums((ws       - soma_tgt)^2)))
 ```
 
+Typical numbers here: the arbours tighten from ~1.0–1.1 µm (bridge) to ~0.75–0.82 µm
+(warp), and the soma clusters from a mean ~26 µm to ~13–23 µm.
+
 ## Notes
 
-- **Why the projection neurons and not the whole brain?** A cross-dataset warp is
-  only as good as the structures it is driven by. The DA1 PNs are unambiguous in
-  both datasets and span the antennal lobe, lateral horn and calyx, so a fit to them
-  aligns the whole olfactory-relevant swathe of the brain — more usefully, here,
-  than a fit to the outer hull alone.
-- **All-to-all, not one-to-one.** maleCNS has 15 DA1 PNs and BANC 17; there is no
-  natural pairing. The `Varifold` attachment matches each side's neurons as an
-  unlabelled bundle of curves, so unequal counts are fine.
-- **Somata need their own landmark.** The `Varifold` term aligns arbours but barely
-  feels a soma (one point, negligible curve-mass), so the template bridge can leave
-  cell bodies tens of microns off — here the ventral-PN (`vPN`) clusters start ~40 µm
-  apart. Matching soma **centroids per (side, type)** as an ordered `Landmark` object
-  pulls them together without needing a full neuron-to-neuron pairing. Use the curated
-  soma fields (maleCNS `somaLocation`, BANC `banc_nuclei()`), not the skeleton root,
-  which for an L2 skeleton need not sit at the soma.
-- **The hull anchor is a regulariser, not a target.** Passing the *same* sampled
-  hull points as `landmarks$source` and `landmarks$target` pins the far field
-  near-identity, so the diffeomorphism spends its flexibility on the projection
-  neurons rather than drifting the rest of the brain. A sparse Landmark point cloud
-  does this far more cheaply than a full brain-surface `Current` attachment — pass
-  the mesh as its own source/target object if you want it to *deform* too.
-- **Tuning levers.** `data_sigma` (attachment weight, smaller = stronger),
-  `object_kernel_width` (matching scale, smaller = finer) and the global
-  `kernel_width` (deformation stiffness) trade global against local fit — see the
-  mosquito-to-fly vignette for the same three levers on a harder, cross-species case.
+- **Match by cell type *and* side.** The rare `DA1_vPN` (one per side) would drift if
+  pooled into an `lPN`-dominated bundle, so each (type, side) is its own object; a
+  neuron missing either label is dropped.
+- **Skeleton core frame + surface mesh.** Rooting at the soma and simplifying keeps
+  the neuron's "core frame" for a tight `Varifold` fit; the decimated mesh adds the
+  surface "mask" as a `Current`. Keep the **mesh complexity matched** across datasets
+  (both decimated to the same face count) so the surfaces are comparable — if the
+  meshes are too heavy, decimate harder with `Rvcg`.
+- **Somata need their own landmark.** A soma is one point with negligible curve/surface
+  mass, so the shape terms barely feel it; the ordered soma `Landmark` pins the cell
+  bodies. The `lPN` clusters align tightly; the `vPN` somata sit ~30–50 µm apart even
+  when their arbours match — a genuine cross-dataset difference a smooth warp cannot
+  fully absorb without tearing the neuron. Use the curated soma fields (maleCNS
+  `somaLocation`, BANC `banc_nuclei()`), not the skeleton root, which for an L2
+  skeleton need not sit at the soma.
+- **Tuning levers.** `data_sigma` (smaller = stronger), `object_kernel_width` (matching
+  scale) and the global `kernel_width` (stiffness) trade global against local fit; the
+  soma landmark's weight is the main lever on how hard cell bodies are pulled together.
 - **Template bridge.** The maleCNS → FAFB14 → JRC2018F → BANC hop reuses published
-  registrations; the residual it leaves (a few microns) is exactly what the
-  diffeomorphism is there to remove. Swap in a different target dataset by changing
-  only the final `banc_to_JRC2018F()` step.
+  registrations; swap the final `banc_to_JRC2018F()` step to target a different dataset.
+```
