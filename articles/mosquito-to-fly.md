@@ -371,13 +371,8 @@ thing as a single, portable bridge.
   ring-vs-arch shape of the lower unit) follows the comparative insect
   central-complex literature; see the fly reference atlas (Hulse *et
   al.*, *eLife* 2021) for the fly definitions.
-- The **lamina** is excluded throughout — from the matched neuropils
-  *and* from the deforming whole-brain hull — as it has no fly
-  central-brain counterpart.
-- **Aedes brain credit.** The *Aedes aegypti* standard brain is the
-  segmented atlas from **Meg Younger’s lab** ([Mosquito Brain
-  Browser](https://www.mosquitobrainbrowser.org/)), here loaded via the
-  Insect Brain Database. Please cite that source.
+- The **lamina** is excluded throughout — it has no fly central-brain
+  counterpart.
 - **Tuning levers.** Three parameters trade global against local fit,
   per object: `data_sigma` (attachment weight, smaller = stronger),
   `object_kernel_width` (the scale at which surface mismatch is
