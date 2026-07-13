@@ -13,14 +13,14 @@ Source:
 [`inst/CITATION`](https://github.com/natverse/deformetricar/blob/master/inst/CITATION)
 
 Bates AS, Jefferis GSXE (2026). deformetricar: R Client for the
-Deformetrica Shape Registration Toolkit. R package version 0.2.0.9000.
+Deformetrica Shape Registration Toolkit. R package version 1.0.0.
 https://github.com/natverse/deformetricar
 
     @Misc{,
       title = {deformetricar: R Client for the Deformetrica Shape Registration Toolkit},
       author = {Alexander Shakeel Bates and Gregory S. X. E. Jefferis},
       year = {2026},
-      note = {R package version 0.2.0.9000},
+      note = {R package version 1.0.0},
       url = {https://github.com/natverse/deformetricar},
     }
 

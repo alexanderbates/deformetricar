@@ -83,7 +83,7 @@ pins specific <code>torch</code>/<code>pykeops</code> versions.</p></dd>
 
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
-<dd><p>One of <code>"conda"</code> (default, recommended — Deformetrica's own install
+<dd><p>One of <code>"conda"</code> (default, recommended - Deformetrica's own install
 instructions use a conda env), <code>"virtualenv"</code>, or <code>"auto"</code> (conda if a conda
 binary is found, else virtualenv).</p></dd>
 
@@ -129,7 +129,7 @@ the environment.</p></dd>
 no native arm64 wheels, so a plain arm64 <code>pip install</code> fails. This function
 handles it for you: on an M-series Mac it defaults to <code>x86 = TRUE</code>, building an
 <code>osx-64</code> conda env (Python 3.8) whose interpreter runs under Rosetta and pulls the
-x86-64 wheels — verified end-to-end (estimate + compute) on this hardware. You
+x86-64 wheels - verified end-to-end (estimate + compute) on this hardware. You
 need Rosetta (<code>softwareupdate --install-rosetta</code>) and a conda binary; the first
 <code>deformetrica</code> call per process pays a ~45 s Rosetta cold-start to import
 torch/vtk, then runs normally.</p>

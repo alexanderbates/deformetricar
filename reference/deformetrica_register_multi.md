@@ -39,7 +39,7 @@ deformetrica_register_multi(
 
 - object_kernel_width:
 
-  Data-attachment kernel width — the spatial scale at which each
+  Data-attachment kernel width - the spatial scale at which each
   object's surface/curve mismatch is measured (Current/Varifold).
   *Smaller = finer, more local matching*, which pulls small structures
   (galls, noduli) onto their target more tightly. A single value for
@@ -57,7 +57,7 @@ deformetrica_register_multi(
   Data-attachment noise sigma. A single value applied to every object,
   or a per-object vector (recycled if length 1; matched by name to
   `sources` if named, else taken in order). *Smaller sigma weights that
-  object more strongly* in the fit — e.g. give homologous neuropils a
+  object more strongly* in the fit - e.g. give homologous neuropils a
   small sigma and the outer hull a larger one so the neuropils drive the
   internal alignment.
 

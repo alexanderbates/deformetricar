@@ -85,15 +85,18 @@ ggplot_flow_gif(
 - points:
 
   Optional named list of point sets drawn as circles on top of the
-  neurons — e.g. neuron root points / somata. Each entry is either a
+  neurons - e.g. neuron root points / somata. Each entry is either a
   static N x 3 matrix or a per-timepoint list of matrices (circles that
   move with the warp), forwarded to
   [`nat.ggplot::ggneuron_gif()`](https://natverse.github.io/nat.ggplot/reference/ggneuron_gif.html).
 
 - point_cols:
 
-  Named colours for `points`; `point_size` the circle size,
-  `point_alpha` its opacity and `point_stroke` its outline width.
+  Named fill colours for `points` (one per entry).
+
+- point_size, point_alpha, point_stroke:
+
+  Circle size, opacity and outline width for `points`.
 
 - file:
 

@@ -130,14 +130,18 @@ to a transparent greyscale ramp so the coloured flow reads clearly on top.</p></
 
 <dt id="arg-points">points<a class="anchor" aria-label="anchor" href="#arg-points"></a></dt>
 <dd><p>Optional named list of point sets drawn as circles on top of the
-neurons — e.g. neuron root points / somata. Each entry is either a static N x 3
+neurons - e.g. neuron root points / somata. Each entry is either a static N x 3
 matrix or a per-timepoint list of matrices (circles that move with the warp),
 forwarded to <code><a href="https://natverse.github.io/nat.ggplot/reference/ggneuron_gif.html" class="external-link">nat.ggplot::ggneuron_gif()</a></code>.</p></dd>
 
 
 <dt id="arg-point-cols">point_cols<a class="anchor" aria-label="anchor" href="#arg-point-cols"></a></dt>
-<dd><p>Named colours for <code>points</code>; <code>point_size</code> the circle size,
-<code>point_alpha</code> its opacity and <code>point_stroke</code> its outline width.</p></dd>
+<dd><p>Named fill colours for <code>points</code> (one per entry).</p></dd>
+
+
+<dt id="arg-point-size-point-alpha-point-stroke">point_size, point_alpha, point_stroke<a class="anchor" aria-label="anchor" href="#arg-point-size-point-alpha-point-stroke"></a></dt>
+<dd><p>Circle size, opacity and outline width
+for <code>points</code>.</p></dd>
 
 
 <dt id="arg-file">file<a class="anchor" aria-label="anchor" href="#arg-file"></a></dt>
