@@ -30,7 +30,8 @@ library(Rvcg)     # mesh decimation
 
 ``` r
 
-brain <- as.mesh3d(elmr::FAFB.surf)          # FAFB whole-brain surface (nm)
+brain <- as.mesh3d(elmr::FAFB.surf)          # FAFB whole-brain surface
+xyzmatrix(brain) <- xyzmatrix(brain) / 1000  # nm -> um: Deformetrica needs ~O(1-100) coords
 
 ## Reflect across the brain's X-midline; flip face winding so normals stay outward
 ## (SurfaceMesh / Current attachment uses them).
@@ -54,7 +55,7 @@ tgt <- Rvcg::vcgQEdecim(brain, tarface = 4000)   # original (fixed)
 kw  <- sqrt(sum((apply(V, 2, max) - apply(V, 2, min))^2)) / 15
 
 fit <- deformetrica_register(src, tgt, kernel_width = kw, timepoints = 15,
-                             max_iterations = 100, device = "cuda", verbose = TRUE)
+                             max_iterations = 100, device = "auto", verbose = TRUE)
 ```
 
 ## 3. Apply + GIF of the L-R flow
@@ -72,8 +73,10 @@ translucent original.
 flow <- deformetrica_shoot(mir, fit$control_points, fit$momenta,
                            kernel_width = fit$kernel_width, flow = TRUE)  # list of meshes
 
-ggplot_flow_gif(list(mirror = flow), cols = c(mirror = "#C1121F"),
-                volume = brain, file = "fafb_left_right.gif")   # needs the gifski package
+ggplot_flow_gif(list(mirror = flow), cols = c(mirror = "#EE4266"),
+                volume = brain, volume_col = "grey70", volume_alpha = 0.12,
+                rotation_matrix = diag(c(1, -1, 1, 1)),   # dorsal-up frontal view
+                file = "fafb_left_right.gif")   # needs gifski or magick
 ```
 
 ## 4. Validation — does the warp tighten the L-R match?
