@@ -23,7 +23,7 @@ neuropils** the two brains share, matched **left-to-left and right-to-right** so
 the warp respects the animals' bilateral symmetry. Everything below is plain R
 built from `deformetricar` helpers.
 
-![The mosquito neuropils (coloured by homology) warping onto their fly counterparts — each matched fly neuropil drawn in transparent greyscale, inside the fly brain hull as a translucent light-pink envelope.](../man/figures/mosquito_to_fly.gif)
+![The mosquito neuropils (coloured by homology) first settling from their native proportions into the initialised pose (the affine), then warping onto their fly counterparts (the diffeomorphism) — each matched fly neuropil drawn in transparent greyscale, inside the fly brain hull as a translucent light-pink envelope, which stays fixed throughout.](../man/figures/mosquito_to_fly.gif)
 
 The recipe is the one a good bridging registration uses:
 
@@ -221,6 +221,7 @@ sigma[grep("^EB_", names(sigma))] <- 1.5                # ellipsoid body: circul
 sigma[grep("^(FB|PB)_", names(sigma))] <- 2.0           # fan-shaped body / protocerebral bridge: match curvature
 sigma[grep("^GA_", names(sigma))] <- 0.5                # galls: strongest of all, snap onto the small fly GA
 sigma[grep("^NO_", names(sigma))] <- 1.5                # noduli: land + resolve left/right
+sigma[grep("^(ME|LO|LOP)_", names(sigma))] <- 1.5       # optic lobes: pull harder so all three hit their fly target
 
 # Kernel width sets the deformation's spatial stiffness. Too large (~diagonal / 11)
 # and it is so global that small peripheral structures (galls, noduli) get dragged by
@@ -234,19 +235,42 @@ fit <- deformetrica_register_multi(
   timepoints = 15L, max_iterations = 60L, device = "auto")
 ```
 
-## 5. Animate the flow, coloured by homology
+## 5. Animate: first the affine, then the warp
 
-`deformetrica_shoot(..., flow = TRUE)` returns every timepoint of the geodesic flow;
-`ggplot_flow_gif()` renders them with `nat.ggplot`, each neuropil in its own colour
-over a translucent fly brain, and assembles a GIF.
+We animate the registration in **two acts** so the cross-species story reads. **Act 1**
+shows the *affine* — each structure appears in its native mosquito proportions and
+settles into the initialised pose (the pre-alignment's scale and rotation). **Act 2** is
+the *warp* — `deformetrica_shoot(..., flow = TRUE)` returns every timepoint of the
+geodesic flow, which `ggplot_flow_gif()` renders with `nat.ggplot`, each neuropil in its
+own colour over a translucent, unchanging fly brain.
 
 ```{r animate}
 show  <- setdiff(names(srcs), "outer")            # every cross-identified neuropil
-# Shoot the neuropils AND the whole aedes brain hull, so the hull deforms too.
+# ACT 2 (the warp): shoot the neuropils AND the whole aedes brain hull, so the hull
+# deforms too.
 flows <- lapply(srcs[c("outer", show)], deformetrica_shoot,
                 control_points = fit$control_points, momenta = fit$momenta,
                 kernel_width = fit$kernel_width, timepoints = 15L,
                 device = "auto", flow = TRUE)
+
+# ACT 1 (the affine): the pre-alignment's linear part (scale + rotation) maps native
+# mosquito coordinates onto the fly; we replay it as motion — each structure revealed in
+# its native mosquito proportions, then settling into the initialised pose. We apply that
+# linear map CENTRED on the view (dropping the translation) so the fly and the camera
+# stay put, then prepend this reveal to the warp.
+Tp     <- function(P) Morpho::applyTransform(pre$apply(P), M)      # native pts -> aligned pts
+o      <- Tp(matrix(0, 1, 3))
+Lmat   <- rbind(Tp(matrix(c(1,0,0),1))-o, Tp(matrix(c(0,1,0),1))-o, Tp(matrix(c(0,0,1),1))-o)
+Linv   <- solve(Lmat)
+reveal <- function(keys, centre_keys, nf = 9) {
+  cc <- colMeans(do.call(rbind, lapply(srcs[centre_keys], xyzmatrix)))
+  setNames(lapply(keys, function(k) { av <- xyzmatrix(srcs[[k]])
+    pv <- sweep(sweep(av, 2, cc) %*% t(Linv), 2, cc, "+")          # centred native proportions
+    lapply(seq(0, 1, length.out = nf), function(a) { m <- srcs[[k]]; xyzmatrix(m) <- (1-a)*pv + a*av; m })
+  }), keys)
+}
+a1     <- reveal(c("outer", show), show)                           # reveal centred on all neuropils
+staged <- setNames(lapply(c("outer", show), function(k) c(a1[[k]], flows[[k]])), c("outer", show))
 # Colour by functional group (L/R matched), shaded within group, LaCroix-inspired:
 # optic = blue, mushroom body = pink-purple, central complex = yellow-orange, the SEZ
 # AMMC green, and the rest of the mid brain cerise.
@@ -276,8 +300,8 @@ rmat <- diag(c(1, -1, 1, 1))
 # behind the coloured neuropils; a slow delay keeps the whole GIF ~5 s so the warp reads.
 cols_all  <- c(list(outer = "#F7C6D0"), as.list(cols))
 alpha_all <- c(outer = 0.08, setNames(rep(0.9, length(show)), show))
-ggplot_flow_gif(flows[c("outer", show)], cols = cols_all, alpha = alpha_all,
-                rotation_matrix = rmat, delay = 0.25,
+ggplot_flow_gif(staged[c("outer", show)], cols = cols_all, alpha = alpha_all,
+                rotation_matrix = rmat, delay = 0.16,
                 volume = fly, volume_col = "lightpink", volume_alpha = 0.08,
                 targets = tgts[show], target_alpha = 0.18,
                 file = "mosquito_to_fly.gif")   # needs the gifski (or magick) package
@@ -289,9 +313,11 @@ the fly CX neuropils merged into one light-pink volume, each individual fly CX t
 still drawn in transparent greyscale underneath.
 
 ```{r cx-gif}
-cxn    <- grep("^(FB|EB|PB|NO|GA)_", show, value = TRUE)
-cxvol  <- Rvcg::vcgClean(Morpho::mergeMeshes(unname(tgts[cxn])), sel = 0)  # merged fly CX
-ggplot_flow_gif(flows[cxn], cols = cols[cxn], rotation_matrix = rmat,
+cxn       <- grep("^(FB|EB|PB|NO|GA)_", show, value = TRUE)
+cxvol     <- Rvcg::vcgClean(Morpho::mergeMeshes(unname(tgts[cxn])), sel = 0)  # merged fly CX
+a1cx      <- reveal(cxn, cxn)                      # same two acts, reveal centred on the CX
+staged_cx <- setNames(lapply(cxn, function(k) c(a1cx[[k]], flows[[k]])), cxn)
+ggplot_flow_gif(staged_cx[cxn], cols = cols[cxn], rotation_matrix = rmat, delay = 0.16,
                 volume = cxvol, volume_col = "lightpink", volume_alpha = 0.06,
                 targets = tgts[cxn], target_alpha = 0.22,
                 file = "mosquito_cx_to_fly.gif")
