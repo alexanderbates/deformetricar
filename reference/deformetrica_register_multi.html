@@ -84,7 +84,12 @@ are templates (moving), <code>targets</code> the subject (fixed). Names become o
 
 
 <dt id="arg-object-kernel-width">object_kernel_width<a class="anchor" aria-label="anchor" href="#arg-object-kernel-width"></a></dt>
-<dd><p>Per-object data kernel width (defaults to <code>kernel_width</code>).</p></dd>
+<dd><p>Data-attachment kernel width — the spatial scale at which
+each object's surface/curve mismatch is measured (Current/Varifold). <em>Smaller =
+finer, more local matching</em>, which pulls small structures (galls, noduli) onto
+their target more tightly. A single value for every object, or a per-object vector
+(recycled if length 1; matched by name to <code>sources</code> if named, else in order).
+Defaults to <code>kernel_width</code>.</p></dd>
 
 
 <dt id="arg-landmarks">landmarks<a class="anchor" aria-label="anchor" href="#arg-landmarks"></a></dt>

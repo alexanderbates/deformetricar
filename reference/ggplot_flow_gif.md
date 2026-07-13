@@ -1,10 +1,16 @@
 # Animate a Deformetrica geodesic flow as a nat.ggplot GIF
 
-Renders a set of warping objects across the timepoints of a geodesic
-flow (as returned by
+A thin convenience wrapper around
+[`nat.ggplot::ggneuron_gif()`](https://natverse.github.io/nat.ggplot/reference/ggneuron_gif.html)
+(where the general "animate a sequence of nat objects to a GIF"
+machinery now lives). It renders a set of warping objects across the
+timepoints of a geodesic flow (as returned by
 [`deformetrica_shoot()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_shoot.md)
 with `flow = TRUE`) to a ping-pong GIF, each object in its own colour
-over a translucent reference volume.
+over an optional reference volume and static greyscale targets. Kept for
+convenience/back-compatibility; new code can call
+[`nat.ggplot::ggneuron_gif()`](https://natverse.github.io/nat.ggplot/reference/ggneuron_gif.html)
+directly.
 
 ## Usage
 
@@ -83,3 +89,8 @@ ggplot_flow_gif(
 
 The GIF path if written (needs `gifski`, or falls back to `magick`),
 else the vector of frame PNGs.
+
+## See also
+
+[`nat.ggplot::ggneuron_gif()`](https://natverse.github.io/nat.ggplot/reference/ggneuron_gif.html)
+for the underlying, general animation function.

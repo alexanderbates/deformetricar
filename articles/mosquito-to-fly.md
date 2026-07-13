@@ -214,13 +214,16 @@ sigma["outer"] <- 4.0                                   # hull: weak global enve
 sigma[grep("^(VL|ML|PED)_", names(sigma))] <- 1.0       # MB lobes: strongest (compress the elongated vertical lobe)
 sigma[grep("^EB_", names(sigma))] <- 1.5                # ellipsoid body: circularise the open arch onto the ring
 sigma[grep("^(FB|PB)_", names(sigma))] <- 2.0           # fan-shaped body / protocerebral bridge: match curvature
-sigma[grep("^GA_", names(sigma))] <- 1.0                # galls: snap onto the small fly GA
+sigma[grep("^GA_", names(sigma))] <- 0.5                # galls: strongest of all, snap onto the small fly GA
 sigma[grep("^NO_", names(sigma))] <- 1.5                # noduli: land + resolve left/right
 
-# A larger kernel width gives a stiffer, more GLOBAL warp, so elongated structures
-# (peduncle, vertical lobe) move coherently onto their target instead of leaving a
-# distal part behind. Set it from the target bounding box (~diagonal / 11).
-kw <- sqrt(sum((apply(xyzmatrix(fly), 2, max) - apply(xyzmatrix(fly), 2, min))^2)) / 11
+# Kernel width sets the deformation's spatial stiffness. Too large (~diagonal / 11)
+# and it is so global that small peripheral structures (galls, noduli) get dragged by
+# their big neighbours; a little smaller (~diagonal / 15) lets them deform locally onto
+# their targets while the elongated optic lobes and MB lobes still move coherently
+# (medulla surface error dropped from ~22 to ~4 um, noduli roughly halved). Set it from
+# the target bounding box.
+kw <- sqrt(sum((apply(xyzmatrix(fly), 2, max) - apply(xyzmatrix(fly), 2, min))^2)) / 15
 fit <- deformetrica_register_multi(
   srcs, tgts, kernel_width = kw, data_sigma = sigma,
   timepoints = 15L, max_iterations = 60L, device = "auto")
@@ -308,6 +311,19 @@ do.call(rbind, lapply(names(srcs), score))
   al.*, *eLife* 2021) for the fly definitions.
 - The **lamina** is excluded throughout — it has no fly central-brain
   counterpart.
+- **Tuning levers.** Three parameters trade global against local fit,
+  per object: `data_sigma` (attachment weight, smaller = stronger),
+  `object_kernel_width` (the scale at which surface mismatch is
+  measured, smaller = finer) and the global `kernel_width` (deformation
+  stiffness). The whole-brain error here is ~3–4 µm for almost every
+  neuropil; a smaller `kernel_width` (~diagonal/15) was needed so small
+  peripheral structures are not dragged by their large neighbours.
+- **The galls (GA) are a known hard case**: tiny and far-lateral, the
+  single global diffeomorphism drags them off their fly target no matter
+  the weight, kernel width or object kernel. For a structure like this,
+  register it on its own with
+  [`deformetrica_register()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_register.md)
+  rather than in the whole-brain fit.
 - Replace the whole-brain fit with a single homologous pair
   (e.g. mosquito AL → fly AL) via
   [`deformetrica_register()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_register.md)
