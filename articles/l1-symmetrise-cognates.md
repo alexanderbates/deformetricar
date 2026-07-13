@@ -21,13 +21,14 @@ driven by the live VFB dataset. That is the point of the walkthrough:
 the three functions are the deliverable.
 
 ![The right Kenyon cells (rose) sweeping across the midline onto their
-left cognates (blue) under the symmetrising map, over the static grey L1
-CNS — viewed along the head-to-tail long
-axis.](../reference/figures/l1_symmetrise.gif)
+left cognates (blue) under the symmetrising map — their somata drawn as
+circles — over the static grey L1 CNS, viewed along the head-to-tail
+long axis.](../reference/figures/l1_symmetrise.gif)
 
 The right Kenyon cells (rose) sweeping across the midline onto their
-left cognates (blue) under the symmetrising map, over the static grey L1
-CNS — viewed along the head-to-tail long axis.
+left cognates (blue) under the symmetrising map — their **somata drawn
+as circles** — over the static grey L1 CNS, viewed along the
+head-to-tail long axis.
 
 ``` r
 
@@ -155,13 +156,15 @@ static as the target the right ones (rose) should meet.
 
 ``` r
 
-getkc <- function(ann) {
-  n <- read.neurons.catmaid(catmaid_skids(ann, conn = l1), conn = l1)
-  n <- nat::nlapply(nat::nlapply(n, nat::resample, stepsize = 1500), nm2um)
-  if (length(n) > 36) n[round(seq(1, length(n), length.out = 36))] else n   # a legible subset
+# One Kenyon-cell fetcher for the whole vignette: n = NULL keeps them all (§6),
+# n = 36 takes a legible subset for the animation.
+getkc <- function(ann, n = NULL) {
+  x <- read.neurons.catmaid(catmaid_skids(ann, conn = l1), conn = l1)
+  x <- nat::nlapply(nat::nlapply(x, nat::resample, stepsize = 1500), nm2um)
+  if (!is.null(n) && length(x) > n) x[round(seq(1, length(x), length.out = n))] else x
 }
-kcR <- getkc("annotation:Kenyon Cell right")
-kcL <- getkc("annotation:Kenyon Cell left")
+kcR <- getkc("annotation:Kenyon Cell right", n = 36)
+kcL <- getkc("annotation:Kenyon Cell left",  n = 36)
 
 # the two acts of otherside(): the mirror-affine sweep, then the diffeomorphic flow
 interp  <- function(o, from, to, n) lapply(seq(0, 1, length.out = n),
@@ -172,16 +175,25 @@ act2    <- deformetrica_shoot(aff_kc, fit$control_points, fit$momenta,
                               kernel_width = fit$kernel_width, flow = TRUE)   # the diffeomorphism
 flow_kc <- c(act1, act2)
 
+# each Kenyon cell is rooted at its soma, so its root point IS the cell body: draw
+# those as circles (the moving right somata, the static left ones) with `points`.
+soma_of <- function(nl) do.call(rbind, lapply(nl, function(n) xyzmatrix(n)[nat::rootpoints(n)[1], , drop = FALSE]))
+somata_R <- lapply(flow_kc, soma_of)          # per-frame, move with the sweep
+somata_L <- soma_of(kcL)                       # static targets
+
 # view: long axis (PC1) vertical, next axis horizontal, shortest into the screen
 pc <- prcomp(xyzmatrix(cns))$rotation
 RM <- diag(4); RM[1, 1:3] <- pc[, 2]; RM[2, 1:3] <- -pc[, 1]; RM[3, 1:3] <- pc[, 3]
 ggplot_flow_gif(list(KC_right = flow_kc),
-                cols = list(KC_right = "#FF5C8A"), alpha = c(KC_right = 0.5),
+                cols = list(KC_right = "#FF5C8A"), alpha = c(KC_right = 0.35),
                 targets = list(KC_left = kcL), target_cols = c(KC_left = "#2C7FB8"),
-                target_alpha = 0.35,
+                target_alpha = 0.28,
+                points = list(KC_right = somata_R, KC_left = somata_L),
+                point_cols = c(KC_right = "#FF5C8A", KC_left = "#2C7FB8"),
+                point_size = 3, point_alpha = 0.85,
                 volume = cns, volume_col = "grey65", volume_alpha = 0.10,
                 rotation_matrix = RM, delay = 0.12,
-                file = "l1_symmetrise.gif")   # static grey CNS + left KCs as context
+                file = "l1_symmetrise.gif")   # somata as circles; grey CNS + left KCs as context
 ```
 
 ## 6. Find left/right cognates by NBLAST
@@ -196,10 +208,8 @@ both sides, so most rights should map cleanly onto a left.
 
 library(nat.nblast)
 # the FULL Kenyon-cell sets (the animation above used a legible subset)
-allkc <- function(ann) nat::nlapply(nat::nlapply(
-  read.neurons.catmaid(catmaid_skids(ann, conn = l1), conn = l1), nat::resample, stepsize = 1000), nm2um)
-KCR <- allkc("annotation:Kenyon Cell right")
-KCL <- allkc("annotation:Kenyon Cell left")
+KCR <- getkc("annotation:Kenyon Cell right")
+KCL <- getkc("annotation:Kenyon Cell left")
 
 kcR_other <- otherside(KCR)                              # every right KC, warped onto the left
 dp <- function(nl) nat::dotprops(nl, resample = 1, k = 5, .progress = "none")

@@ -29,6 +29,8 @@ ggplot_flow_gif(
   points = NULL,
   point_cols = NULL,
   point_size = 3,
+  point_alpha = 1,
+  point_stroke = 0.8,
   file = NULL,
   width = 900,
   height = 800,
@@ -90,7 +92,8 @@ ggplot_flow_gif(
 
 - point_cols:
 
-  Named colours for `points`; `point_size` the circle size.
+  Named colours for `points`; `point_size` the circle size,
+  `point_alpha` its opacity and `point_stroke` its outline width.
 
 - file:
 
