@@ -23,7 +23,7 @@ Suggests:
     reticulate,
     Rvcg,
     ggplot2,
-    nat.ggplot (>= 1.1.1),
+    nat.ggplot (>= 1.1.5),
     gifski,
     magick,
     nat.templatebrains,
@@ -43,7 +43,7 @@ Suggests:
     rmarkdown
 Remotes:
     natverse/nat,
-    natverse/nat.ggplot@v1.1.1,
+    natverse/nat.ggplot@v1.1.5,
     natverse/nat.nblast,
     natverse/nat.templatebrains,
     natverse/nat.flybrains,
