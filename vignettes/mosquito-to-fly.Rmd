@@ -225,13 +225,24 @@ flows <- lapply(srcs[show], deformetrica_shoot,
                 control_points = fit$control_points, momenta = fit$momenta,
                 kernel_width = fit$kernel_width, timepoints = 15L,
                 device = "auto", flow = TRUE)
-# Family hues (optic = blue, MB = green, AL = gold, CX = warm/purple), separated
-# within a family by lightness so ME/LO/LOP and CA/PED/VL/ML each read distinctly.
-pal <- c(ME="#1B4F72", LO="#2E86AB", LOP="#7FB3D5",
-         CA="#196F3D", PED="#28B463", VL="#7DCEA0", ML="#A9DFBF", AL="#F39C12",
-         AMMC="#CA6F1E", LAL="#566573", GA="#C39BD3", AOTU="#45B39D",
-         FB="#E74C3C", EB="#E27396", PB="#8E44AD", NO="#16A085")
-cols <- setNames(pal[sub("_[LR]$", "", show)], show)
+# Colour by functional group (L/R matched), shaded within group, LaCroix-inspired:
+# optic = blue, mushroom body = pink-purple, central complex = yellow-orange, the SEZ
+# AMMC green, and the rest of the mid brain cerise.
+grp <- function(b) {
+  if (b %in% c("ME","LO","LOP")) "optic"
+  else if (b %in% c("AMMC")) "sez"
+  else if (b %in% c("CA","PED","VL","ML")) "mb"
+  else if (b %in% c("FB","EB","PB","NO")) "cx"
+  else "midbrain"
+}
+grp_ramp <- list(optic=c("#1BA3C6","#B3ECF7"), sez=c("#2CB11B","#CBEFA0"),
+                 mb=c("#C1478E","#EDBFE0"), cx=c("#F5850B","#FFD24D"),
+                 midbrain=c("#C1275E","#F2A6C2"))
+sb  <- sub("_[LR]$", "", show); groups <- vapply(sb, grp, character(1))
+cols <- setNames(character(length(show)), show)
+for (g in names(grp_ramp)) { gb <- unique(sb[groups == g]); if (!length(gb)) next
+  ramp <- setNames(grDevices::colorRampPalette(grp_ramp[[g]])(length(gb)), gb)
+  cols[groups == g] <- ramp[sb[groups == g]] }
 
 # Fly context for the GIF: the whole brain hull as a very translucent light-pink
 # envelope, and each matched fly *target* neuropil in a transparent greyscale, so the
