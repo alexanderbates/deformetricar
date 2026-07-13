@@ -117,5 +117,7 @@ all three when you use `deformetricar`.
 ## Acknowledgements
 
 Deformetrica is developed by the [Aramis Lab](https://www.deformetrica.org) at the
-Paris Brain Institute (ICM). `deformetricar` merely wraps it. Part of the
+Paris Brain Institute (ICM). `deformetricar` merely wraps it. The *Aedes aegypti*
+brain atlas used in the mosquito-to-fly example is from **Meg Younger's lab**
+([Mosquito Brain Browser](https://www.mosquitobrainbrowser.org/)). Part of the
 [natverse](https://natverse.github.io).
