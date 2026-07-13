@@ -117,7 +117,10 @@ on a CPU, longer than on a GPU but perfectly usable).</p>
 <p>The fly side is the JRC2018F outer surface plus the standard
 neuropils, brought into the JRC2018F frame once. The mosquito side is
 the <em>Aedes aegypti</em> standard brain (an <code>hxsurf</code> of
-named neuropil sub-surfaces).</p>
+named neuropil sub-surfaces) — a segmented atlas built by <strong>Meg
+Younger’s lab</strong> and browsable at the <a href="https://www.mosquitobrainbrowser.org/" class="external-link">Mosquito Brain Browser</a>;
+we load it here through the Insect Brain Database mirror. Please credit
+that source when you use the <em>Aedes</em> brain.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fly</span>     <span class="op">&lt;-</span> <span class="fu"><a href="https://dmurdoch.github.io/rgl/dev/reference/as.mesh3d.default.html" class="external-link">as.mesh3d</a></span><span class="op">(</span><span class="fu">nat.flybrains</span><span class="fu">::</span><span class="va"><a href="https://natverse.github.io/nat.flybrains/reference/JRC2018.html" class="external-link">JRC2018F.surf</a></span><span class="op">)</span></span>
 <span><span class="va">fly_np</span>  <span class="op">&lt;-</span> <span class="fu">nat.flybrains</span><span class="fu">::</span><span class="va"><a href="https://natverse.github.io/nat.flybrains/reference/JFRC2NP.surf.html" class="external-link">JFRC2NP.surf</a></span></span>
@@ -138,6 +141,13 @@ fly, and hands back an <code><a href="https://rdrr.io/r/base/apply.html" class="
 neuropil is carried into the aligned frame consistently.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pre</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/affine_prealign.html">affine_prealign</a></span><span class="op">(</span><span class="fu"><a href="https://dmurdoch.github.io/rgl/dev/reference/as.mesh3d.default.html" class="external-link">as.mesh3d</a></span><span class="op">(</span><span class="va">aedes_brain</span><span class="op">)</span>, <span class="va">fly</span>, type <span class="op">=</span> <span class="st">"rigid"</span><span class="op">)</span></span>
+<span><span class="co"># The deforming whole-brain hull EXCLUDES the lamina (LA): it is a large, far-lateral</span></span>
+<span><span class="co"># optic neuropil with no fly central-brain counterpart, so it must not be shown warping</span></span>
+<span><span class="co"># onto the fly (and it would only distort the hull's match to the compact fly surface).</span></span>
+<span><span class="co"># Rebuild the aligned hull from the aedes brain minus every lamina region — this leaves</span></span>
+<span><span class="co"># the affine transform (and so every neuropil position below) untouched.</span></span>
+<span><span class="va">nola</span>        <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grep</a></span><span class="op">(</span><span class="st">"^LA(_|$)"</span>, <span class="va">aedes_brain</span><span class="op">$</span><span class="va">RegionList</span>, value <span class="op">=</span> <span class="cn">TRUE</span>, invert <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">pre</span><span class="op">$</span><span class="va">aligned</span> <span class="op">&lt;-</span> <span class="va">pre</span><span class="op">$</span><span class="fu">apply</span><span class="op">(</span><span class="fu"><a href="https://dmurdoch.github.io/rgl/dev/reference/as.mesh3d.default.html" class="external-link">as.mesh3d</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">aedes_brain</span>, <span class="va">nola</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co"># Keep only each neuropil's largest connected component: some Insect Brain Database</span></span>
 <span><span class="co"># surfaces carry a stray detached fragment that cannot warp onto the compact fly</span></span>
 <span><span class="co"># target and would poke out of the brain.</span></span>
@@ -398,8 +408,15 @@ captures the whole thing as a single, portable bridge.</p>
 the ring-vs-arch shape of the lower unit) follows the comparative insect
 central-complex literature; see the fly reference atlas (Hulse <em>et
 al.</em>, <em>eLife</em> 2021) for the fly definitions.</li>
-<li>The <strong>lamina</strong> is excluded throughout — it has no fly
-central-brain counterpart.</li>
+<li>The <strong>lamina</strong> is excluded throughout — from the
+matched neuropils <em>and</em> from the deforming whole-brain hull — as
+it has no fly central-brain counterpart.</li>
+<li>
+<strong>Aedes brain credit.</strong> The <em>Aedes aegypti</em>
+standard brain is the segmented atlas from <strong>Meg Younger’s
+lab</strong> (<a href="https://www.mosquitobrainbrowser.org/" class="external-link">Mosquito
+Brain Browser</a>), here loaded via the Insect Brain Database. Please
+cite that source.</li>
 <li>
 <strong>Tuning levers.</strong> Three parameters trade global
 against local fit, per object: <code>data_sigma</code> (attachment

@@ -58,7 +58,11 @@ longer than on a GPU but perfectly usable).
 
 The fly side is the JRC2018F outer surface plus the standard neuropils,
 brought into the JRC2018F frame once. The mosquito side is the *Aedes
-aegypti* standard brain (an `hxsurf` of named neuropil sub-surfaces).
+aegypti* standard brain (an `hxsurf` of named neuropil sub-surfaces) — a
+segmented atlas built by **Meg Younger’s lab** and browsable at the
+[Mosquito Brain Browser](https://www.mosquitobrainbrowser.org/); we load
+it here through the Insect Brain Database mirror. Please credit that
+source when you use the *Aedes* brain.
 
 ``` r
 
@@ -84,6 +88,13 @@ every mosquito neuropil is carried into the aligned frame consistently.
 ``` r
 
 pre <- affine_prealign(as.mesh3d(aedes_brain), fly, type = "rigid")
+# The deforming whole-brain hull EXCLUDES the lamina (LA): it is a large, far-lateral
+# optic neuropil with no fly central-brain counterpart, so it must not be shown warping
+# onto the fly (and it would only distort the hull's match to the compact fly surface).
+# Rebuild the aligned hull from the aedes brain minus every lamina region — this leaves
+# the affine transform (and so every neuropil position below) untouched.
+nola        <- grep("^LA(_|$)", aedes_brain$RegionList, value = TRUE, invert = TRUE)
+pre$aligned <- pre$apply(as.mesh3d(subset(aedes_brain, nola)))
 # Keep only each neuropil's largest connected component: some Insect Brain Database
 # surfaces carry a stray detached fragment that cannot warp onto the compact fly
 # target and would poke out of the brain.
@@ -360,8 +371,13 @@ thing as a single, portable bridge.
   ring-vs-arch shape of the lower unit) follows the comparative insect
   central-complex literature; see the fly reference atlas (Hulse *et
   al.*, *eLife* 2021) for the fly definitions.
-- The **lamina** is excluded throughout — it has no fly central-brain
-  counterpart.
+- The **lamina** is excluded throughout — from the matched neuropils
+  *and* from the deforming whole-brain hull — as it has no fly
+  central-brain counterpart.
+- **Aedes brain credit.** The *Aedes aegypti* standard brain is the
+  segmented atlas from **Meg Younger’s lab** ([Mosquito Brain
+  Browser](https://www.mosquitobrainbrowser.org/)), here loaded via the
+  Insect Brain Database. Please cite that source.
 - **Tuning levers.** Three parameters trade global against local fit,
   per object: `data_sigma` (attachment weight, smaller = stronger),
   `object_kernel_width` (the scale at which surface mismatch is
