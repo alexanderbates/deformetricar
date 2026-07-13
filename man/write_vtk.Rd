@@ -25,10 +25,6 @@ write_vtk(
 \item{datatype}{.vtk datatype (defaults to float)}
 
 \item{title}{Title of the .vtk file (defaults to filename)}
-
-\item{mesh}{mesh3d or surf object}
-
-\item{trafo}{a transformation that can be given to Morpho::applyTransform}
 }
 \description{
 Write VTK file

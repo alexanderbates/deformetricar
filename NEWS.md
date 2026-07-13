@@ -1,7 +1,12 @@
-# deformetricar 0.2.0.9000 (development)
+# deformetricar 1.0.0
 
 A major modernisation: `deformetricar` is now a focused client for Deformetrica
-(>= 4.3), meeting current R package standards.
+(>= 4.3), meeting current R package standards. This 1.0.0 release marks a clean
+break from the 10-year-old, L1-larva-specific `ShootAndFlow3`/`sparseMatching3`
+era: the package is now template- and species-agnostic. The old L1 symmetrisation
+helpers (`symmetrisel1()`, `otherside()`, `apply.mirror.affine()`) are no longer
+exported — they are rebuilt from scratch as a walkthrough in the L1 vignette,
+showing how to compose a symmetrising warp from the general API.
 
 ## New features
 

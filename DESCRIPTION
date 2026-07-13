@@ -1,7 +1,7 @@
 Package: deformetricar
 Type: Package
 Title: R Client for the Deformetrica Shape Registration Toolkit
-Version: 0.2.0.9000
+Version: 1.0.0
 Authors@R: c(
     person("Alexander", "Bates", email = "alexander.shakeel.bates@gmail.com",
            role = c("aut", "cre")),
