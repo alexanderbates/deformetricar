@@ -37,6 +37,6 @@ jobs:
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
-          error-on: '"error"'   # experimental package: NOTEs/WARNINGs shouldn't fail CI
+          error-on: '"error"'   # tolerate NOTEs/WARNINGs (heavy optional Suggests) — fail only on errors
           # Deformetrica itself is not on the runner, so the deformetrica_* tests
           # skip; the rest (VTK I/O etc.) run.

@@ -1,8 +1,8 @@
 <!-- badges: start -->
 [![natverse](https://img.shields.io/badge/natverse-Part%20of%20the%20natverse-a241b6)](https://natverse.github.io)
-[![Docs](https://img.shields.io/badge/docs-experimental-orange.svg)](https://natverse.github.io/deformetricar/reference/)
+[![Docs](https://img.shields.io/badge/docs-stable-brightgreen.svg)](https://natverse.github.io/deformetricar/reference/)
 [![R-CMD-check](https://github.com/natverse/deformetricar/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/natverse/deformetricar/actions/workflows/R-CMD-check.yaml)
-[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
 <!-- badges: end -->
 
 # deformetricar <img src="man/figures/logo.png" align="right" height="139" alt="" />
