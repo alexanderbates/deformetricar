@@ -69,7 +69,7 @@ deformetrica_register_multi(
 - timepoints, max_iterations, device, deformetrica, workdir, verbose:
 
   As
-  [`deformetrica_register()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_register.md).
+  [`deformetrica_register()`](https://natverse.github.io/deformetricar/reference/deformetrica_register.md).
 
 ## Value
 
@@ -77,5 +77,5 @@ A list with `control_points`, `momenta`, `kernel_width`, `output_dir`.
 
 ## See also
 
-[`deformetrica_register()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_register.md)
+[`deformetrica_register()`](https://natverse.github.io/deformetricar/reference/deformetrica_register.md)
 for the single-object case.

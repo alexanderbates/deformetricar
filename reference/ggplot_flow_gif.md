@@ -5,7 +5,7 @@ A thin convenience wrapper around
 (where the general "animate a sequence of nat objects to a GIF"
 machinery now lives). It renders a set of warping objects across the
 timepoints of a geodesic flow (as returned by
-[`deformetrica_shoot()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_shoot.md)
+[`deformetrica_shoot()`](https://natverse.github.io/deformetricar/reference/deformetrica_shoot.md)
 with `flow = TRUE`) to a ping-pong GIF, each object in its own colour
 over an optional reference volume and static greyscale targets. Kept for
 convenience/back-compatibility; new code can call

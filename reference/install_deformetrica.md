@@ -6,7 +6,7 @@ uses [reticulate](https://rstudio.github.io/reticulate/) to create (or
 reuse) a dedicated Python environment, `pip install`s Deformetrica into
 it, verifies the `deformetrica` console script, and caches its path in
 `options(deformetricar.exe=)` so every subsequent
-[`find_deformetrica()`](https://alexanderbates.github.io/deformetricar/reference/find_deformetrica.md)
+[`find_deformetrica()`](https://natverse.github.io/deformetricar/reference/find_deformetrica.md)
 call resolves it automatically (including in new sessions if you persist
 the option).
 
@@ -91,7 +91,7 @@ Rosetta cold-start to import torch/vtk, then runs normally.
 
 ## See also
 
-[`find_deformetrica()`](https://alexanderbates.github.io/deformetricar/reference/find_deformetrica.md)
+[`find_deformetrica()`](https://natverse.github.io/deformetricar/reference/find_deformetrica.md)
 to locate an existing install.
 
 ## Examples

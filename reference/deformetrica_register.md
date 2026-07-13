@@ -5,7 +5,7 @@ The Deformetrica 4 estimate path: fit a diffeomorphism that deforms
 ordered `source` \<-\> `target` row correspondences a point-to-point
 Landmark attachment is used. Returns the estimated control points +
 momenta, which
-[`deformetrica_shoot()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_shoot.md)
+[`deformetrica_shoot()`](https://natverse.github.io/deformetricar/reference/deformetrica_shoot.md)
 then applies to arbitrary new points.
 
 ## Usage
@@ -78,9 +78,9 @@ deformetrica_register(
 
 A list with `control_points` and `momenta` (file paths), `kernel_width`
 and `output_dir`; pass the paths straight to
-[`deformetrica_shoot()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_shoot.md).
+[`deformetrica_shoot()`](https://natverse.github.io/deformetricar/reference/deformetrica_shoot.md).
 
 ## See also
 
-[`deformetrica_shoot()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_shoot.md)
+[`deformetrica_shoot()`](https://natverse.github.io/deformetricar/reference/deformetrica_shoot.md)
 to apply the fitted transform.

@@ -60,11 +60,11 @@ fit <- deformetrica_register(src, tgt, kernel_width = kw, timepoints = 15,
 
 ## 3. Apply + GIF of the L-R flow
 
-[`deformetrica_shoot()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_shoot.md)
+[`deformetrica_shoot()`](https://natverse.github.io/deformetricar/reference/deformetrica_shoot.md)
 flows any object through the fitted diffeomorphism (returning the same
 class you give it). With `flow = TRUE` it returns *every* geodesic
 timepoint, which
-[`ggplot_flow_gif()`](https://alexanderbates.github.io/deformetricar/reference/ggplot_flow_gif.md)
+[`ggplot_flow_gif()`](https://natverse.github.io/deformetricar/reference/ggplot_flow_gif.md)
 animates with `nat.ggplot`: the flipped brain (red) flowing onto the
 translucent original.
 
@@ -98,7 +98,7 @@ c(flip = median(abs(d_flip)), warped = median(abs(d_warped)))   # warped should 
 deformetricaLR built its L-R registration not from the brain surface but
 from a **set of matched cognate neuron tracts** — one diffeomorphism fit
 to many objects at once.
-[`deformetrica_register_multi()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_register_multi.md)
+[`deformetrica_register_multi()`](https://natverse.github.io/deformetricar/reference/deformetrica_register_multi.md)
 does exactly that, and mixes object types (meshes, neurons as polylines,
 point sets):
 

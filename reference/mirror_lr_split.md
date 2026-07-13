@@ -45,7 +45,7 @@ mirror_lr_split(
   onto its reflection (finds a curved symmetry surface). Needs a working
   Deformetrica install; passes `...` (e.g. `kernel_width`, `device`)
   through to
-  [`deformetrica_register()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_register.md)/[`deformetrica_shoot()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_shoot.md).
+  [`deformetrica_register()`](https://natverse.github.io/deformetricar/reference/deformetrica_register.md)/[`deformetrica_shoot()`](https://natverse.github.io/deformetricar/reference/deformetrica_shoot.md).
 
 - band:
 
@@ -68,5 +68,5 @@ signed `travel` along `axis`.
 
 ## See also
 
-[`split_mesh_lr()`](https://alexanderbates.github.io/deformetricar/reference/split_mesh_lr.md)
+[`split_mesh_lr()`](https://natverse.github.io/deformetricar/reference/split_mesh_lr.md)
 for the plain-plane split.

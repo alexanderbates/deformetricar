@@ -3,7 +3,7 @@
 Faces are assigned to a side by their centroid position along `axis`
 relative to `mid`. For a cleaner split of a shape whose symmetry surface
 is curved rather than a flat plane, see
-[`mirror_lr_split()`](https://alexanderbates.github.io/deformetricar/reference/mirror_lr_split.md).
+[`mirror_lr_split()`](https://natverse.github.io/deformetricar/reference/mirror_lr_split.md).
 
 ## Usage
 

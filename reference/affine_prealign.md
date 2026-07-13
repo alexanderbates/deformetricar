@@ -47,5 +47,5 @@ matrix).
 
 ## See also
 
-[`deformetrica_register()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_register.md)
+[`deformetrica_register()`](https://natverse.github.io/deformetricar/reference/deformetrica_register.md)
 for the non-rigid step that follows.

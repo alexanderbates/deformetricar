@@ -32,7 +32,7 @@ pipeline on O2.
   (ordered L2), `Varifold`, `Current`.
 
 `R/deformetrica4.R` (new, this branch) wraps that path:
-[`find_deformetrica()`](https://alexanderbates.github.io/deformetricar/reference/find_deformetrica.md) +
+[`find_deformetrica()`](https://natverse.github.io/deformetricar/reference/find_deformetrica.md) +
 `deformetrica_shoot(x, control_points, momenta, kernel_width, ...)`.
 
 ## Task list
@@ -40,8 +40,8 @@ pipeline on O2.
 ### Done on `dev`
 
 `R/deformetrica4.R`:
-[`find_deformetrica()`](https://alexanderbates.github.io/deformetricar/reference/find_deformetrica.md),
-[`deformetrica_shoot()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_shoot.md)
+[`find_deformetrica()`](https://natverse.github.io/deformetricar/reference/find_deformetrica.md),
+[`deformetrica_shoot()`](https://natverse.github.io/deformetricar/reference/deformetrica_shoot.md)
 (Deformetrica 4 shooting apply), ported from the validated
 `bancpipeline/deform/deformetrica-align-shoot.R`.
 
@@ -54,7 +54,7 @@ DESCRIPTION: `Authors@R`, `Encoding: UTF-8`, `URL`/`BugReports`,
 
 ### Done on `dev` (cont.)
 
-[`deformetrica_register()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_register.md)
+[`deformetrica_register()`](https://natverse.github.io/deformetricar/reference/deformetrica_register.md)
 (Deformetrica 4 estimate/fit path) + mesh support:
 `deformetrica_register` and `deformetrica_shoot` accept `mesh3d`
 (SurfaceMesh + Current, faces written to VTK; shoot returns a warped
@@ -76,12 +76,12 @@ nat.flybrains, insectbrainr, gifski).
 
 That repo (FAFB L-R bridging registration, Deformetrica 3.0.0.beta)
 contributed: - \[x\] **Multi-object registration** —
-[`deformetrica_register_multi()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_register_multi.md):
+[`deformetrica_register_multi()`](https://natverse.github.io/deformetricar/reference/deformetrica_register_multi.md):
 ONE diffeomorphism fit to a whole SET of matched objects at once (its
 `model.xml` had one `<object>` per cognate neuron tract). This is how a
 real bridging registration is built, vs a single source→target shape. -
 \[x\] **Neuron tracts as `NonOrientedPolyLine`** —
-[`write_neuron_vtk()`](https://alexanderbates.github.io/deformetricar/reference/write_neuron_vtk.md)
+[`write_neuron_vtk()`](https://natverse.github.io/deformetricar/reference/write_neuron_vtk.md)
 (VTK POLYDATA LINES) + object auto-classification
 (mesh→SurfaceMesh/Current, neuron→NonOrientedPolyLine/Varifold,
 points→Landmark). - \[x\] **Landmark object as a global regulariser** —
@@ -106,7 +106,7 @@ Regenerate `NAMESPACE` + `man/` with roxygen2 7.x
 (`devtools::document()`); export the new functions.
 
 Add a Deformetrica 4 **estimate** wrapper
-([`deformetrica_register()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_register.md))
+([`deformetrica_register()`](https://natverse.github.io/deformetricar/reference/deformetrica_register.md))
 mirroring the `bancpipeline` fit: write ordered Landmark VTKs +
 Registration/DeterministicAtlas model, run `deformetrica estimate`,
 return control points + momenta. Fold in the object-id derivation fix
@@ -114,7 +114,7 @@ return control points + momenta. Fold in the object-id derivation fix
 
 Supersede `shootflow()` (2.1) via lifecycle: keep it, mark `superseded`,
 point to
-[`deformetrica_shoot()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_shoot.md).
+[`deformetrica_shoot()`](https://natverse.github.io/deformetricar/reference/deformetrica_shoot.md).
 Do NOT delete — some users may still have Deformetrica 2.1.
 
 Relocate/shrink example data: move `reg_neurons` (37 MB) +
@@ -126,7 +126,7 @@ with [`requireNamespace()`](https://rdrr.io/r/base/ns-load.html) and
 move to `Suggests` (only `nat`, `xml2` are core).
 
 Tests (testthat 3e): a
-[`deformetrica_shoot()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_shoot.md)
+[`deformetrica_shoot()`](https://natverse.github.io/deformetricar/reference/deformetrica_shoot.md)
 round-trip on a tiny fixture registration; skip on CI with
 `skip_if(is.null(find_deformetrica-safe))` when the binary is absent.
 

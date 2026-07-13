@@ -30,13 +30,13 @@ type and side**, and anchored at the cell bodies:
     and its **surface mesh** is decimated to matched complexity on both
     sides;
 3.  a **multi-object diffeomorphism**
-    ([`deformetrica_register_multi()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_register_multi.md))
+    ([`deformetrica_register_multi()`](https://natverse.github.io/deformetricar/reference/deformetrica_register_multi.md))
     fits, per (cell type, side), the core-frame skeletons (`Varifold`,
     weighted strongly) and the neuron-surface meshes (`Current`), plus
     an ordered **soma / root-point `Landmark`** correspondence and a
     weak whole-brain hull anchor;
 4.  a **nat.ggplot animation**
-    ([`ggplot_flow_gif()`](https://alexanderbates.github.io/deformetricar/reference/ggplot_flow_gif.md))
+    ([`ggplot_flow_gif()`](https://natverse.github.io/deformetricar/reference/ggplot_flow_gif.md))
     of the geodesic flow, with the somata shown as circles.
 
 ``` r
@@ -179,7 +179,7 @@ set.seed(1); anc <- xyzmatrix(hull)[sample(ncol(hull$vb), 400L), ]
 
 ## 4. One diffeomorphism, matched per cell type and side
 
-[`deformetrica_register_multi()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_register_multi.md)
+[`deformetrica_register_multi()`](https://natverse.github.io/deformetricar/reference/deformetrica_register_multi.md)
 fits a single diffeomorphism to every object at once. For each (type,
 side) present in **both** datasets we add the core-frame skeleton
 (`Varifold`, weighted strongly via a small `data_sigma`) and the merged,
@@ -217,7 +217,7 @@ fit <- deformetrica_register_multi(
 
 `deformetrica_shoot(..., flow = TRUE)` returns every timepoint of the
 geodesic flow.
-[`ggplot_flow_gif()`](https://alexanderbates.github.io/deformetricar/reference/ggplot_flow_gif.md)
+[`ggplot_flow_gif()`](https://natverse.github.io/deformetricar/reference/ggplot_flow_gif.md)
 renders the maleCNS neurons (red) flowing onto the static BANC targets
 (blue) in the brain hull; `points` draws the **somata as circles** — the
 moving maleCNS root points and the static BANC ones — so the cell-body

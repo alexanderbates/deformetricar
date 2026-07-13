@@ -13,9 +13,9 @@ and then **finds cognate neuron pairs** by morphological similarity
 (NBLAST) once the two sides are in register.
 
 Ten years ago this package was an L1-only tool: it shipped hard-wired
-helpers — `apply.mirror.affine()`, `symmetrisel1()`, `otherside()` for
-the symmetrising map, and `findcognate()` / `checkL1cognates()` for the
-left-right cognate search — each backed by a bundled transform and a
+helpers — `apply_mirror_affine()`, `symmetrise_l1()`, `other_side()` for
+the symmetrising map, and `find_cognate()` / `check_l1_cognates()` for
+the left-right cognate search — each backed by a bundled transform and a
 bespoke L1 NBLAST scoring matrix. `deformetricar` is no longer
 L1-specific, so those functions are gone from the package. **This
 vignette rebuilds them from scratch**, as a few lines each over the
@@ -42,34 +42,66 @@ library(Rvcg)             # mesh clean / decimate
 library(Morpho)           # applyTransform
 ```
 
-## 1. Fetch the L1 CNS and its left/right compartments (CATMAID)
+## 1. Acquire the L1 data from Virtual Fly Brain
 
-The L1 larval CATMAID is public and read-only. It ships the whole-CNS
-surface (`cns`) plus a set of bilateral neuropil **volumes** — the two
-brain hemispheres, the SEZ, and the thoracic/abdominal VNC segments
-(`T1`–`T3`, `A1`–`A8`) — each as a `_left`/`_right` pair. Those matched
-pairs are the anchors that teach the warp what “symmetric” means; we
-take a spread of them down the whole length of the CNS.
+The L1 larval CATMAID is public and read-only — no login needed. Connect
+once; from there everything is a query against that connection. We pull
+two kinds of object: the **neurons** (fetched by annotation) and the
+**neuropil compartment volumes** that will anchor the symmetrising warp.
 
 ``` r
 
 l1 <- catmaid_connection(server = "https://l1em.catmaid.virtualflybrain.org/")
-vl <- catmaid_get_volumelist(conn = l1)
 # Deformetrica needs ~O(1-100) coordinates: work in um, not the raw nm.
-nm2um  <- function(x) { xyzmatrix(x) <- xyzmatrix(x) / 1000; x }
-getvol <- function(name) nm2um(Rvcg::vcgClean(
+nm2um <- function(x) { xyzmatrix(x) <- xyzmatrix(x) / 1000; x }
+```
+
+### The neurons
+
+Cells are fetched by **annotation**. The L1 dataset is richly annotated
+— browse the tags with `catmaid_get_annotationlist(conn = l1)` — so a
+query like `"annotation:Kenyon Cell right"` returns every skeleton
+tagged with it. `get_neurons()` fetches an annotation’s skeletons,
+resamples them and puts them in µm; we take the left and right **Kenyon
+cells** as a clean, bilaterally-matched test set. Swap the annotation
+for any cell type, or widen it to pull the whole ~4,000-neuron CNS.
+
+``` r
+
+get_neurons <- function(ann, n = NULL) {
+  x <- read.neurons.catmaid(catmaid_skids(ann, conn = l1), conn = l1)
+  x <- nat::nlapply(nat::nlapply(x, nat::resample, stepsize = 1500), nm2um)
+  if (!is.null(n) && length(x) > n) x[round(seq(1, length(x), length.out = n))] else x
+}
+KCR <- get_neurons("annotation:Kenyon Cell right")   # all right Kenyon cells
+KCL <- get_neurons("annotation:Kenyon Cell left")    # all left  Kenyon cells
+```
+
+### The CNS surface and its left/right compartments
+
+The dataset also ships the whole-CNS surface (`cns`) plus a set of
+bilateral neuropil **volumes** — the two brain hemispheres, the SEZ, and
+the thoracic/abdominal VNC segments (`T1`–`T3`, `A1`–`A8`), each as a
+`_left`/`_right` pair. Those matched pairs are the anchors that teach
+the warp what “symmetric” means; we take a spread of them down the whole
+length of the CNS.
+
+``` r
+
+vl <- catmaid_get_volumelist(conn = l1)
+get_volume <- function(name) nm2um(Rvcg::vcgClean(
   as.mesh3d(catmaid_get_volume(vl$id[vl$name == name], conn = l1, rval = "mesh3d")),
   sel = 0, silent = TRUE))
 
-cns   <- getvol("cns")                                    # the whole CNS surface
+cns   <- get_volume("cns")                                    # the whole CNS surface
 pairs <- c("Brain Hemisphere", "SEZ", "T1", "T2", "A3", "A6")   # head -> tail spread
 lname <- function(p) if (p == "Brain Hemisphere") "Brain Hemisphere left"  else paste0(p, "_left")
 rname <- function(p) if (p == "Brain Hemisphere") "Brain Hemisphere right" else paste0(p, "_right")
-L <- setNames(lapply(pairs, function(p) getvol(lname(p))), pairs)
-R <- setNames(lapply(pairs, function(p) getvol(rname(p))), pairs)
+L <- setNames(lapply(pairs, function(p) get_volume(lname(p))), pairs)
+R <- setNames(lapply(pairs, function(p) get_volume(rname(p))), pairs)
 ```
 
-## 2. `apply.mirror.affine()` — reflect one side onto the other
+## 2. `apply_mirror_affine()` — reflect one side onto the other
 
 The linear half of a symmetrising map. Reflect an object across the CNS
 midline plane (so left ↔︎ right), then rigidly affine-align that
@@ -88,8 +120,8 @@ mirror <- function(m) {                                   # reflect across x = m
 }
 pre <- affine_prealign(mirror(cns), cns, type = "rigid")  # reflection -> original CNS
 
-# apply.mirror.affine(x): reflect x, then apply that same rigid alignment.
-apply.mirror.affine <- function(x) pre$apply(mirror(x))
+# apply_mirror_affine(x): reflect x, then apply that same rigid alignment.
+apply_mirror_affine <- function(x) pre$apply(mirror(x))
 ```
 
 ## 3. Fit the symmetrising diffeomorphism from the matched compartments
@@ -98,7 +130,7 @@ The affine cannot capture the specimen’s *non-rigid* left-right
 asymmetry (a slightly bent VNC, one hemisphere fuller than the other). A
 diffeomorphism can. We fit **one** diffeomorphism to the whole set of
 matched compartments at once with
-[`deformetrica_register_multi()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_register_multi.md),
+[`deformetrica_register_multi()`](https://natverse.github.io/deformetricar/reference/deformetrica_register_multi.md),
 in **both directions** so the result is genuinely symmetric: each
 mirror-affined *right* compartment is driven onto its *left* partner,
 and each mirror-affined *left* onto its *right*. Registering the
@@ -110,36 +142,36 @@ this cheap and robust.
 dec  <- function(m, n = 700L) Rvcg::vcgQEdecim(m, tarface = n)
 srcs <- tgts <- list()
 for (p in pairs) {
-  srcs[[paste0(p, "_R")]] <- dec(apply.mirror.affine(R[[p]])); tgts[[paste0(p, "_R")]] <- dec(L[[p]])
-  srcs[[paste0(p, "_L")]] <- dec(apply.mirror.affine(L[[p]])); tgts[[paste0(p, "_L")]] <- dec(R[[p]])
+  srcs[[paste0(p, "_R")]] <- dec(apply_mirror_affine(R[[p]])); tgts[[paste0(p, "_R")]] <- dec(L[[p]])
+  srcs[[paste0(p, "_L")]] <- dec(apply_mirror_affine(L[[p]])); tgts[[paste0(p, "_L")]] <- dec(R[[p]])
 }
 kw  <- sqrt(sum((apply(xyzmatrix(cns), 2, max) - apply(xyzmatrix(cns), 2, min))^2)) / 12
 fit <- deformetrica_register_multi(srcs, tgts, kernel_width = kw, data_sigma = 3,
                                    timepoints = 15L, max_iterations = 40L, device = "auto")
 ```
 
-## 4. `symmetrisel1()` and `otherside()` — the full contralateral map
+## 4. `symmetrise_l1()` and `other_side()` — the full contralateral map
 
-Now compose the two halves. `symmetrisel1()` mirror-affines an object
+Now compose the two halves. `symmetrise_l1()` mirror-affines an object
 and then flows it through the fitted diffeomorphism — the complete
 non-linear symmetrisation. Because the diffeomorphism that makes the CNS
 symmetric is *exactly* the map that carries each structure onto its
-contralateral partner, `otherside()` — “send this neuron to the other
+contralateral partner, `other_side()` — “send this neuron to the other
 side of the CNS” — is the very same function. (`flow = TRUE` keeps every
 geodesic timepoint, for the animation; the default returns just the
 endpoint.)
 
 ``` r
 
-symmetrisel1 <- function(x, flow = FALSE)
-  deformetrica_shoot(apply.mirror.affine(x), fit$control_points, fit$momenta,
+symmetrise_l1 <- function(x, flow = FALSE)
+  deformetrica_shoot(apply_mirror_affine(x), fit$control_points, fit$momenta,
                      kernel_width = fit$kernel_width, flow = flow)
 
-otherside <- symmetrisel1        # the symmetrising map IS the left<->right map
+other_side <- symmetrise_l1        # the symmetrising map IS the left<->right map
 ```
 
-These three functions — `apply.mirror.affine()`, `symmetrisel1()`,
-`otherside()` — are the modern, dataset-driven replacements for the old
+These three functions — `apply_mirror_affine()`, `symmetrise_l1()`,
+`other_side()` — are the modern, dataset-driven replacements for the old
 bundled helpers. They accept anything with
 [`xyzmatrix()`](https://rdrr.io/pkg/nat/man/xyzmatrix.html) coordinates:
 a points matrix, a `mesh3d`, a `neuron` or a `neuronlist`.
@@ -149,7 +181,7 @@ a points matrix, a `mesh3d`, a `neuron` or a `neuronlist`.
 The whole L1 CNS is so nearly symmetric that the *surface* deformation
 is only a few µm — true to the biology, but too subtle to watch. The
 striking thing to see is the **map applied to cells**: send the right
-Kenyon cells across the midline with `otherside()` and watch them land
+Kenyon cells across the midline with `other_side()` and watch them land
 on their left partners. We animate the full journey in two acts — the
 **mirror-affine** reflection (a big, ~50 µm cross-midline sweep) and
 then the **diffeomorphic** flow — over a static grey CNS, viewed along
@@ -159,20 +191,14 @@ static as the target the right ones (rose) should meet.
 
 ``` r
 
-# One Kenyon-cell fetcher for the whole vignette: n = NULL keeps them all (§6),
-# n = 36 takes a legible subset for the animation.
-getkc <- function(ann, n = NULL) {
-  x <- read.neurons.catmaid(catmaid_skids(ann, conn = l1), conn = l1)
-  x <- nat::nlapply(nat::nlapply(x, nat::resample, stepsize = 1500), nm2um)
-  if (!is.null(n) && length(x) > n) x[round(seq(1, length(x), length.out = n))] else x
-}
-kcR <- getkc("annotation:Kenyon Cell right", n = 36)
-kcL <- getkc("annotation:Kenyon Cell left",  n = 36)
+# a legible subset of the KCs fetched in §1, so the animation is not too dense
+sub36 <- function(x) x[round(seq(1, length(x), length.out = min(36, length(x))))]
+kcR <- sub36(KCR); kcL <- sub36(KCL)
 
-# the two acts of otherside(): the mirror-affine sweep, then the diffeomorphic flow
+# the two acts of other_side(): the mirror-affine sweep, then the diffeomorphic flow
 interp  <- function(o, from, to, n) lapply(seq(0, 1, length.out = n),
              function(a) { x <- o; xyzmatrix(x) <- (1 - a) * from + a * to; x })
-aff_kc  <- apply.mirror.affine(kcR)                                    # reflect + rigid
+aff_kc  <- apply_mirror_affine(kcR)                                    # reflect + rigid
 act1    <- interp(kcR, xyzmatrix(kcR), xyzmatrix(aff_kc), 12)          # the cross-midline sweep
 act2    <- deformetrica_shoot(aff_kc, fit$control_points, fit$momenta,
                               kernel_width = fit$kernel_width, flow = TRUE)   # the diffeomorphism
@@ -199,10 +225,10 @@ ggplot_flow_gif(list(KC_right = flow_kc),
                 file = "l1_symmetrise.gif")   # somata as circles; grey CNS + left KCs as context
 ```
 
-## 6. `findcognate()` and `checkL1cognates()` — the cognate search
+## 6. `find_cognate()` and `check_l1_cognates()` — the cognate search
 
 With a symmetrising map, cognate-finding is direct: send every right
-neuron across with `otherside()`, then NBLAST it against the left
+neuron across with `other_side()`, then NBLAST it against the left
 neurons — the top hit is its putative left cognate. Two choices make
 this **L1-tuned**, as the original was: `UseAlpha = TRUE` (which
 up-weights each neuron’s tract-like backbone), and an **L1-scale scoring
@@ -220,10 +246,10 @@ at those L1 `distbreaks`; here we pass the adult alpha matrix
 library(nat.nblast)
 dp <- function(nl) nat::dotprops(nl, resample = 0.5, k = 5, .progress = "none")
 
-# findcognate(x, db_dps): carry x across with otherside(), NBLAST against the
+# find_cognate(x, db_dps): carry x across with other_side(), NBLAST against the
 # contralateral database, return each neuron's ranked cognates with scores.
-findcognate <- function(x, db_dps, smat = smat_alpha.fcwb, n = 5) {
-  q  <- dp(otherside(x))
+find_cognate <- function(x, db_dps, smat = smat_alpha.fcwb, n = 5) {
+  q  <- dp(other_side(x))
   sc <- nblast(q, db_dps, smat = smat, normalised = TRUE, UseAlpha = TRUE, .progress = "none")
   lapply(stats::setNames(colnames(sc), colnames(sc)), function(j) {
     o <- order(sc[, j], decreasing = TRUE)[seq_len(n)]
@@ -234,11 +260,9 @@ findcognate <- function(x, db_dps, smat = smat_alpha.fcwb, n = 5) {
 
 ``` r
 
-KCR <- getkc("annotation:Kenyon Cell right")     # full sets (§5 animated a subset)
-KCL <- getkc("annotation:Kenyon Cell left")
-kcl_dps <- dp(KCL)
+kcl_dps <- dp(KCL)                                 # KCR / KCL were fetched in §1
 
-cog <- findcognate(KCR, kcl_dps)                  # ranked left cognates per right KC
+cog <- find_cognate(KCR, kcl_dps)                  # ranked left cognates per right KC
 cog[[1]]                                           # top-5 cognates + scores for one right KC
 ```
 
@@ -250,34 +274,34 @@ mapping, and its size is a clean score for the whole symmetrisation.
 ``` r
 
 top1 <- function(res) vapply(res, function(d) d$cognate[1], character(1))
-r2l  <- top1(findcognate(KCR, kcl_dps))                       # right skid -> best left skid
-l2r  <- top1(findcognate(KCL, dp(KCR)))                       # left  skid -> best right skid
+r2l  <- top1(find_cognate(KCR, kcl_dps))                       # right skid -> best left skid
+l2r  <- top1(find_cognate(KCL, dp(KCR)))                       # left  skid -> best right skid
 rbh  <- names(r2l)[l2r[r2l] == names(r2l)]                    # mutual top-1 pairs
 sprintf("%d / %d right Kenyon cells have a reciprocal-best-hit left cognate",
         length(rbh), length(r2l))
 ```
 
-**`checkL1cognates()`** — the old interactive rgl inspector, as a static
-`nat.ggplot` panel: a right query carried across the midline (rose) over
-its top-ranked left cognate (blue), viewed along the CNS long axis (the
-`RM` from §5).
+**`check_l1_cognates()`** — the old interactive rgl inspector, as a
+static `nat.ggplot` panel: a right query carried across the midline
+(rose) over its top-ranked left cognate (blue), viewed along the CNS
+long axis (the `RM` from §5).
 
 ``` r
 
-checkL1cognates <- function(right_skid, db_right, db_left, cog, RM) {
-  q    <- otherside(db_right[right_skid])
+check_l1_cognates <- function(right_skid, db_right, db_left, cog, RM) {
+  q    <- other_side(db_right[right_skid])
   best <- db_left[cog[[right_skid]]$cognate[1]]
   ggplot2::ggplot() +
     nat.ggplot::geom_neuron(q,    rotation_matrix = RM, cols = c("#FF5C8A", "#FF5C8A")) +
     nat.ggplot::geom_neuron(best, rotation_matrix = RM, cols = c("#2C7FB8", "#2C7FB8")) +
     ggplot2::coord_fixed() + ggplot2::theme_void()
 }
-checkL1cognates(names(rbh)[1], KCR, KCL, cog, RM)   # inspect the first confident pair
+check_l1_cognates(names(rbh)[1], KCR, KCL, cog, RM)   # inspect the first confident pair
 ```
 
 The original ran this over the **whole L1 CNS** — all ~4,000
 reconstructed neurons at once, not just the Kenyon cells — to build a
-left-right map for the entire connectome. `findcognate()` scales
+left-right map for the entire connectome. `find_cognate()` scales
 straight to that: pass the whole-CNS dotprops as `db_dps`.
 
 ## Notes
@@ -287,10 +311,10 @@ straight to that: pass the whole-CNS dotprops as `db_dps`.
   stable; fitting to thousands of neuron skeletons at once is neither.
   The neurons are what we *apply* the finished map to — that is always
   cheap
-  ([`deformetrica_shoot()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_shoot.md)).
-- **The five functions are the point.** `apply.mirror.affine()`,
-  `symmetrisel1()`, `otherside()`, `findcognate()` and
-  `checkL1cognates()` are just closures over `pre`, `fit` and (for the
+  ([`deformetrica_shoot()`](https://natverse.github.io/deformetricar/reference/deformetrica_shoot.md)).
+- **The five functions are the point.** `apply_mirror_affine()`,
+  `symmetrise_l1()`, `other_side()`, `find_cognate()` and
+  `check_l1_cognates()` are just closures over `pre`, `fit` and (for the
   search) a scoring matrix. Swap the dataset (or the compartment list)
   and you have a symmetriser + cognate-finder for any other nervous
   system — nothing here is L1-specific any more, which is exactly why
@@ -310,7 +334,7 @@ straight to that: pass the whole-CNS dotprops as `db_dps`.
 
 The whole-brain and neuropil surface analogues of this workflow are in
 the
-[mosquito-to-fly](https://alexanderbates.github.io/deformetricar/articles/mosquito-to-fly.md)
+[mosquito-to-fly](https://natverse.github.io/deformetricar/articles/mosquito-to-fly.md)
 and [FAFB
-left-right](https://alexanderbates.github.io/deformetricar/articles/fafb-left-right.md)
+left-right](https://natverse.github.io/deformetricar/articles/fafb-left-right.md)
 vignettes.

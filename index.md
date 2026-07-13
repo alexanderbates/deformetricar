@@ -21,14 +21,14 @@ complex](reference/figures/mosquito_cx_to_fly.gif)
 **Drosophila** JRC2018F template. Right: just the central complex — the
 mosquito’s CBU/CBL onto the fly’s fan-shaped and ellipsoid bodies. Both
 are produced end-to-end by the [mosquito-to-fly
-vignette](https://alexanderbates.github.io/deformetricar/articles/mosquito-to-fly.html).*
+vignette](https://natverse.github.io/deformetricar/articles/mosquito-to-fly.html).*
 
 ## Installation
 
 ``` r
 
 # install.packages("remotes")
-remotes::install_github("alexanderbates/deformetricar")
+remotes::install_github("natverse/deformetricar")
 ```
 
 ### Installing Deformetrica
@@ -46,7 +46,7 @@ deformetricar::install_deformetrica()
 ```
 
 After that
-[`find_deformetrica()`](https://alexanderbates.github.io/deformetricar/reference/find_deformetrica.md)
+[`find_deformetrica()`](https://natverse.github.io/deformetricar/reference/find_deformetrica.md)
 resolves the executable automatically. It searches, in order:
 `options(deformetricar.exe=)`, the `PATH`, the managed environment
 above, then `~/.conda/envs/deformetrica/`. If you already have
@@ -55,13 +55,13 @@ Deformetrica elsewhere, just point at it with
 
 > **Apple Silicon (arm64 macOS):** Deformetrica 4.3 pins `torch==1.6`,
 > which has no native arm64 wheels.
-> [`install_deformetrica()`](https://alexanderbates.github.io/deformetricar/reference/install_deformetrica.md)
+> [`install_deformetrica()`](https://natverse.github.io/deformetricar/reference/install_deformetrica.md)
 > handles this automatically — on an M-series Mac it builds an `osx-64`
 > conda env (Python 3.8) that runs under Rosetta and pulls the x86-64
 > wheels (verified end-to-end here). You just need Rosetta
 > (`softwareupdate --install-rosetta`) and a conda binary. Linux and
 > Intel macOS install natively. See
-> [`?install_deformetrica`](https://alexanderbates.github.io/deformetricar/reference/install_deformetrica.md).
+> [`?install_deformetrica`](https://natverse.github.io/deformetricar/reference/install_deformetrica.md).
 
 ## Quick start
 
@@ -108,19 +108,19 @@ the rest.
 ## Articles
 
 - **[Warping a mosquito brain onto the
-  fly](https://alexanderbates.github.io/deformetricar/articles/mosquito-to-fly.html)**
+  fly](https://natverse.github.io/deformetricar/articles/mosquito-to-fly.html)**
   — register the *Aedes aegypti* brain onto *Drosophila* JRC2018F,
   driven by cross-identified neuropils matched left-to-left and
   right-to-right, with a nat.ggplot GIF.
 - **[A FAFB left-right brain
-  registration](https://alexanderbates.github.io/deformetricar/articles/fafb-left-right.html)**
+  registration](https://natverse.github.io/deformetricar/articles/fafb-left-right.html)**
   — register the FAFB brain surface to its mirror image.
 - **[Symmetrising the L1 larval CNS + finding
-  cognates](https://alexanderbates.github.io/deformetricar/articles/l1-symmetrise-cognates.html)**
+  cognates](https://natverse.github.io/deformetricar/articles/l1-symmetrise-cognates.html)**
   — build a left-right symmetrising warp from L1 larval VFB CATMAID
   neurons and find cognate pairs.
 - **[Warping maleCNS DA1 PNs onto the
-  BANC](https://alexanderbates.github.io/deformetricar/articles/malecns-to-banc.html)**
+  BANC](https://natverse.github.io/deformetricar/articles/malecns-to-banc.html)**
   — bridge the DA1 projection neurons from the maleCNS connectome into
   BANC space, then fit a per-side diffeomorphism (with an ordered soma
   correspondence) to warp them onto their BANC counterparts.

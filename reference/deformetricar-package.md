@@ -10,7 +10,7 @@ geodesic shooting. It also reads and writes VTK object formats.
 - `deformetricar.exe`:
 
   Path to (or name of) the `deformetrica` executable; consulted by
-  [`find_deformetrica`](https://alexanderbates.github.io/deformetricar/reference/find_deformetrica.md).
+  [`find_deformetrica`](https://natverse.github.io/deformetricar/reference/find_deformetrica.md).
   Set it in your [`Rprofile`](https://rdrr.io/r/base/Startup.html) if
   Deformetrica is not on the `PATH` or in a conda environment.
 
@@ -20,9 +20,9 @@ geodesic shooting. It also reads and writes VTK object formats.
 
 ## See also
 
-[`find_deformetrica`](https://alexanderbates.github.io/deformetricar/reference/find_deformetrica.md),
-[`deformetrica_register`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_register.md),
-[`deformetrica_shoot`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_shoot.md)
+[`find_deformetrica`](https://natverse.github.io/deformetricar/reference/find_deformetrica.md),
+[`deformetrica_register`](https://natverse.github.io/deformetricar/reference/deformetrica_register.md),
+[`deformetrica_shoot`](https://natverse.github.io/deformetricar/reference/deformetrica_shoot.md)
 
 ## Author
 

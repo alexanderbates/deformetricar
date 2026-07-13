@@ -25,13 +25,13 @@ translucent light-pink envelope, which stays fixed throughout.
 The recipe is the one a good bridging registration uses:
 
 1.  an **affine pre-alignment** to remove gross pose and scale
-    ([`affine_prealign()`](https://alexanderbates.github.io/deformetricar/reference/affine_prealign.md)),
+    ([`affine_prealign()`](https://natverse.github.io/deformetricar/reference/affine_prealign.md)),
 2.  a **multi-object diffeomorphism**
-    ([`deformetrica_register_multi()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_register_multi.md))
+    ([`deformetrica_register_multi()`](https://natverse.github.io/deformetricar/reference/deformetrica_register_multi.md))
     fit to the whole set of matched neuropils at once, each weighted,
     plus a weak outer hull, and
 3.  a **nat.ggplot animation** of the resulting geodesic flow
-    ([`ggplot_flow_gif()`](https://alexanderbates.github.io/deformetricar/reference/ggplot_flow_gif.md)).
+    ([`ggplot_flow_gif()`](https://natverse.github.io/deformetricar/reference/ggplot_flow_gif.md)).
 
 ``` r
 
@@ -83,7 +83,7 @@ aedes_brain <- insectbraindb_read_brain(species = "Aedes aegypti", brain.sex = "
 
 A diffeomorphism should not absorb a cross-species change of pose and
 scale — that is the affine step’s job.
-[`affine_prealign()`](https://alexanderbates.github.io/deformetricar/reference/affine_prealign.md)
+[`affine_prealign()`](https://natverse.github.io/deformetricar/reference/affine_prealign.md)
 centres, isotropically scales and rigidly refines the mosquito onto the
 fly, and hands back an [`apply()`](https://rdrr.io/r/base/apply.html)
 closure that replays the *identical* transform on any sub-object, so
@@ -160,7 +160,7 @@ protocerebral bridge (PB) and noduli (NO) match the fly PB and NO.
 Crucially the fly EB is a closed **ring**, whereas the mosquito CBL is
 an open **arch** — so forcing the whole shapes together distorts the
 ring. We instead split each midline CX object into left and right halves
-([`split_mesh_lr()`](https://alexanderbates.github.io/deformetricar/reference/split_mesh_lr.md))
+([`split_mesh_lr()`](https://natverse.github.io/deformetricar/reference/split_mesh_lr.md))
 and match per half, which keeps the deformation symmetric.
 
 ``` r
@@ -183,13 +183,13 @@ srcs$NO_R <- amesh("^NO_RIGHT"); tgts$NO_R <- fno$R
 > **Splitting an unpaired object is itself a mini-registration.** A
 > midline object has no left/right label, but every point still belongs
 > to a hemisphere.
-> [`mirror_lr_split()`](https://alexanderbates.github.io/deformetricar/reference/mirror_lr_split.md)
+> [`mirror_lr_split()`](https://natverse.github.io/deformetricar/reference/mirror_lr_split.md)
 > recovers that the way a mirroring registration does (cf.
 > `bancr::banc_lr`): reflect the object, optionally warp it onto its own
 > reflection to find the true (curved) symmetry surface, and label each
 > point by how far and in which direction it must travel to meet its
 > mirror partner.
-> [`split_mesh_lr()`](https://alexanderbates.github.io/deformetricar/reference/split_mesh_lr.md)
+> [`split_mesh_lr()`](https://natverse.github.io/deformetricar/reference/split_mesh_lr.md)
 > above is the flat-plane special case.
 
 ### Refine the affine on neuropil centroids
@@ -217,7 +217,7 @@ pre$aligned <- applyM(pre$aligned)   # the outer hull rides the same refinement
 
 ## 4. One diffeomorphism for the whole matched set
 
-[`deformetrica_register_multi()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_register_multi.md)
+[`deformetrica_register_multi()`](https://natverse.github.io/deformetricar/reference/deformetrica_register_multi.md)
 fits a single diffeomorphism to every matched object at once.
 `data_sigma` weights each object — *smaller means stronger* — so we let
 the well-matched neuropils drive the fit, damp the ring-vs-arch central
@@ -265,7 +265,7 @@ native mosquito proportions and settles into the initialised pose (the
 pre-alignment’s scale and rotation). **Act 2** is the *warp* —
 `deformetrica_shoot(..., flow = TRUE)` returns every timepoint of the
 geodesic flow, which
-[`ggplot_flow_gif()`](https://alexanderbates.github.io/deformetricar/reference/ggplot_flow_gif.md)
+[`ggplot_flow_gif()`](https://natverse.github.io/deformetricar/reference/ggplot_flow_gif.md)
 renders with `nat.ggplot`, each neuropil in its own colour over a
 translucent, unchanging fly brain.
 
@@ -432,9 +432,9 @@ thing as a single, portable bridge.
   single global diffeomorphism drags them off their fly target no matter
   the weight, kernel width or object kernel. For a structure like this,
   register it on its own with
-  [`deformetrica_register()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_register.md)
+  [`deformetrica_register()`](https://natverse.github.io/deformetricar/reference/deformetrica_register.md)
   rather than in the whole-brain fit.
 - Replace the whole-brain fit with a single homologous pair
   (e.g. mosquito AL → fly AL) via
-  [`deformetrica_register()`](https://alexanderbates.github.io/deformetricar/reference/deformetrica_register.md)
+  [`deformetrica_register()`](https://natverse.github.io/deformetricar/reference/deformetrica_register.md)
   for a tighter, more local registration.
