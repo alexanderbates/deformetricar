@@ -99,6 +99,95 @@
 <span>                                   landmarks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>source <span class="op">=</span> <span class="va">lm_s</span>, target <span class="op">=</span> <span class="va">lm_t</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
+<h2 id="tuning-the-registration">Tuning the registration<a class="anchor" aria-label="anchor" href="#tuning-the-registration"></a>
+</h2>
+<p>A Deformetrica fit is governed by a few parameters. <strong>Work in µm-scale coordinates</strong> (∼O(1–100)); a fit in nm can silently collapse to an identity warp. The most useful knobs, from most to least impactful:</p>
+<table style="width:100%;" class="table">
+<colgroup>
+<col width="16%">
+<col width="16%">
+<col width="16%">
+<col width="16%">
+<col width="16%">
+<col width="16%">
+</colgroup>
+<thead><tr>
+<th>Parameter</th>
+<th>Scope</th>
+<th>Default</th>
+<th>What it does</th>
+<th>Smaller →</th>
+<th>Larger →</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code>kernel_width</code></td>
+<td>global</td>
+<td>you set</td>
+<td>Spatial <strong>stiffness</strong> of the diffeomorphism — the scale over which the deformation is smooth.</td>
+<td>More <strong>local</strong>: small structures deform independently, but elongated ones can tear/leave a distal part behind.</td>
+<td>More <strong>global/stiff</strong>: big structures move coherently, but small peripheral ones get dragged by their neighbours. (Try target-diagonal ÷ 11–15.)</td>
+</tr>
+<tr>
+<td>
+<code>data_sigma</code> (noise-std)</td>
+<td>per object</td>
+<td>0.5</td>
+<td>
+<strong>Attachment weight</strong> — how hard each object is pulled onto its target.</td>
+<td>
+<strong>Stronger</strong> pull (a well-matched object drives the fit).</td>
+<td>Weaker (e.g. an outer hull as a loose global guide).</td>
+</tr>
+<tr>
+<td><code>object_kernel_width</code></td>
+<td>per object</td>
+<td>= <code>kernel_width</code>
+</td>
+<td>Scale at which each object’s <strong>surface/curve mismatch</strong> is measured (Current/Varifold).</td>
+<td>Finer, more local matching — snaps fine detail. <strong>But below the target mesh’s resolution it degrades.</strong>
+</td>
+<td>Coarser matching, robust to noisy meshes.</td>
+</tr>
+<tr>
+<td><code>attachment_type</code></td>
+<td>per object</td>
+<td>Landmark/Current</td>
+<td>How mismatch is scored: <code>Landmark</code> (ordered point-to-point L2), <code>Current</code> / <code>Varifold</code> (unordered surfaces/curves; Varifold ignores orientation).</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>timepoints</code></td>
+<td>global</td>
+<td>10</td>
+<td>Geodesic integration steps (flow smoothness/accuracy, and GIF frames).</td>
+<td>Coarser, faster.</td>
+<td>Smoother, slower.</td>
+</tr>
+<tr>
+<td><code>max_iterations</code></td>
+<td>global</td>
+<td>150</td>
+<td>Optimiser iterations.</td>
+<td>May under-converge.</td>
+<td>Better fit, slower.</td>
+</tr>
+<tr>
+<td>
+<code>landmarks</code> / <code>landmark_sigma</code>
+</td>
+<td>shared</td>
+<td>—</td>
+<td>An optional shared point cloud that anchors the whole fit globally.</td>
+<td>Stronger anchor.</td>
+<td>Looser.</td>
+</tr>
+</tbody>
+</table>
+<p>Rules of thumb: give <strong>strong</strong> homologous objects a small <code>data_sigma</code> and a hull a larger one; if a small structure lags, reduce <code>kernel_width</code> (global) before cranking its weight; keep <code>object_kernel_width</code> ≥ the target mesh’s face spacing. Because <code>data_sigma</code> and <code>object_kernel_width</code> are <strong>per object</strong>, you can tune specific pairings (e.g. the central-complex objects) independently of the rest.</p>
+</div>
+<div class="section level2">
 <h2 id="articles">Articles<a class="anchor" aria-label="anchor" href="#articles"></a>
 </h2>
 <ul>

@@ -73,8 +73,8 @@ translucent original.
 flow <- deformetrica_shoot(mir, fit$control_points, fit$momenta,
                            kernel_width = fit$kernel_width, flow = TRUE)  # list of meshes
 
-ggplot_flow_gif(list(mirror = flow), cols = c(mirror = "#EE4266"),
-                volume = brain, volume_col = "grey70", volume_alpha = 0.12,
+ggplot_flow_gif(list(mirror = flow), cols = c(mirror = "#EE4266"), alpha = 0.45,
+                volume = brain, volume_col = "#2C7FB8", volume_alpha = 0.09,
                 rotation_matrix = diag(c(1, -1, 1, 1)),   # dorsal-up frontal view
                 file = "fafb_left_right.gif")   # needs gifski or magick
 ```

@@ -81,6 +81,30 @@ fit <- deformetrica_register_multi(sources, targets, kernel_width = 20,
                                    landmarks = list(source = lm_s, target = lm_t))
 ```
 
+## Tuning the registration
+
+A Deformetrica fit is governed by a few parameters. **Work in µm-scale
+coordinates** (∼O(1–100)); a fit in nm can silently collapse to an
+identity warp. The most useful knobs, from most to least impactful:
+
+| Parameter | Scope | Default | What it does | Smaller → | Larger → |
+|----|----|----|----|----|----|
+| `kernel_width` | global | you set | Spatial **stiffness** of the diffeomorphism — the scale over which the deformation is smooth. | More **local**: small structures deform independently, but elongated ones can tear/leave a distal part behind. | More **global/stiff**: big structures move coherently, but small peripheral ones get dragged by their neighbours. (Try target-diagonal ÷ 11–15.) |
+| `data_sigma` (noise-std) | per object | 0.5 | **Attachment weight** — how hard each object is pulled onto its target. | **Stronger** pull (a well-matched object drives the fit). | Weaker (e.g. an outer hull as a loose global guide). |
+| `object_kernel_width` | per object | = `kernel_width` | Scale at which each object’s **surface/curve mismatch** is measured (Current/Varifold). | Finer, more local matching — snaps fine detail. **But below the target mesh’s resolution it degrades.** | Coarser matching, robust to noisy meshes. |
+| `attachment_type` | per object | Landmark/Current | How mismatch is scored: `Landmark` (ordered point-to-point L2), `Current` / `Varifold` (unordered surfaces/curves; Varifold ignores orientation). | — | — |
+| `timepoints` | global | 10 | Geodesic integration steps (flow smoothness/accuracy, and GIF frames). | Coarser, faster. | Smoother, slower. |
+| `max_iterations` | global | 150 | Optimiser iterations. | May under-converge. | Better fit, slower. |
+| `landmarks` / `landmark_sigma` | shared | — | An optional shared point cloud that anchors the whole fit globally. | Stronger anchor. | Looser. |
+
+Rules of thumb: give **strong** homologous objects a small `data_sigma`
+and a hull a larger one; if a small structure lags, reduce
+`kernel_width` (global) before cranking its weight; keep
+`object_kernel_width` ≥ the target mesh’s face spacing. Because
+`data_sigma` and `object_kernel_width` are **per object**, you can tune
+specific pairings (e.g. the central-complex objects) independently of
+the rest.
+
 ## Articles
 
 - **[Warping a mosquito brain onto the
