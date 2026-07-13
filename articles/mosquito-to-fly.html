@@ -141,18 +141,29 @@ fly, and hands back an <code><a href="https://rdrr.io/r/base/apply.html" class="
 neuropil is carried into the aligned frame consistently.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pre</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/affine_prealign.html">affine_prealign</a></span><span class="op">(</span><span class="fu"><a href="https://dmurdoch.github.io/rgl/dev/reference/as.mesh3d.default.html" class="external-link">as.mesh3d</a></span><span class="op">(</span><span class="va">aedes_brain</span><span class="op">)</span>, <span class="va">fly</span>, type <span class="op">=</span> <span class="st">"rigid"</span><span class="op">)</span></span>
-<span><span class="co"># The deforming whole-brain hull EXCLUDES the lamina (LA): it is a large, far-lateral</span></span>
-<span><span class="co"># optic neuropil with no fly central-brain counterpart, so it must not be shown warping</span></span>
-<span><span class="co"># onto the fly (and it would only distort the hull's match to the compact fly surface).</span></span>
-<span><span class="co"># Rebuild the aligned hull from the aedes brain minus every lamina region — this leaves</span></span>
-<span><span class="co"># the affine transform (and so every neuropil position below) untouched.</span></span>
-<span><span class="va">nola</span>        <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grep</a></span><span class="op">(</span><span class="st">"^LA(_|$)"</span>, <span class="va">aedes_brain</span><span class="op">$</span><span class="va">RegionList</span>, value <span class="op">=</span> <span class="cn">TRUE</span>, invert <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="va">pre</span><span class="op">$</span><span class="va">aligned</span> <span class="op">&lt;-</span> <span class="va">pre</span><span class="op">$</span><span class="fu">apply</span><span class="op">(</span><span class="fu"><a href="https://dmurdoch.github.io/rgl/dev/reference/as.mesh3d.default.html" class="external-link">as.mesh3d</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">aedes_brain</span>, <span class="va">nola</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co"># Keep only each neuropil's largest connected component: some Insect Brain Database</span></span>
 <span><span class="co"># surfaces carry a stray detached fragment that cannot warp onto the compact fly</span></span>
 <span><span class="co"># target and would poke out of the brain.</span></span>
 <span><span class="va">amesh</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">region</span><span class="op">)</span> <span class="va">pre</span><span class="op">$</span><span class="fu">apply</span><span class="op">(</span><span class="fu">Rvcg</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Rvcg/man/vcgIsolated.html" class="external-link">vcgIsolated</a></span><span class="op">(</span><span class="fu"><a href="https://dmurdoch.github.io/rgl/dev/reference/as.mesh3d.default.html" class="external-link">as.mesh3d</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">aedes_brain</span>, <span class="va">region</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">fmesh</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">region</span><span class="op">)</span> <span class="fu"><a href="https://dmurdoch.github.io/rgl/dev/reference/as.mesh3d.default.html" class="external-link">as.mesh3d</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">fly_np</span>, <span class="va">region</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<div class="section level3">
+<h3 id="drop-the-lamina-from-the-deforming-hull">Drop the lamina from the deforming hull<a class="anchor" aria-label="anchor" href="#drop-the-lamina-from-the-deforming-hull"></a>
+</h3>
+<p>The animation shows the whole aedes brain surface deforming onto the
+fly. But one mosquito neuropil has <strong>no fly central-brain
+counterpart at all</strong>: the <strong>lamina
+(<code>LA</code>)</strong>, the first optic ganglion. If we left it in
+the hull it would be dragged onto empty fly space — visually wrong and a
+waste of deformation. So we build the deforming hull from the aedes
+brain <em>minus its lamina regions</em>, and it is this LA-free hull we
+carry through every step below. (The affine map itself is untouched, so
+every neuropil position is unchanged.)</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">lamina</span>      <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grep</a></span><span class="op">(</span><span class="st">"^LA(_|$)"</span>, <span class="va">aedes_brain</span><span class="op">$</span><span class="va">RegionList</span>, value <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>  <span class="co"># LA_LEFT, LA_RIGHT</span></span>
+<span><span class="va">lamina</span>      <span class="co"># the regions we exclude</span></span>
+<span><span class="va">keep</span>        <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/nat/man/setdiff.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="va">aedes_brain</span><span class="op">$</span><span class="va">RegionList</span>, <span class="va">lamina</span><span class="op">)</span></span>
+<span><span class="va">pre</span><span class="op">$</span><span class="va">aligned</span> <span class="op">&lt;-</span> <span class="va">pre</span><span class="op">$</span><span class="fu">apply</span><span class="op">(</span><span class="fu"><a href="https://dmurdoch.github.io/rgl/dev/reference/as.mesh3d.default.html" class="external-link">as.mesh3d</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">aedes_brain</span>, <span class="va">keep</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>         <span class="co"># hull without lamina</span></span></code></pre></div>
+</div>
 </div>
 <div class="section level2">
 <h2 id="cross-identified-neuropils-matched-per-side">3. Cross-identified neuropils, matched per side<a class="anchor" aria-label="anchor" href="#cross-identified-neuropils-matched-per-side"></a>
@@ -162,7 +173,7 @@ the same identity. We match each mosquito neuropil to its fly
 counterpart <strong>one object per side</strong>, so the fit can never
 swap a left structure onto a right one. The lamina (<code>LA</code>) has
 no fly central-brain counterpart and is <strong>dropped</strong>.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># name = c(mosquito region regex, fly region); _L / _R kept as separate objects.</span></span>
 <span><span class="va">paired</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  ME_L <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"^ME_LEFT"</span>,<span class="st">"ME_L"</span><span class="op">)</span>,   ME_R <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"^ME_RIGHT"</span>,<span class="st">"ME_R"</span><span class="op">)</span>,</span>
@@ -197,7 +208,7 @@ closed <strong>ring</strong>, whereas the mosquito CBL is an open
 the ring. We instead split each midline CX object into left and right
 halves (<code><a href="../reference/split_mesh_lr.html">split_mesh_lr()</a></code>) and match per half, which keeps
 the deformation symmetric.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mid_a</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/range.html" class="external-link">range</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/nat/man/xyzmatrix.html" class="external-link">xyzmatrix</a></span><span class="op">(</span><span class="va">pre</span><span class="op">$</span><span class="va">aligned</span><span class="op">)</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">mid_f</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/range.html" class="external-link">range</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/nat/man/xyzmatrix.html" class="external-link">xyzmatrix</a></span><span class="op">(</span><span class="va">fly</span><span class="op">)</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">cx</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>FB <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"^FB/CBU"</span>,<span class="st">"FB"</span><span class="op">)</span>, EB <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"^EB/CBL"</span>,<span class="st">"EB"</span><span class="op">)</span>, PB <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"^PB_noside"</span>,<span class="st">"PB"</span><span class="op">)</span><span class="op">)</span></span>
@@ -237,7 +248,7 @@ the matched neuropil <strong>centroids</strong>, which removes the gross
 offset and lets the warp do local, not gross, work. We carry every
 source neuropil <em>and</em> the outer hull through the identical map so
 the whole template stays in one frame.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ctr</span>    <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">m</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colMeans</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/nat/man/xyzmatrix.html" class="external-link">xyzmatrix</a></span><span class="op">(</span><span class="va">m</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">M</span>      <span class="op">&lt;-</span> <span class="fu">Morpho</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Morpho/man/computeTransform.html" class="external-link">computeTransform</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">tgts</span>, <span class="va">ctr</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">srcs</span>, <span class="va">ctr</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>                                   type <span class="op">=</span> <span class="st">"similarity"</span><span class="op">)</span></span>
@@ -254,7 +265,7 @@ diffeomorphism to every matched object at once. <code>data_sigma</code>
 weights each object — <em>smaller means stronger</em> — so we let the
 well-matched neuropils drive the fit, damp the ring-vs-arch central
 complex, and add the outer hull only as a weak global guide.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">srcs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">srcs</span>, <span class="fu">Rvcg</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/Rvcg/man/vcgQEdecim.html" class="external-link">vcgQEdecim</a></span>, tarface <span class="op">=</span> <span class="fl">4000L</span><span class="op">)</span></span>
 <span><span class="va">tgts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">tgts</span>, <span class="fu">Rvcg</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/Rvcg/man/vcgQEdecim.html" class="external-link">vcgQEdecim</a></span>, tarface <span class="op">=</span> <span class="fl">4000L</span><span class="op">)</span></span>
 <span><span class="va">srcs</span><span class="op">$</span><span class="va">outer</span> <span class="op">&lt;-</span> <span class="fu">Rvcg</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Rvcg/man/vcgQEdecim.html" class="external-link">vcgQEdecim</a></span><span class="op">(</span><span class="va">pre</span><span class="op">$</span><span class="va">aligned</span>, tarface <span class="op">=</span> <span class="fl">12000L</span><span class="op">)</span></span>
@@ -292,7 +303,7 @@ complex, and add the outer hull only as a weak global guide.</p>
 timepoint of the geodesic flow; <code><a href="../reference/ggplot_flow_gif.html">ggplot_flow_gif()</a></code> renders
 them with <code>nat.ggplot</code>, each neuropil in its own colour over
 a translucent fly brain, and assembles a GIF.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">show</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/nat/man/setdiff.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">srcs</span><span class="op">)</span>, <span class="st">"outer"</span><span class="op">)</span>            <span class="co"># every cross-identified neuropil</span></span>
 <span><span class="co"># Shoot the neuropils AND the whole aedes brain hull, so the hull deforms too.</span></span>
 <span><span class="va">flows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">srcs</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"outer"</span>, <span class="va">show</span><span class="op">)</span><span class="op">]</span>, <span class="va">deformetrica_shoot</span>,</span>
@@ -339,7 +350,7 @@ animate just the
 gall <code>GA</code>) objects over the merged fly central complex — the
 fly CX neuropils merged into one light-pink volume, each individual fly
 CX target still drawn in transparent greyscale underneath.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cxn</span>    <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grep</a></span><span class="op">(</span><span class="st">"^(FB|EB|PB|NO|GA)_"</span>, <span class="va">show</span>, value <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">cxvol</span>  <span class="op">&lt;-</span> <span class="fu">Rvcg</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Rvcg/man/vcgClean.html" class="external-link">vcgClean</a></span><span class="op">(</span><span class="fu">Morpho</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Morpho/man/mergeMeshes.html" class="external-link">mergeMeshes</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="va">tgts</span><span class="op">[</span><span class="va">cxn</span><span class="op">]</span><span class="op">)</span><span class="op">)</span>, sel <span class="op">=</span> <span class="fl">0</span><span class="op">)</span>  <span class="co"># merged fly CX</span></span>
 <span><span class="fu"><a href="../reference/ggplot_flow_gif.html">ggplot_flow_gif</a></span><span class="op">(</span><span class="va">flows</span><span class="op">[</span><span class="va">cxn</span><span class="op">]</span>, cols <span class="op">=</span> <span class="va">cols</span><span class="op">[</span><span class="va">cxn</span><span class="op">]</span>, rotation_matrix <span class="op">=</span> <span class="va">rmat</span>,</span>
@@ -354,7 +365,7 @@ CX target still drawn in transparent greyscale underneath.</p>
 its fly homologue. Warp each and report the symmetric surface distance
 and a volumetric Dice overlap; the warp should beat the affine-only
 baseline for every neuropil.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">surface_dist</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="fu">Rvcg</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Rvcg/man/vcgClostKD.html" class="external-link">vcgClostKD</a></span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span><span class="op">)</span><span class="op">$</span><span class="va">quality</span><span class="op">)</span></span>
 <span><span class="va">dice</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">ov</span> <span class="op">&lt;-</span> <span class="fu">Rvcg</span><span class="fu">::</span><span class="fu">vcgBool</span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span>, <span class="st">"intersection"</span><span class="op">)</span></span>
@@ -378,7 +389,7 @@ thin-plate-spline</strong> transform ([Morpho::tps3d()]), fit from a
 dense sample of <em>native</em> aedes positions to where each lands in
 fly space, and reuse it to bridge any new aedes object into the fly
 template in a single call — no Deformetrica needed at apply time.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># a dense sample of NATIVE aedes positions (the whole-brain surface vertices) ...</span></span>
 <span><span class="va">brain_native</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dmurdoch.github.io/rgl/dev/reference/as.mesh3d.default.html" class="external-link">as.mesh3d</a></span><span class="op">(</span><span class="va">aedes_brain</span><span class="op">)</span></span>
 <span><span class="va">start</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/nat/man/xyzmatrix.html" class="external-link">xyzmatrix</a></span><span class="op">(</span><span class="va">brain_native</span><span class="op">)</span></span>
@@ -408,8 +419,15 @@ captures the whole thing as a single, portable bridge.</p>
 the ring-vs-arch shape of the lower unit) follows the comparative insect
 central-complex literature; see the fly reference atlas (Hulse <em>et
 al.</em>, <em>eLife</em> 2021) for the fly definitions.</li>
-<li>The <strong>lamina</strong> is excluded throughout — it has no fly
-central-brain counterpart.</li>
+<li>The <strong>lamina</strong> is excluded throughout — from the
+matched neuropils <em>and</em> from the deforming whole-brain hull — as
+it has no fly central-brain counterpart.</li>
+<li>
+<strong>Aedes brain credit.</strong> The <em>Aedes aegypti</em>
+standard brain is the segmented atlas from <strong>Meg Younger’s
+lab</strong> (<a href="https://www.mosquitobrainbrowser.org/" class="external-link">Mosquito
+Brain Browser</a>), here loaded via the Insect Brain Database. Please
+cite that source.</li>
 <li>
 <strong>Tuning levers.</strong> Three parameters trade global
 against local fit, per object: <code>data_sigma</code> (attachment

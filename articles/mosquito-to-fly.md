@@ -88,18 +88,30 @@ every mosquito neuropil is carried into the aligned frame consistently.
 ``` r
 
 pre <- affine_prealign(as.mesh3d(aedes_brain), fly, type = "rigid")
-# The deforming whole-brain hull EXCLUDES the lamina (LA): it is a large, far-lateral
-# optic neuropil with no fly central-brain counterpart, so it must not be shown warping
-# onto the fly (and it would only distort the hull's match to the compact fly surface).
-# Rebuild the aligned hull from the aedes brain minus every lamina region — this leaves
-# the affine transform (and so every neuropil position below) untouched.
-nola        <- grep("^LA(_|$)", aedes_brain$RegionList, value = TRUE, invert = TRUE)
-pre$aligned <- pre$apply(as.mesh3d(subset(aedes_brain, nola)))
 # Keep only each neuropil's largest connected component: some Insect Brain Database
 # surfaces carry a stray detached fragment that cannot warp onto the compact fly
 # target and would poke out of the brain.
 amesh <- function(region) pre$apply(Rvcg::vcgIsolated(as.mesh3d(subset(aedes_brain, region))))
 fmesh <- function(region) as.mesh3d(subset(fly_np, region))
+```
+
+### Drop the lamina from the deforming hull
+
+The animation shows the whole aedes brain surface deforming onto the
+fly. But one mosquito neuropil has **no fly central-brain counterpart at
+all**: the **lamina (`LA`)**, the first optic ganglion. If we left it in
+the hull it would be dragged onto empty fly space — visually wrong and a
+waste of deformation. So we build the deforming hull from the aedes
+brain *minus its lamina regions*, and it is this LA-free hull we carry
+through every step below. (The affine map itself is untouched, so every
+neuropil position is unchanged.)
+
+``` r
+
+lamina      <- grep("^LA(_|$)", aedes_brain$RegionList, value = TRUE)  # LA_LEFT, LA_RIGHT
+lamina      # the regions we exclude
+keep        <- setdiff(aedes_brain$RegionList, lamina)
+pre$aligned <- pre$apply(as.mesh3d(subset(aedes_brain, keep)))         # hull without lamina
 ```
 
 ## 3. Cross-identified neuropils, matched per side
@@ -371,8 +383,13 @@ thing as a single, portable bridge.
   ring-vs-arch shape of the lower unit) follows the comparative insect
   central-complex literature; see the fly reference atlas (Hulse *et
   al.*, *eLife* 2021) for the fly definitions.
-- The **lamina** is excluded throughout — it has no fly central-brain
-  counterpart.
+- The **lamina** is excluded throughout — from the matched neuropils
+  *and* from the deforming whole-brain hull — as it has no fly
+  central-brain counterpart.
+- **Aedes brain credit.** The *Aedes aegypti* standard brain is the
+  segmented atlas from **Meg Younger’s lab** ([Mosquito Brain
+  Browser](https://www.mosquitobrainbrowser.org/)), here loaded via the
+  Insect Brain Database. Please cite that source.
 - **Tuning levers.** Three parameters trade global against local fit,
   per object: `data_sigma` (attachment weight, smaller = stronger),
   `object_kernel_width` (the scale at which surface mismatch is
