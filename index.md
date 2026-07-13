@@ -119,6 +119,11 @@ the rest.
   cognates](https://alexanderbates.github.io/deformetricar/articles/l1-symmetrise-cognates.html)**
   — build a left-right symmetrising warp from L1 larval VFB CATMAID
   neurons and find cognate pairs.
+- **[Warping maleCNS DA1 PNs onto the
+  BANC](https://alexanderbates.github.io/deformetricar/articles/malecns-to-banc.html)**
+  — bridge the DA1 projection neurons from the maleCNS connectome into
+  BANC space, then fit a per-side diffeomorphism (with an ordered soma
+  correspondence) to warp them onto their BANC counterparts.
 
 ## Citation
 

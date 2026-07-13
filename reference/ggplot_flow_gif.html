@@ -33,6 +33,7 @@ directly.'><meta property="og:image" content="https://alexanderbates.github.io/d
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/mosquito-to-fly.html">Warping a mosquito brain onto the fly by cross-identified neuropils</a></li>
     <li><a class="dropdown-item" href="../articles/fafb-left-right.html">A FAFB left-right brain registration</a></li>
     <li><a class="dropdown-item" href="../articles/l1-symmetrise-cognates.html">Symmetrising the L1 larval CNS and finding left-right cognates</a></li>
+    <li><a class="dropdown-item" href="../articles/malecns-to-banc.html">Warping maleCNS DA1 projection neurons onto the BANC</a></li>
   </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/alexanderbates/deformetricar/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul></div>
@@ -70,6 +71,9 @@ directly.</p>
 <span>  target_alpha <span class="op">=</span> <span class="fl">0.18</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">0.6</span>,</span>
 <span>  rotation_matrix <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  points <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  point_cols <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  point_size <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>  file <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  width <span class="op">=</span> <span class="fl">900</span>,</span>
 <span>  height <span class="op">=</span> <span class="fl">800</span>,</span>
@@ -120,6 +124,17 @@ to a transparent greyscale ramp so the coloured flow reads clearly on top.</p></
 
 <dt id="arg-rotation-matrix">rotation_matrix<a class="anchor" aria-label="anchor" href="#arg-rotation-matrix"></a></dt>
 <dd><p>Optional 4x4 view matrix (as <code>nat.ggplot</code>/<code>rgl</code> use).</p></dd>
+
+
+<dt id="arg-points">points<a class="anchor" aria-label="anchor" href="#arg-points"></a></dt>
+<dd><p>Optional named list of point sets drawn as circles on top of the
+neurons — e.g. neuron root points / somata. Each entry is either a static N x 3
+matrix or a per-timepoint list of matrices (circles that move with the warp),
+forwarded to <code><a href="https://natverse.github.io/nat.ggplot/reference/ggneuron_gif.html" class="external-link">nat.ggplot::ggneuron_gif()</a></code>.</p></dd>
+
+
+<dt id="arg-point-cols">point_cols<a class="anchor" aria-label="anchor" href="#arg-point-cols"></a></dt>
+<dd><p>Named colours for <code>points</code>; <code>point_size</code> the circle size.</p></dd>
 
 
 <dt id="arg-file">file<a class="anchor" aria-label="anchor" href="#arg-file"></a></dt>

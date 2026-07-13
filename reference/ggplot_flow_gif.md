@@ -26,6 +26,9 @@ ggplot_flow_gif(
   target_alpha = 0.18,
   alpha = 0.6,
   rotation_matrix = NULL,
+  points = NULL,
+  point_cols = NULL,
+  point_size = 3,
   file = NULL,
   width = 900,
   height = 800,
@@ -76,6 +79,18 @@ ggplot_flow_gif(
 - rotation_matrix:
 
   Optional 4x4 view matrix (as `nat.ggplot`/`rgl` use).
+
+- points:
+
+  Optional named list of point sets drawn as circles on top of the
+  neurons — e.g. neuron root points / somata. Each entry is either a
+  static N x 3 matrix or a per-timepoint list of matrices (circles that
+  move with the warp), forwarded to
+  [`nat.ggplot::ggneuron_gif()`](https://natverse.github.io/nat.ggplot/reference/ggneuron_gif.html).
+
+- point_cols:
+
+  Named colours for `points`; `point_size` the circle size.
 
 - file:
 
