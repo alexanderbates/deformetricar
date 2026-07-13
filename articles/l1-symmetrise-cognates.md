@@ -43,6 +43,9 @@ hemi <- function(name) Rvcg::vcgClean(
   sel = 0:6, silent = TRUE)
 left  <- hemi("Brain Hemisphere left")
 right <- hemi("Brain Hemisphere right")
+# Deformetrica needs ~O(1-100) coords: work in um, not the raw nm.
+nm2um <- function(x) { xyzmatrix(x) <- xyzmatrix(x) / 1000; x }
+left <- nm2um(left); right <- nm2um(right)
 ```
 
 ## 2. Build the symmetrising diffeomorphism from the hemispheres
@@ -62,7 +65,7 @@ pre <- affine_prealign(mir, left, type = "rigid")
 
 kw  <- sqrt(sum((apply(V, 2, max) - apply(V, 2, min))^2)) / 11
 fit <- deformetrica_register(pre$aligned, left, kernel_width = kw,
-                             timepoints = 15, max_iterations = 60, device = "cuda")
+                             timepoints = 15, max_iterations = 60, device = "auto")
 ```
 
 ## 3. Symmetrise neurons and animate the flow
@@ -80,13 +83,16 @@ them through the transform — cheap, so we take every timepoint
 
 right_kc <- read.neurons.catmaid(catmaid_skids("annotation:Kenyon Cell right", conn = l1), conn = l1)
 right_kc <- nat::nlapply(right_kc, nat::resample, stepsize = 1000)
+right_kc <- nat::nlapply(right_kc, nm2um)   # -> um, matching the hemispheres
 reflectX <- function(n) { m <- nat::xyzmatrix(n); m[, 1] <- 2 * midX - m[, 1]; nat::xyzmatrix(n) <- m; n }
 right_aff <- nat::nlapply(nat::nlapply(right_kc, reflectX), pre$apply)  # mirror + same affine
 
 flow <- deformetrica_shoot(right_aff, fit$control_points, fit$momenta,
                            kernel_width = fit$kernel_width, flow = TRUE)  # list of neuronlists
-ggplot_flow_gif(list(neurons = flow), cols = c(neurons = "#C1121F"),
-                volume = left, file = "l1_symmetrise.gif")   # translucent left hemisphere
+ggplot_flow_gif(list(neurons = flow), cols = c(neurons = "#EE4266"),
+                volume = left, volume_col = "grey70", volume_alpha = 0.12,
+                rotation_matrix = diag(c(1, -1, 1, 1)), delay = 0.25,
+                file = "l1_symmetrise.gif")   # translucent left hemisphere, ~5 s
 ```
 
 ## 4. Symmetrise, then find cognates by NBLAST

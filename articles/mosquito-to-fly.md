@@ -320,6 +320,40 @@ score <- function(nm) {
 do.call(rbind, lapply(names(srcs), score))
 ```
 
+## 7. Package the whole bridge as one reusable transform (TPS)
+
+Every aedes point of interest has now been carried into the fly template
+— through the affine pre-alignment, the centroid refinement, and the
+Deformetrica warp. We can fold all of that into **one
+thin-plate-spline** transform (\[Morpho::tps3d()\]), fit from a dense
+sample of *native* aedes positions to where each lands in fly space, and
+reuse it to bridge any new aedes object into the fly template in a
+single call — no Deformetrica needed at apply time.
+
+``` r
+
+# a dense sample of NATIVE aedes positions (the whole-brain surface vertices) ...
+brain_native <- as.mesh3d(aedes_brain)
+start <- xyzmatrix(brain_native)
+# ... and where each lands after the FULL pipeline (affine -> centroid refine -> warp):
+carried <- applyM(pre$apply(brain_native))                       # affine + centroid refine
+end     <- xyzmatrix(deformetrica_shoot(carried, fit$control_points, fit$momenta,
+                                        kernel_width = fit$kernel_width))
+
+# One reusable mosquito -> fly bridge (affine AND warp), as a thin-plate spline:
+mosquito_to_fly <- function(x) { xyzmatrix(x) <- Morpho::tps3d(xyzmatrix(x), start, end); x }
+# e.g. bridge a fresh aedes neuron / mesh into JRC2018F:
+# fly_space_obj <- mosquito_to_fly(some_native_aedes_object)
+```
+
+Because the TPS only needs start/end correspondences, the *earlier*
+steps are free to be as elaborate as they like — for example a
+**separate affine per neuropil** (each aligned to its own fly
+counterpart) plus the hull, rather than one global affine, which can
+tighten structures like the mushroom-body lobes. However the internal
+warp is built, the final `start -> end` TPS still captures the whole
+thing as a single, portable bridge.
+
 ## Notes
 
 - **Central-complex nomenclature** (CBU/CBL vs FB/EB, and the

@@ -359,6 +359,37 @@ baseline for every neuropil.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">srcs</span><span class="op">)</span>, <span class="va">score</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
+<h2 id="package-the-whole-bridge-as-one-reusable-transform-tps">7. Package the whole bridge as one reusable transform (TPS)<a class="anchor" aria-label="anchor" href="#package-the-whole-bridge-as-one-reusable-transform-tps"></a>
+</h2>
+<p>Every aedes point of interest has now been carried into the fly
+template — through the affine pre-alignment, the centroid refinement,
+and the Deformetrica warp. We can fold all of that into <strong>one
+thin-plate-spline</strong> transform ([Morpho::tps3d()]), fit from a
+dense sample of <em>native</em> aedes positions to where each lands in
+fly space, and reuse it to bridge any new aedes object into the fly
+template in a single call — no Deformetrica needed at apply time.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># a dense sample of NATIVE aedes positions (the whole-brain surface vertices) ...</span></span>
+<span><span class="va">brain_native</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dmurdoch.github.io/rgl/dev/reference/as.mesh3d.default.html" class="external-link">as.mesh3d</a></span><span class="op">(</span><span class="va">aedes_brain</span><span class="op">)</span></span>
+<span><span class="va">start</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/nat/man/xyzmatrix.html" class="external-link">xyzmatrix</a></span><span class="op">(</span><span class="va">brain_native</span><span class="op">)</span></span>
+<span><span class="co"># ... and where each lands after the FULL pipeline (affine -&gt; centroid refine -&gt; warp):</span></span>
+<span><span class="va">carried</span> <span class="op">&lt;-</span> <span class="fu">applyM</span><span class="op">(</span><span class="va">pre</span><span class="op">$</span><span class="fu">apply</span><span class="op">(</span><span class="va">brain_native</span><span class="op">)</span><span class="op">)</span>                       <span class="co"># affine + centroid refine</span></span>
+<span><span class="va">end</span>     <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/nat/man/xyzmatrix.html" class="external-link">xyzmatrix</a></span><span class="op">(</span><span class="fu"><a href="../reference/deformetrica_shoot.html">deformetrica_shoot</a></span><span class="op">(</span><span class="va">carried</span>, <span class="va">fit</span><span class="op">$</span><span class="va">control_points</span>, <span class="va">fit</span><span class="op">$</span><span class="va">momenta</span>,</span>
+<span>                                        kernel_width <span class="op">=</span> <span class="va">fit</span><span class="op">$</span><span class="va">kernel_width</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># One reusable mosquito -&gt; fly bridge (affine AND warp), as a thin-plate spline:</span></span>
+<span><span class="va">mosquito_to_fly</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span> <span class="fu"><a href="https://rdrr.io/pkg/nat/man/xyzmatrix.html" class="external-link">xyzmatrix</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu">Morpho</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Morpho/man/tps3d.html" class="external-link">tps3d</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/nat/man/xyzmatrix.html" class="external-link">xyzmatrix</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, <span class="va">start</span>, <span class="va">end</span><span class="op">)</span>; <span class="va">x</span> <span class="op">}</span></span>
+<span><span class="co"># e.g. bridge a fresh aedes neuron / mesh into JRC2018F:</span></span>
+<span><span class="co"># fly_space_obj &lt;- mosquito_to_fly(some_native_aedes_object)</span></span></code></pre></div>
+<p>Because the TPS only needs start/end correspondences, the
+<em>earlier</em> steps are free to be as elaborate as they like — for
+example a <strong>separate affine per neuropil</strong> (each aligned to
+its own fly counterpart) plus the hull, rather than one global affine,
+which can tighten structures like the mushroom-body lobes. However the
+internal warp is built, the final <code>start -&gt; end</code> TPS still
+captures the whole thing as a single, portable bridge.</p>
+</div>
+<div class="section level2">
 <h2 id="notes">Notes<a class="anchor" aria-label="anchor" href="#notes"></a>
 </h2>
 <ul>
