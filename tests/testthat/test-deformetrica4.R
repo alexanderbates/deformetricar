@@ -64,3 +64,25 @@ test_that("deformetrica_register + deformetrica_shoot recover a known translatio
   d_after  <- mean(sqrt(rowSums((warped - tgt)^2)))
   expect_lt(d_after, d_before)
 })
+
+test_that("deformetrica_register returns a deformetricareg usable as a nat transform", {
+  skip_if_no_live_deformetrica()
+  skip_if_not_installed("nat")
+  set.seed(1)
+  src <- matrix(stats::rnorm(60), 20, 3) * 10
+  tgt <- sweep(src, 2, c(6, 0, 0))                       # a pure translation
+  reg <- deformetrica_register(src, tgt, kernel_width = 9, max_iterations = 40, device = "auto")
+  expect_s3_class(reg, "deformetricareg")
+
+  p <- matrix(stats::rnorm(15), 5, 3) * 8
+  # nat::xform(x, reg) dispatches to xformpoints.deformetricareg == deformetrica_shoot()
+  expect_equal(nat::xform(p, reg), deformetrica_shoot(p, reg), tolerance = 1e-5)
+  expect_s3_class(nat::xform(nat::kcs20[1:2], reg), "neuronlist")
+
+  # a saved reg survives its tempfiles being cleaned (contents are stored inline)
+  a  <- nat::xform(p, reg)
+  tf <- tempfile(fileext = ".rds"); saveRDS(reg, tf)
+  unlink(reg$output_dir, recursive = TRUE)
+  unlink(c(reg$control_points, reg$momenta))
+  expect_equal(nat::xform(p, readRDS(tf)), a, tolerance = 1e-5)
+})

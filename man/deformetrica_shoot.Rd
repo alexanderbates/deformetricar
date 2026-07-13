@@ -7,8 +7,8 @@
 deformetrica_shoot(
   x,
   control_points,
-  momenta,
-  kernel_width,
+  momenta = NULL,
+  kernel_width = NULL,
   timepoints = 10L,
   object_type = "Landmark",
   device = c("auto", "cpu", "cuda"),
@@ -25,7 +25,9 @@ deformetrica_shoot(
 \code{...ControlPoints.txt} / \code{...Momenta.txt}, or a numeric matrix. Passing the
 files Deformetrica itself wrote is strongly preferred: it writes momenta with
 a leading \verb{n_subjects n_cp dim} header that its own reader expects, so a bare
-matrix is best-effort only.}
+matrix is best-effort only. Alternatively pass a \code{deformetricareg} object (from
+\code{\link[=deformetrica_register]{deformetrica_register()}}) as \code{control_points} and leave \code{momenta}/\code{kernel_width}
+unset — they are taken from the registration.}
 
 \item{kernel_width}{Deformation kernel width, in the coordinate units. Larger =
 stiffer / more global; must match the width the registration was fit with.}

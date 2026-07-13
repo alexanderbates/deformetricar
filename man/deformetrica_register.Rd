@@ -44,8 +44,10 @@ deformetrica_register(
 \item{verbose}{Show \code{deformetrica} output.}
 }
 \value{
-A list with \code{control_points} and \code{momenta} (file paths), \code{kernel_width}
-and \code{output_dir}; pass the paths straight to \code{\link[=deformetrica_shoot]{deformetrica_shoot()}}.
+A \code{deformetricareg} object (a portable handle on the fitted diffeomorphism,
+storing the control points + momenta inline). Apply it with \code{nat::xform(x, reg)} or
+\code{\link[=deformetrica_shoot]{deformetrica_shoot()}}; it survives \code{saveRDS()}. Its elements \code{control_points},
+\code{momenta}, \code{kernel_width}, \code{timepoints} and \code{output_dir} are still accessible.
 }
 \description{
 The Deformetrica 4 estimate path: fit a diffeomorphism that deforms \code{source}
@@ -55,5 +57,5 @@ Returns the estimated control points + momenta, which \code{\link[=deformetrica_
 then applies to arbitrary new points.
 }
 \seealso{
-\code{\link[=deformetrica_shoot]{deformetrica_shoot()}} to apply the fitted transform.
+\code{\link[=xformpoints.deformetricareg]{xformpoints.deformetricareg()}} / \code{\link[=deformetrica_shoot]{deformetrica_shoot()}} to apply the fit.
 }

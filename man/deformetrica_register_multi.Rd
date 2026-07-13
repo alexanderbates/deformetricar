@@ -49,7 +49,8 @@ object (defaults to the mean of \code{data_sigma}).}
 \code{\link[=deformetrica_register]{deformetrica_register()}}.}
 }
 \value{
-A list with \code{control_points}, \code{momenta}, \code{kernel_width}, \code{output_dir}.
+A \code{deformetricareg} object; see \code{\link[=deformetrica_register]{deformetrica_register()}}. Apply it with
+\code{nat::xform(x, reg)} or \code{\link[=deformetrica_shoot]{deformetrica_shoot()}}.
 }
 \description{
 The flyconnectome/deformetricaLR recipe, ported to Deformetrica 4: register a

@@ -48,7 +48,9 @@ find_deformetrica <- function(deformetrica = getOption("deformetricar.exe")) {
 #'   `...ControlPoints.txt` / `...Momenta.txt`, or a numeric matrix. Passing the
 #'   files Deformetrica itself wrote is strongly preferred: it writes momenta with
 #'   a leading `n_subjects n_cp dim` header that its own reader expects, so a bare
-#'   matrix is best-effort only.
+#'   matrix is best-effort only. Alternatively pass a `deformetricareg` object (from
+#'   [deformetrica_register()]) as `control_points` and leave `momenta`/`kernel_width`
+#'   unset — they are taken from the registration.
 #' @param kernel_width Deformation kernel width, in the coordinate units. Larger =
 #'   stiffer / more global; must match the width the registration was fit with.
 #' @param timepoints Number of geodesic integration steps; must match the fit.
@@ -64,7 +66,7 @@ find_deformetrica <- function(deformetrica = getOption("deformetricar.exe")) {
 #'   of the input class), in the input units and row order. With `flow = TRUE`, a
 #'   list of such objects, one per geodesic timepoint.
 #' @export
-deformetrica_shoot <- function(x, control_points, momenta, kernel_width,
+deformetrica_shoot <- function(x, control_points, momenta = NULL, kernel_width = NULL,
                                timepoints = 10L, object_type = "Landmark",
                                device = c("auto", "cpu", "cuda"),
                                deformetrica = NULL,
@@ -72,6 +74,18 @@ deformetrica_shoot <- function(x, control_points, momenta, kernel_width,
                                flow = FALSE,
                                verbose = FALSE) {
   device <- match.arg(device)
+  # A fitted registration can be passed directly as `control_points`: unpack its
+  # momenta / kernel width / timepoints (rewriting its files if they were cleaned).
+  if (inherits(control_points, "deformetricareg")) {
+    reg <- control_points; ff <- .dfca_reg_files(reg)
+    control_points <- ff$cp
+    if (is.null(momenta)) momenta <- ff$mom
+    if (is.null(kernel_width)) kernel_width <- reg$kernel_width
+    if (missing(timepoints) && !is.null(reg$timepoints)) timepoints <- reg$timepoints
+  }
+  if (is.null(momenta) || is.null(kernel_width))
+    stop("Supply `momenta` and `kernel_width`, or pass a deformetricareg as `control_points`.",
+         call. = FALSE)
   pts <- nat::xyzmatrix(x)
   exe <- find_deformetrica(deformetrica)
   dir.create(workdir, recursive = TRUE, showWarnings = FALSE)
@@ -119,6 +133,61 @@ deformetrica_shoot <- function(x, control_points, momenta, kernel_width,
     return(res)
   }
   as_input(.dfca_read_final_flow(file.path(workdir, "output")))
+}
+
+# Build a portable `deformetricareg` from a fit's control-point / momenta files. It keeps
+# BOTH the file paths (fast, this session) and their verbatim contents, so a saveRDS'd
+# registration survives the tempdir being cleaned or being moved to another machine.
+.dfca_reg <- function(control_points, momenta, kernel_width, timepoints, output_dir = NULL) {
+  structure(list(control_points = control_points, momenta = momenta,
+                 kernel_width = kernel_width, timepoints = as.integer(timepoints),
+                 output_dir = output_dir,
+                 cp_text = readLines(control_points), mom_text = readLines(momenta)),
+            class = "deformetricareg")
+}
+
+# Resolve a reg's control-point / momenta to readable files, rewriting from the stored
+# contents when the original tempfiles are gone (e.g. after saveRDS + reload).
+.dfca_reg_files <- function(reg) {
+  cp <- reg$control_points; mom <- reg$momenta
+  if (is.null(cp) || !file.exists(cp)) { cp <- tempfile("dfca_cp_", fileext = ".txt")
+    writeLines(reg$cp_text, cp) }
+  if (is.null(mom) || !file.exists(mom)) { mom <- tempfile("dfca_mom_", fileext = ".txt")
+    writeLines(reg$mom_text, mom) }
+  list(cp = cp, mom = mom)
+}
+
+#' Apply a Deformetrica registration as a natverse transform
+#'
+#' [deformetrica_register()] and [deformetrica_register_multi()] return a
+#' `deformetricareg` — a portable handle on the fitted diffeomorphism, and a
+#' [nat::xformpoints()] method. That makes a fitted registration a first-class natverse
+#' transform: `nat::xform(x, reg)` warps any points / neuron / neuronlist / mesh through
+#' it, and it composes with other registrations (e.g. in a `nat.templatebrains` reglist).
+#' The control points and momenta are stored *inline*, so a `deformetricareg` survives
+#' `saveRDS()` and being moved to another machine.
+#'
+#' @param reg A `deformetricareg`.
+#' @param points An N x 3 matrix of coordinates.
+#' @param ... Passed to [deformetrica_shoot()] (e.g. `object_type`, `device`).
+#' @return An N x 3 matrix of deformed coordinates.
+#' @seealso [deformetrica_shoot()], which does the actual geodesic shooting.
+#' @exportS3Method nat::xformpoints
+xformpoints.deformetricareg <- function(reg, points, ...) {
+  # nat::xform passes control args (FallBackToAffine, na.action, ...) that shoot does
+  # not take; keep only those deformetrica_shoot() understands.
+  dots <- list(...)
+  dots <- dots[names(dots) %in% names(formals(deformetrica_shoot))]
+  do.call(deformetrica_shoot, c(list(points, reg), dots))
+}
+
+#' @export
+print.deformetricareg <- function(x, ...) {
+  cat("<deformetricareg> a fitted Deformetrica diffeomorphism\n")
+  cat(sprintf("  ~%d control points | kernel width %g | %d timepoints\n",
+              length(x$cp_text), x$kernel_width, x$timepoints))
+  cat("  apply with nat::xform(object, reg) or deformetrica_shoot(object, reg)\n")
+  invisible(x)
 }
 
 # ---- internal helpers -------------------------------------------------------
@@ -203,9 +272,11 @@ deformetrica_shoot <- function(x, control_points, momenta, kernel_width,
 #' @param deformetrica Optional path to the executable (auto-detected otherwise).
 #' @param workdir Working directory for the run (a fresh tempdir by default).
 #' @param verbose Show `deformetrica` output.
-#' @return A list with `control_points` and `momenta` (file paths), `kernel_width`
-#'   and `output_dir`; pass the paths straight to [deformetrica_shoot()].
-#' @seealso [deformetrica_shoot()] to apply the fitted transform.
+#' @return A `deformetricareg` object (a portable handle on the fitted diffeomorphism,
+#'   storing the control points + momenta inline). Apply it with `nat::xform(x, reg)` or
+#'   [deformetrica_shoot()]; it survives `saveRDS()`. Its elements `control_points`,
+#'   `momenta`, `kernel_width`, `timepoints` and `output_dir` are still accessible.
+#' @seealso [xformpoints.deformetricareg()] / [deformetrica_shoot()] to apply the fit.
 #' @export
 deformetrica_register <- function(source, target, kernel_width,
                                   timepoints = 10L, object_type = "Landmark",
@@ -286,8 +357,7 @@ deformetrica_register <- function(source, target, kernel_width,
   mom <- list.files(od, pattern = "Momenta\\.txt$", full.names = TRUE)
   if (!length(cp) || !length(mom))
     stop("estimate produced no ControlPoints/Momenta in ", od, call. = FALSE)
-  list(control_points = cp[[1]], momenta = mom[[1]],
-       kernel_width = kernel_width, output_dir = od)
+  .dfca_reg(cp[[1]], mom[[1]], kernel_width, timepoints, od)
 }
 
 #' Write a neuron as a VTK NonOrientedPolyLine
@@ -375,7 +445,8 @@ write_neuron_vtk <- function(x, file) {
 #'   object (defaults to the mean of `data_sigma`).
 #' @param timepoints,max_iterations,device,deformetrica,workdir,verbose As
 #'   [deformetrica_register()].
-#' @return A list with `control_points`, `momenta`, `kernel_width`, `output_dir`.
+#' @return A `deformetricareg` object; see [deformetrica_register()]. Apply it with
+#'   `nat::xform(x, reg)` or [deformetrica_shoot()].
 #' @seealso [deformetrica_register()] for the single-object case.
 #' @export
 deformetrica_register_multi <- function(sources, targets, kernel_width,
@@ -469,5 +540,5 @@ deformetrica_register_multi <- function(sources, targets, kernel_width,
   cp  <- list.files(od, pattern = "ControlPoints\\.txt$", full.names = TRUE)
   mom <- list.files(od, pattern = "Momenta\\.txt$", full.names = TRUE)
   if (!length(cp) || !length(mom)) stop("multi-object estimate produced no CP/Momenta.", call. = FALSE)
-  list(control_points = cp[[1]], momenta = mom[[1]], kernel_width = kernel_width, output_dir = od)
+  .dfca_reg(cp[[1]], mom[[1]], kernel_width, timepoints, od)
 }

@@ -149,9 +149,8 @@ other side of the CNS" — is the very same function. (`flow = TRUE` keeps every
 timepoint, for the animation; the default returns just the endpoint.)
 
 ```{r symmetrise-fns}
-symmetrise_l1 <- function(x, flow = FALSE)
-  deformetrica_shoot(apply_mirror_affine(x), fit$control_points, fit$momenta,
-                     kernel_width = fit$kernel_width, flow = flow)
+symmetrise_l1 <- function(x, flow = FALSE)         # `fit` is a portable `deformetricareg`
+  deformetrica_shoot(apply_mirror_affine(x), fit, flow = flow)
 
 other_side <- symmetrise_l1        # the symmetrising map IS the left<->right map
 ```
@@ -182,8 +181,7 @@ interp  <- function(o, from, to, n) lapply(seq(0, 1, length.out = n),
              function(a) { x <- o; xyzmatrix(x) <- (1 - a) * from + a * to; x })
 aff_kc  <- apply_mirror_affine(kcR)                                    # reflect + rigid
 act1    <- interp(kcR, xyzmatrix(kcR), xyzmatrix(aff_kc), 12)          # the cross-midline sweep
-act2    <- deformetrica_shoot(aff_kc, fit$control_points, fit$momenta,
-                              kernel_width = fit$kernel_width, flow = TRUE)   # the diffeomorphism
+act2    <- deformetrica_shoot(aff_kc, fit, flow = TRUE)                # the diffeomorphism
 flow_kc <- c(act1, act2)
 
 # each Kenyon cell is rooted at its soma, so its root point IS the cell body: draw
