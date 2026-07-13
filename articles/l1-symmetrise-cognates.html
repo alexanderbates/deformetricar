@@ -76,15 +76,18 @@ from its matched left/right neuropil compartments, uses it to carry
 structures across the midline onto their contralateral partners, and
 then <strong>finds cognate neuron pairs</strong> by morphological
 similarity (NBLAST) once the two sides are in register.</p>
-<p>Ten years ago this package shipped three hard-wired, L1-only helpers
-— <code>apply.mirror.affine()</code>, <code>symmetrisel1()</code> and
-<code>otherside()</code> — backed by a bundled transform.
+<p>Ten years ago this package was an L1-only tool: it shipped hard-wired
+helpers — <code>apply.mirror.affine()</code>,
+<code>symmetrisel1()</code>, <code>otherside()</code> for the
+symmetrising map, and <code>findcognate()</code> /
+<code>checkL1cognates()</code> for the left-right cognate search — each
+backed by a bundled transform and a bespoke L1 NBLAST scoring matrix.
 <code>deformetricar</code> is no longer L1-specific, so those functions
 are gone from the package. <strong>This vignette rebuilds them from
 scratch</strong>, as a few lines each over the general
-<code>deformetricar</code> API, driven by the live VFB dataset. That is
-the point of the walkthrough: the three functions are the
-deliverable.</p>
+<code>deformetricar</code> (and <code>nat.nblast</code>) API, driven by
+the live VFB dataset. That is the point of the walkthrough: the five
+functions are the deliverable.</p>
 <div class="float">
 <img src="../reference/figures/l1_symmetrise.gif" alt="The right Kenyon cells (rose) sweeping across the midline onto their left cognates (blue) under the symmetrising map — their somata drawn as circles — over the static grey L1 CNS, viewed along the head-to-tail long axis."><div class="figcaption">The right Kenyon cells (rose) sweeping across
 the midline onto their left cognates (blue) under the symmetrising map —
@@ -255,29 +258,76 @@ should meet.</p>
 <span>                file <span class="op">=</span> <span class="st">"l1_symmetrise.gif"</span><span class="op">)</span>   <span class="co"># somata as circles; grey CNS + left KCs as context</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="find-leftright-cognates-by-nblast">6. Find left/right cognates by NBLAST<a class="anchor" aria-label="anchor" href="#find-leftright-cognates-by-nblast"></a>
+<h2 id="findcognate-and-checkl1cognates-the-cognate-search">6. <code>findcognate()</code> and <code>checkL1cognates()</code> —
+the cognate search<a class="anchor" aria-label="anchor" href="#findcognate-and-checkl1cognates-the-cognate-search"></a>
 </h2>
-<p>With a symmetrising map in hand, cognate-finding is direct: send
-every right neuron to the other side with <code>otherside()</code>, then
-NBLAST it against the left neurons — the top hit is its putative left
-cognate. Kenyon cells are a clean test case: they exist in matched
-numbers on both sides, so most rights should map cleanly onto a
-left.</p>
+<p>With a symmetrising map, cognate-finding is direct: send every right
+neuron across with <code>otherside()</code>, then NBLAST it against the
+left neurons — the top hit is its putative left cognate. Two choices
+make this <strong>L1-tuned</strong>, as the original was:
+<code>UseAlpha = TRUE</code> (which up-weights each neuron’s tract-like
+backbone), and an <strong>L1-scale scoring matrix</strong>. NBLAST’s
+default matrix is trained on the adult fly, whose neurons are an order
+of magnitude larger; the L1 matrix bins distances from fractions of a
+micron (its first breaks are 0.75, 1.5 µm, versus 2.5 µm for the adult),
+so L1 near-misses are scored on the right scale. Build one from
+provisional cognate pairs with
+<code><a href="https://natverse.org/nat.nblast/reference/create_scoringmatrix.html" class="external-link">nat.nblast::create_scoringmatrix()</a></code> at those L1
+<code>distbreaks</code>; here we pass the adult alpha matrix
+<code>smat_alpha.fcwb</code> to keep the walkthrough self-contained.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://natverse.org/nat.nblast/" class="external-link">nat.nblast</a></span><span class="op">)</span></span>
-<span><span class="co"># the FULL Kenyon-cell sets (the animation above used a legible subset)</span></span>
-<span><span class="va">KCR</span> <span class="op">&lt;-</span> <span class="fu">getkc</span><span class="op">(</span><span class="st">"annotation:Kenyon Cell right"</span><span class="op">)</span></span>
-<span><span class="va">KCL</span> <span class="op">&lt;-</span> <span class="fu">getkc</span><span class="op">(</span><span class="st">"annotation:Kenyon Cell left"</span><span class="op">)</span></span>
+<span><span class="va">dp</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">nl</span><span class="op">)</span> <span class="fu">nat</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/nat/man/dotprops.html" class="external-link">dotprops</a></span><span class="op">(</span><span class="va">nl</span>, resample <span class="op">=</span> <span class="fl">0.5</span>, k <span class="op">=</span> <span class="fl">5</span>, .progress <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">kcR_other</span> <span class="op">&lt;-</span> <span class="fu">otherside</span><span class="op">(</span><span class="va">KCR</span><span class="op">)</span>                              <span class="co"># every right KC, warped onto the left</span></span>
-<span><span class="va">dp</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">nl</span><span class="op">)</span> <span class="fu">nat</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/nat/man/dotprops.html" class="external-link">dotprops</a></span><span class="op">(</span><span class="va">nl</span>, resample <span class="op">=</span> <span class="fl">1</span>, k <span class="op">=</span> <span class="fl">5</span>, .progress <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></span>
-<span><span class="va">scores</span>  <span class="op">&lt;-</span> <span class="fu">nat.nblast</span><span class="fu">::</span><span class="fu"><a href="https://natverse.org/nat.nblast/reference/nblast.html" class="external-link">nblast</a></span><span class="op">(</span><span class="fu">dp</span><span class="op">(</span><span class="va">kcR_other</span><span class="op">)</span>, <span class="fu">dp</span><span class="op">(</span><span class="va">KCL</span><span class="op">)</span>, normalised <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="va">cognate</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">scores</span>, <span class="fl">2</span>, <span class="kw">function</span><span class="op">(</span><span class="va">s</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">scores</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/which.min.html" class="external-link">which.max</a></span><span class="op">(</span><span class="va">s</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>left <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">scores</span><span class="op">)</span>, right_cognate <span class="op">=</span> <span class="va">cognate</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>Compare <code>nblast(dp(apply.mirror.affine(KCR)), dp(KCL))</code>
-(mirror-affine only) with the symmetrised scores: the diffeomorphism
-should raise the correct-cognate NBLAST and sharpen the top-1 margin,
-making hemilineage- and cell-type-level left-right mapping clearer.</p>
+<span><span class="co"># findcognate(x, db_dps): carry x across with otherside(), NBLAST against the</span></span>
+<span><span class="co"># contralateral database, return each neuron's ranked cognates with scores.</span></span>
+<span><span class="va">findcognate</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">db_dps</span>, <span class="va">smat</span> <span class="op">=</span> <span class="va">smat_alpha.fcwb</span>, <span class="va">n</span> <span class="op">=</span> <span class="fl">5</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">q</span>  <span class="op">&lt;-</span> <span class="fu">dp</span><span class="op">(</span><span class="fu">otherside</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://natverse.org/nat.nblast/reference/nblast.html" class="external-link">nblast</a></span><span class="op">(</span><span class="va">q</span>, <span class="va">db_dps</span>, smat <span class="op">=</span> <span class="va">smat</span>, normalised <span class="op">=</span> <span class="cn">TRUE</span>, UseAlpha <span class="op">=</span> <span class="cn">TRUE</span>, .progress <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">sc</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">sc</span><span class="op">)</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">j</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">o</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">sc</span><span class="op">[</span>, <span class="va">j</span><span class="op">]</span>, decreasing <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span><span class="op">]</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>cognate <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">sc</span><span class="op">)</span><span class="op">[</span><span class="va">o</span><span class="op">]</span>, score <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">sc</span><span class="op">[</span><span class="va">o</span>, <span class="va">j</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">}</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">KCR</span> <span class="op">&lt;-</span> <span class="fu">getkc</span><span class="op">(</span><span class="st">"annotation:Kenyon Cell right"</span><span class="op">)</span>     <span class="co"># full sets (§5 animated a subset)</span></span>
+<span><span class="va">KCL</span> <span class="op">&lt;-</span> <span class="fu">getkc</span><span class="op">(</span><span class="st">"annotation:Kenyon Cell left"</span><span class="op">)</span></span>
+<span><span class="va">kcl_dps</span> <span class="op">&lt;-</span> <span class="fu">dp</span><span class="op">(</span><span class="va">KCL</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">cog</span> <span class="op">&lt;-</span> <span class="fu">findcognate</span><span class="op">(</span><span class="va">KCR</span>, <span class="va">kcl_dps</span><span class="op">)</span>                  <span class="co"># ranked left cognates per right KC</span></span>
+<span><span class="va">cog</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>                                           <span class="co"># top-5 cognates + scores for one right KC</span></span></code></pre></div>
+<p><strong>Reciprocal best hits.</strong> A cognate call is trustworthy
+when the two neurons are each other’s top match <em>both ways</em> —
+right→left and left→right agree. That mutual-best-hit set is the
+confident left-right mapping, and its size is a clean score for the
+whole symmetrisation.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">top1</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">res</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="va">res</span>, <span class="kw">function</span><span class="op">(</span><span class="va">d</span><span class="op">)</span> <span class="va">d</span><span class="op">$</span><span class="va">cognate</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">r2l</span>  <span class="op">&lt;-</span> <span class="fu">top1</span><span class="op">(</span><span class="fu">findcognate</span><span class="op">(</span><span class="va">KCR</span>, <span class="va">kcl_dps</span><span class="op">)</span><span class="op">)</span>                       <span class="co"># right skid -&gt; best left skid</span></span>
+<span><span class="va">l2r</span>  <span class="op">&lt;-</span> <span class="fu">top1</span><span class="op">(</span><span class="fu">findcognate</span><span class="op">(</span><span class="va">KCL</span>, <span class="fu">dp</span><span class="op">(</span><span class="va">KCR</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>                       <span class="co"># left  skid -&gt; best right skid</span></span>
+<span><span class="va">rbh</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">r2l</span><span class="op">)</span><span class="op">[</span><span class="va">l2r</span><span class="op">[</span><span class="va">r2l</span><span class="op">]</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">r2l</span><span class="op">)</span><span class="op">]</span>                    <span class="co"># mutual top-1 pairs</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"%d / %d right Kenyon cells have a reciprocal-best-hit left cognate"</span>,</span>
+<span>        <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">rbh</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">r2l</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><strong><code>checkL1cognates()</code></strong> — the old interactive
+rgl inspector, as a static <code>nat.ggplot</code> panel: a right query
+carried across the midline (rose) over its top-ranked left cognate
+(blue), viewed along the CNS long axis (the <code>RM</code> from
+§5).</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">checkL1cognates</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">right_skid</span>, <span class="va">db_right</span>, <span class="va">db_left</span>, <span class="va">cog</span>, <span class="va">RM</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">q</span>    <span class="op">&lt;-</span> <span class="fu">otherside</span><span class="op">(</span><span class="va">db_right</span><span class="op">[</span><span class="va">right_skid</span><span class="op">]</span><span class="op">)</span></span>
+<span>  <span class="va">best</span> <span class="op">&lt;-</span> <span class="va">db_left</span><span class="op">[</span><span class="va">cog</span><span class="op">[[</span><span class="va">right_skid</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">cognate</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu">nat.ggplot</span><span class="fu">::</span><span class="fu"><a href="https://natverse.github.io/nat.ggplot/reference/geom_neuron.html" class="external-link">geom_neuron</a></span><span class="op">(</span><span class="va">q</span>,    rotation_matrix <span class="op">=</span> <span class="va">RM</span>, cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#FF5C8A"</span>, <span class="st">"#FF5C8A"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu">nat.ggplot</span><span class="fu">::</span><span class="fu"><a href="https://natverse.github.io/nat.ggplot/reference/geom_neuron.html" class="external-link">geom_neuron</a></span><span class="op">(</span><span class="va">best</span>, rotation_matrix <span class="op">=</span> <span class="va">RM</span>, cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#2C7FB8"</span>, <span class="st">"#2C7FB8"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_fixed.html" class="external-link">coord_fixed</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_void</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="fu">checkL1cognates</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">rbh</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="va">KCR</span>, <span class="va">KCL</span>, <span class="va">cog</span>, <span class="va">RM</span><span class="op">)</span>   <span class="co"># inspect the first confident pair</span></span></code></pre></div>
+<p>The original ran this over the <strong>whole L1 CNS</strong> — all
+~4,000 reconstructed neurons at once, not just the Kenyon cells — to
+build a left-right map for the entire connectome.
+<code>findcognate()</code> scales straight to that: pass the whole-CNS
+dotprops as <code>db_dps</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="notes">Notes<a class="anchor" aria-label="anchor" href="#notes"></a>
@@ -290,18 +340,29 @@ cheap and numerically stable; fitting to thousands of neuron skeletons
 at once is neither. The neurons are what we <em>apply</em> the finished
 map to — that is always cheap (<code><a href="../reference/deformetrica_shoot.html">deformetrica_shoot()</a></code>).</li>
 <li>
-<strong>The three functions are the point.</strong>
-<code>apply.mirror.affine()</code>, <code>symmetrisel1()</code> and
-<code>otherside()</code> are just closures over <code>pre</code> and
-<code>fit</code>. Swap the dataset (or the compartment list) and you
-have a symmetriser for any other nervous system — nothing here is
-L1-specific any more, which is exactly why they no longer live in the
-package.</li>
+<strong>The five functions are the point.</strong>
+<code>apply.mirror.affine()</code>, <code>symmetrisel1()</code>,
+<code>otherside()</code>, <code>findcognate()</code> and
+<code>checkL1cognates()</code> are just closures over <code>pre</code>,
+<code>fit</code> and (for the search) a scoring matrix. Swap the dataset
+(or the compartment list) and you have a symmetriser + cognate-finder
+for any other nervous system — nothing here is L1-specific any more,
+which is exactly why they no longer live in the package.</li>
+<li>
+<strong>L1-scale NBLAST.</strong> The original shipped a bespoke L1
+scoring matrix because the default is trained on adult-fly neurons ~10×
+larger; on L1 you want distance bins that start below a micron.
+<code>UseAlpha = TRUE</code> matters too — Kenyon cells and VNC tracts
+are near-parallel bundles, and the alpha term rewards that shared
+backbone geometry.</li>
 <li>
 <strong>More anchors, better VNC.</strong> Add more of the
 <code>A1</code>–<code>A8</code> / <code>T1</code>–<code>T3</code> pairs
-to <code>pairs</code> for a tighter fit along the nerve cord, at the
-cost of a slower registration.</li>
+to <code>pairs</code> for a tighter fit along the nerve cord; the
+original also drove the warp with named fibre <strong>tracts</strong>
+(the antennal-lobe tracts, the dorso/ventro-medial/lateral VNC tracts)
+as extra matched anchors — add any bilateral pair you can name to
+<code>srcs</code>/<code>tgts</code>.</li>
 </ul>
 </div>
 <div class="section level2">
