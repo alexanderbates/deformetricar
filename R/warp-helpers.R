@@ -188,7 +188,7 @@ ggplot_flow_gif <- function(flows, cols = NULL, volume = NULL, volume_alpha = 0.
                             file = NULL, width = 900, height = 800, delay = 0.14,
                             dpi = 96) {
   if (!requireNamespace("nat.ggplot", quietly = TRUE))
-    stop("ggplot_flow_gif() needs 'nat.ggplot' (>= 1.1.2).", call. = FALSE)
+    stop("ggplot_flow_gif() needs 'nat.ggplot' (>= 1.1.6).", call. = FALSE)
   nat.ggplot::ggneuron_gif(
     flows, cols = cols, volume = volume, volume_col = volume_col,
     volume_alpha = volume_alpha, targets = targets, target_cols = target_cols,
