@@ -18,6 +18,8 @@ ggplot_flow_gif(
   points = NULL,
   point_cols = NULL,
   point_size = 3,
+  point_alpha = 1,
+  point_stroke = 0.8,
   file = NULL,
   width = 900,
   height = 800,
@@ -55,7 +57,8 @@ neurons — e.g. neuron root points / somata. Each entry is either a static N x 
 matrix or a per-timepoint list of matrices (circles that move with the warp),
 forwarded to \code{\link[nat.ggplot:ggneuron_gif]{nat.ggplot::ggneuron_gif()}}.}
 
-\item{point_cols}{Named colours for \code{points}; \code{point_size} the circle size.}
+\item{point_cols}{Named colours for \code{points}; \code{point_size} the circle size,
+\code{point_alpha} its opacity and \code{point_stroke} its outline width.}
 
 \item{file}{Output GIF path. Frames are written next to it.}
 

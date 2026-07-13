@@ -173,7 +173,8 @@ mirror_lr_split <- function(x, axis = c("X", "Y", "Z"), mid = NULL, refine = FAL
 #'   neurons — e.g. neuron root points / somata. Each entry is either a static N x 3
 #'   matrix or a per-timepoint list of matrices (circles that move with the warp),
 #'   forwarded to [nat.ggplot::ggneuron_gif()].
-#' @param point_cols Named colours for `points`; `point_size` the circle size.
+#' @param point_cols Named colours for `points`; `point_size` the circle size,
+#'   `point_alpha` its opacity and `point_stroke` its outline width.
 #' @param rotation_matrix Optional 4x4 view matrix (as `nat.ggplot`/`rgl` use).
 #' @param file Output GIF path. Frames are written next to it.
 #' @param width,height,delay,dpi GIF frame size (px), per-frame delay (s) and dpi.
@@ -185,6 +186,7 @@ ggplot_flow_gif <- function(flows, cols = NULL, volume = NULL, volume_alpha = 0.
                             volume_col = "grey80", targets = NULL, target_cols = NULL,
                             target_alpha = 0.18, alpha = 0.6, rotation_matrix = NULL,
                             points = NULL, point_cols = NULL, point_size = 3,
+                            point_alpha = 1, point_stroke = 0.8,
                             file = NULL, width = 900, height = 800, delay = 0.14,
                             dpi = 96) {
   if (!requireNamespace("nat.ggplot", quietly = TRUE))
@@ -194,5 +196,6 @@ ggplot_flow_gif <- function(flows, cols = NULL, volume = NULL, volume_alpha = 0.
     volume_alpha = volume_alpha, targets = targets, target_cols = target_cols,
     target_alpha = target_alpha, alpha = alpha, rotation_matrix = rotation_matrix,
     points = points, point_cols = point_cols, point_size = point_size,
+    point_alpha = point_alpha, point_stroke = point_stroke,
     file = file, width = width, height = height, delay = delay, dpi = dpi)
 }
