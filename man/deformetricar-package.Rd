@@ -2,35 +2,39 @@
 % Please edit documentation in R/deformetricar.R
 \docType{package}
 \name{deformetricar-package}
-\alias{deformetrica}
-\alias{deformetricar,}
+\alias{deformetricar}
 \alias{deformetricar-package}
-\title{R wrapper for elements of the Deformetrica registration tool}
+\title{deformetricar: an R client for the Deformetrica shape-registration toolkit}
 \description{
-\bold{deformetricar} wraps the Deformetrica tool for statistical analysis of
-2D and 3D shape data.
+\bold{deformetricar} wraps the Deformetrica (>= 4.3) command-line tools for
+statistical shape analysis: it fits diffeomorphisms between point clouds, neuron
+backbones and surface meshes, and applies them by geodesic shooting. It also
+reads and writes VTK object formats.
 }
-\section{Package Options}{
- The following options can be set to specify default
-  behaviour.
+\section{Package options}{
 
-  \itemize{
-
-  \item{\code{deformeticar.bindir}}{ Location of Deformetrica binaries}. You
-  may wish to set this in your \code{\link[base]{Rprofile}} if you do not
-  have deformeticra installed in a standard location.
-
-  }
+\describe{
+\item{\code{deformetricar.exe}}{Path to (or name of) the \code{deformetrica}
+executable; consulted by \code{\link{find_deformetrica}}. Set it in your
+\code{\link[base]{Rprofile}} if Deformetrica is not on the \code{PATH} or in
+a conda environment.}
 }
-\examples{
-# Show state of deformetricar package options
-options()[grep('^deformetricar', names(options()))]
 }
+
 \references{
-See \url{http://www.deformetrica.org/}
+\url{https://www.deformetrica.org}
 }
 \seealso{
-\code{\link{shootflow}}
+\code{\link{find_deformetrica}}, \code{\link{deformetrica_register}},
+\code{\link{deformetrica_shoot}}
 }
-\keyword{package}
+\author{
+\strong{Maintainer}: Alexander Bates \email{alexander.shakeel.bates@gmail.com}
 
+Authors:
+\itemize{
+  \item Gregory Jefferis \email{jefferis@gmail.com} (\href{https://orcid.org/0000-0002-0587-9355}{ORCID})
+}
+
+}
+\keyword{internal}

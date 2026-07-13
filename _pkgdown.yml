@@ -1,0 +1,44 @@
+url: https://alexanderbates.github.io/deformetricar
+
+template:
+  bootstrap: 5
+
+navbar:
+  structure:
+    left: [reference, articles]
+    right: [github]
+
+articles:
+- title: Vignettes
+  navbar: ~
+  contents:
+  - mosquito-to-fly
+  - fafb-left-right
+  - l1-symmetrise-cognates
+
+reference:
+- title: Deformetrica 4 client
+  desc: Fit and apply diffeomorphisms with a modern Deformetrica (>= 4.3) install.
+  contents:
+  - install_deformetrica
+  - find_deformetrica
+  - deformetrica_register
+  - deformetrica_register_multi
+  - deformetrica_shoot
+- title: Alignment helpers
+  desc: Prepare and post-process objects for a cross-brain registration.
+  contents:
+  - affine_prealign
+  - split_mesh_lr
+  - mirror_lr_split
+- title: Visualisation
+  desc: Animate a geodesic flow with nat.ggplot.
+  contents:
+  - ggplot_flow_gif
+- title: Object I/O
+  desc: Read and write neurons, meshes and point sets as VTK.
+  contents:
+  - write_neuron_vtk
+  - read_vtk
+  - write_vtk
+  - transform_vtk

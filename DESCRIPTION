@@ -1,14 +1,55 @@
 Package: deformetricar
 Type: Package
-Title: R wrapper for elements of the Deformetrica registration tool
-Version: 0.1
-Author: Alex Bates and Gregory Jefferis
-Maintainer: Alex Bates <abates@mrc-lmb.cam.ac.uk>
-Description: Wraps deformetrica command line tools to allow 3d coordinates
-    to be transformed using deformetrica registrations. Also provides functions
-    to read and write VTK object formats.
-License: GPL-3
-LazyData: TRUE
-RoxygenNote: 5.0.1
-Suggests: testthat
-Imports: nat, Morpho, Rvcg, xml2, catmaid, rgl, nat.nblast
+Title: R Client for the Deformetrica Shape Registration Toolkit
+Version: 0.2.0.9000
+Authors@R: c(
+    person("Alexander", "Bates", email = "alexander.shakeel.bates@gmail.com",
+           role = c("aut", "cre")),
+    person("Gregory", "Jefferis", email = "jefferis@gmail.com", role = "aut",
+           comment = c(ORCID = "0000-0002-0587-9355")))
+Description: Wraps the Deformetrica (>= 4.3) command-line tools so that 3D
+    coordinates and neuron objects can be transformed by fitted diffeomorphisms
+    via geodesic shooting and flow. Reads and writes VTK object formats and
+    provides sensible defaults for registering fly connectome neurons.
+License: GPL (>= 3)
+Encoding: UTF-8
+Language: en-GB
+URL: https://github.com/alexanderbates/deformetricar,
+    https://alexanderbates.github.io/deformetricar/
+BugReports: https://github.com/alexanderbates/deformetricar/issues
+Depends: R (>= 4.1)
+Imports: nat, Morpho
+Suggests:
+    reticulate,
+    Rvcg,
+    ggplot2,
+    nat.ggplot (>= 1.1.1),
+    gifski,
+    magick,
+    nat.templatebrains,
+    nat.flybrains,
+    nat.jrcbrains,
+    insectbrainr,
+    elmr,
+    catmaid,
+    nat.nblast,
+    testthat (>= 3.0.0),
+    withr,
+    knitr,
+    rmarkdown
+Remotes:
+    natverse/nat,
+    natverse/nat.ggplot@v1.1.1,
+    natverse/nat.nblast,
+    natverse/nat.templatebrains,
+    natverse/nat.flybrains,
+    natverse/nat.jrcbrains,
+    natverse/insectbrainr,
+    natverse/elmr,
+    catmaid=natverse/rcatmaid
+Roxygen: list(markdown = TRUE)
+Config/testthat/edition: 3
+Config/Needs/website: pkgdown
+VignetteBuilder: knitr
+Config/roxygen2/version: 8.0.0
+RoxygenNote: 7.3.3

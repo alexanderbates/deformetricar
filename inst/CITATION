@@ -1,0 +1,79 @@
+citHeader("To cite deformetricar in publications please cite the package, the natverse, and the Deformetrica software it wraps:")
+
+bibentry(
+  bibtype  = "Misc",
+  title    = "deformetricar: R Client for the Deformetrica Shape Registration Toolkit",
+  author   = c(person("Alexander Shakeel", "Bates"),
+               person("Gregory S. X. E.", "Jefferis")),
+  year     = "2026",
+  note     = "R package version 0.2.0.9000",
+  url      = "https://github.com/alexanderbates/deformetricar",
+  textVersion = paste(
+    "Bates AS, Jefferis GSXE (2026). deformetricar: R Client for the Deformetrica",
+    "Shape Registration Toolkit. R package version 0.2.0.9000.",
+    "https://github.com/alexanderbates/deformetricar"
+  )
+)
+
+bibentry(
+  bibtype  = "Article",
+  title    = "The natverse, a versatile toolbox for combining and analysing neuroanatomical data",
+  author   = c(person("Alexander Shakeel", "Bates"),
+               person("James D.", "Manton"),
+               person("Sridhar R.", "Jagannathan"),
+               person("Marta", "Costa"),
+               person("Philipp", "Schlegel"),
+               person("Torsten", "Rohlfing"),
+               person("Gregory S. X. E.", "Jefferis")),
+  journal  = "eLife",
+  year     = "2020",
+  volume   = "9",
+  pages    = "e53350",
+  doi      = "10.7554/eLife.53350",
+  textVersion = paste(
+    "Bates AS, Manton JD, Jagannathan SR, Costa M, Schlegel P, Rohlfing T, Jefferis GSXE (2020).",
+    "The natverse, a versatile toolbox for combining and analysing neuroanatomical data.",
+    "eLife 9:e53350. doi:10.7554/eLife.53350."
+  )
+)
+
+bibentry(
+  bibtype  = "InProceedings",
+  title    = "Deformetrica 4: an open-source software for statistical shape analysis",
+  author   = c(person("Alexandre", "Bone"),
+               person("Maxime", "Louis"),
+               person("Benoit", "Martin"),
+               person("Stanley", "Durrleman")),
+  booktitle = "Shape in Medical Imaging (ShapeMI), MICCAI",
+  year     = "2018",
+  pages    = "3-13",
+  doi      = "10.1007/978-3-030-04747-4_1",
+  url      = "https://www.deformetrica.org",
+  textVersion = paste(
+    "Bone A, Louis M, Martin B, Durrleman S (2018).",
+    "Deformetrica 4: an open-source software for statistical shape analysis.",
+    "ShapeMI, MICCAI 2018:3-13. doi:10.1007/978-3-030-04747-4_1. https://www.deformetrica.org"
+  )
+)
+
+bibentry(
+  bibtype  = "Article",
+  title    = "Morphometry of anatomical shape complexes with dense deformations and sparse parameters",
+  author   = c(person("Stanley", "Durrleman"),
+               person("Marcel", "Prastawa"),
+               person("Nicolas", "Charon"),
+               person("Julie R.", "Korenberg"),
+               person("Sarang", "Joshi"),
+               person("Guido", "Gerig"),
+               person("Alain", "Trouve")),
+  journal  = "NeuroImage",
+  year     = "2014",
+  volume   = "101",
+  pages    = "35-49",
+  doi      = "10.1016/j.neuroimage.2014.06.043",
+  textVersion = paste(
+    "Durrleman S, Prastawa M, Charon N, Korenberg JR, Joshi S, Gerig G, Trouve A (2014).",
+    "Morphometry of anatomical shape complexes with dense deformations and sparse parameters.",
+    "NeuroImage 101:35-49. doi:10.1016/j.neuroimage.2014.06.043."
+  )
+)
