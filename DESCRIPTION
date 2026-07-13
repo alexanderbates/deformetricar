@@ -33,6 +33,10 @@ Suggests:
     elmr,
     catmaid,
     nat.nblast,
+    malecns,
+    bancr,
+    neuprintr,
+    fafbseg,
     testthat (>= 3.0.0),
     withr,
     knitr,
@@ -46,7 +50,11 @@ Remotes:
     natverse/nat.jrcbrains,
     natverse/insectbrainr,
     natverse/elmr,
-    catmaid=natverse/rcatmaid
+    catmaid=natverse/rcatmaid,
+    flyconnectome/malecns,
+    natverse/bancr,
+    natverse/neuprintr,
+    natverse/fafbseg
 Roxygen: list(markdown = TRUE)
 Config/testthat/edition: 3
 Config/Needs/website: pkgdown
