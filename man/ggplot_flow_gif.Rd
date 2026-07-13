@@ -53,12 +53,14 @@ to a transparent greyscale ramp so the coloured flow reads clearly on top.}
 \item{rotation_matrix}{Optional 4x4 view matrix (as \code{nat.ggplot}/\code{rgl} use).}
 
 \item{points}{Optional named list of point sets drawn as circles on top of the
-neurons — e.g. neuron root points / somata. Each entry is either a static N x 3
+neurons - e.g. neuron root points / somata. Each entry is either a static N x 3
 matrix or a per-timepoint list of matrices (circles that move with the warp),
 forwarded to \code{\link[nat.ggplot:ggneuron_gif]{nat.ggplot::ggneuron_gif()}}.}
 
-\item{point_cols}{Named colours for \code{points}; \code{point_size} the circle size,
-\code{point_alpha} its opacity and \code{point_stroke} its outline width.}
+\item{point_cols}{Named fill colours for \code{points} (one per entry).}
+
+\item{point_size, point_alpha, point_stroke}{Circle size, opacity and outline width
+for \code{points}.}
 
 \item{file}{Output GIF path. Frames are written next to it.}
 

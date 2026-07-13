@@ -46,7 +46,7 @@ registration does (cf. \code{bancr::banc_lr}): reflect the object across a nomin
 midline plane and, optionally, \code{refine} the reflection with a Deformetrica warp
 of the object onto its own reflection so the true (possibly curved) symmetry
 surface is found. Each point is then labelled by \emph{how far and in which direction
-it must travel to reach its mirror partner} — points on the symmetry surface
+it must travel to reach its mirror partner} - points on the symmetry surface
 barely move; points to one side travel toward the other.
 }
 \seealso{

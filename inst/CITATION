@@ -1,16 +1,19 @@
 citHeader("To cite deformetricar in publications please cite the package, the natverse, and the Deformetrica software it wraps:")
 
+if (!exists("meta") || is.null(meta)) meta <- packageDescription("deformetricar")
+ver <- meta$Version
+
 bibentry(
   bibtype  = "Misc",
   title    = "deformetricar: R Client for the Deformetrica Shape Registration Toolkit",
   author   = c(person("Alexander Shakeel", "Bates"),
                person("Gregory S. X. E.", "Jefferis")),
   year     = "2026",
-  note     = "R package version 0.2.0.9000",
+  note     = paste("R package version", ver),
   url      = "https://github.com/natverse/deformetricar",
-  textVersion = paste(
-    "Bates AS, Jefferis GSXE (2026). deformetricar: R Client for the Deformetrica",
-    "Shape Registration Toolkit. R package version 0.2.0.9000.",
+  textVersion = paste0(
+    "Bates AS, Jefferis GSXE (2026). deformetricar: R Client for the Deformetrica ",
+    "Shape Registration Toolkit. R package version ", ver, ". ",
     "https://github.com/natverse/deformetricar"
   )
 )

@@ -95,7 +95,7 @@ split_mesh_lr <- function(x, mid = NULL, axis = c("X", "Y", "Z"),
 #' midline plane and, optionally, `refine` the reflection with a Deformetrica warp
 #' of the object onto its own reflection so the true (possibly curved) symmetry
 #' surface is found. Each point is then labelled by *how far and in which direction
-#' it must travel to reach its mirror partner* — points on the symmetry surface
+#' it must travel to reach its mirror partner* - points on the symmetry surface
 #' barely move; points to one side travel toward the other.
 #'
 #' @param x A `mesh3d`.
@@ -170,11 +170,12 @@ mirror_lr_split <- function(x, axis = c("X", "Y", "Z"), mid = NULL, refine = FAL
 #' @param volume_alpha,target_alpha,alpha Alphas for the reference volume, the target
 #'   objects and the flow objects.
 #' @param points Optional named list of point sets drawn as circles on top of the
-#'   neurons — e.g. neuron root points / somata. Each entry is either a static N x 3
+#'   neurons - e.g. neuron root points / somata. Each entry is either a static N x 3
 #'   matrix or a per-timepoint list of matrices (circles that move with the warp),
 #'   forwarded to [nat.ggplot::ggneuron_gif()].
-#' @param point_cols Named colours for `points`; `point_size` the circle size,
-#'   `point_alpha` its opacity and `point_stroke` its outline width.
+#' @param point_cols Named fill colours for `points` (one per entry).
+#' @param point_size,point_alpha,point_stroke Circle size, opacity and outline width
+#'   for `points`.
 #' @param rotation_matrix Optional 4x4 view matrix (as `nat.ggplot`/`rgl` use).
 #' @param file Output GIF path. Frames are written next to it.
 #' @param width,height,delay,dpi GIF frame size (px), per-frame delay (s) and dpi.

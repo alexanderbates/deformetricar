@@ -13,3 +13,5 @@
 ^pkgdown$
 ^o2$
 ^CLAUDE\.md$
+^.*\.DS_Store$
+^\.claude$

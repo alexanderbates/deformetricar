@@ -17,7 +17,7 @@
 #' @param envname Name of the conda env / virtualenv to install into
 #'   (default `"deformetrica"`). A dedicated env is recommended because Deformetrica
 #'   pins specific `torch`/`pykeops` versions.
-#' @param method One of `"conda"` (default, recommended — Deformetrica's own install
+#' @param method One of `"conda"` (default, recommended - Deformetrica's own install
 #'   instructions use a conda env), `"virtualenv"`, or `"auto"` (conda if a conda
 #'   binary is found, else virtualenv).
 #' @param python_version Python for the new environment (default `"3.8"`, which
@@ -38,7 +38,7 @@
 #'   no native arm64 wheels, so a plain arm64 `pip install` fails. This function
 #'   handles it for you: on an M-series Mac it defaults to `x86 = TRUE`, building an
 #'   `osx-64` conda env (Python 3.8) whose interpreter runs under Rosetta and pulls the
-#'   x86-64 wheels — verified end-to-end (estimate + compute) on this hardware. You
+#'   x86-64 wheels - verified end-to-end (estimate + compute) on this hardware. You
 #'   need Rosetta (`softwareupdate --install-rosetta`) and a conda binary; the first
 #'   `deformetrica` call per process pays a ~45 s Rosetta cold-start to import
 #'   torch/vtk, then runs normally.
@@ -119,7 +119,7 @@ install_deformetrica <- function(envname = "deformetrica",
   if (is.null(exe))
     stop("Install completed but the 'deformetrica' console script was not found in ",
          "environment '", envname, "'. Check the pip output above for errors ",
-         "(on arm64 macOS the torch==1.6 pin commonly fails — see ?install_deformetrica).",
+         "(on arm64 macOS the torch==1.6 pin commonly fails - see ?install_deformetrica).",
          call. = FALSE)
 
   ok <- identical(as.integer(suppressWarnings(

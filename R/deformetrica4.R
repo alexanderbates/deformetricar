@@ -229,7 +229,7 @@ deformetrica_register <- function(source, target, kernel_width,
   dir.create(workdir, recursive = TRUE, showWarnings = FALSE)
   write_vtk(src, file.path(workdir, "source.vtk"), polygons = if (src_is_mesh) t(source$it) - 1L else NULL)
   write_vtk(tgt, file.path(workdir, "target.vtk"), polygons = if (tgt_is_mesh) t(target$it) - 1L else NULL)
-  # Explicit MATCHING object id in both XMLs ("shape") — never derive it by
+  # Explicit MATCHING object id in both XMLs ("shape") - never derive it by
   # stripping a filename suffix (that silently desyncs when the suffix recurs).
   writeLines(sprintf(
 '<?xml version="1.0" encoding="UTF-8"?>
@@ -358,7 +358,7 @@ write_neuron_vtk <- function(x, file) {
 #' @param sources,targets Named, equal-length lists of matched objects. `sources`
 #'   are templates (moving), `targets` the subject (fixed). Names become object ids.
 #' @param kernel_width Deformation kernel width.
-#' @param object_kernel_width Data-attachment kernel width — the spatial scale at which
+#' @param object_kernel_width Data-attachment kernel width - the spatial scale at which
 #'   each object's surface/curve mismatch is measured (Current/Varifold). *Smaller =
 #'   finer, more local matching*, which pulls small structures (galls, noduli) onto
 #'   their target more tightly. A single value for every object, or a per-object vector
@@ -369,7 +369,7 @@ write_neuron_vtk <- function(x, file) {
 #' @param data_sigma Data-attachment noise sigma. A single value applied to every
 #'   object, or a per-object vector (recycled if length 1; matched by name to
 #'   `sources` if named, else taken in order). *Smaller sigma weights that object
-#'   more strongly* in the fit — e.g. give homologous neuropils a small sigma and
+#'   more strongly* in the fit - e.g. give homologous neuropils a small sigma and
 #'   the outer hull a larger one so the neuropils drive the internal alignment.
 #' @param landmark_sigma Data-attachment sigma for the optional shared `landmarks`
 #'   object (defaults to the mean of `data_sigma`).

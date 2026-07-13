@@ -20,7 +20,7 @@ install_deformetrica(
 (default \code{"deformetrica"}). A dedicated env is recommended because Deformetrica
 pins specific \code{torch}/\code{pykeops} versions.}
 
-\item{method}{One of \code{"conda"} (default, recommended — Deformetrica's own install
+\item{method}{One of \code{"conda"} (default, recommended - Deformetrica's own install
 instructions use a conda env), \code{"virtualenv"}, or \code{"auto"} (conda if a conda
 binary is found, else virtualenv).}
 
@@ -60,7 +60,7 @@ resolves it automatically (including in new sessions if you persist the option).
 no native arm64 wheels, so a plain arm64 \verb{pip install} fails. This function
 handles it for you: on an M-series Mac it defaults to \code{x86 = TRUE}, building an
 \code{osx-64} conda env (Python 3.8) whose interpreter runs under Rosetta and pulls the
-x86-64 wheels — verified end-to-end (estimate + compute) on this hardware. You
+x86-64 wheels - verified end-to-end (estimate + compute) on this hardware. You
 need Rosetta (\code{softwareupdate --install-rosetta}) and a conda binary; the first
 \code{deformetrica} call per process pays a ~45 s Rosetta cold-start to import
 torch/vtk, then runs normally.

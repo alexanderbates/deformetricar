@@ -26,7 +26,7 @@ are templates (moving), \code{targets} the subject (fixed). Names become object 
 
 \item{kernel_width}{Deformation kernel width.}
 
-\item{object_kernel_width}{Data-attachment kernel width — the spatial scale at which
+\item{object_kernel_width}{Data-attachment kernel width - the spatial scale at which
 each object's surface/curve mismatch is measured (Current/Varifold). \emph{Smaller =
 finer, more local matching}, which pulls small structures (galls, noduli) onto
 their target more tightly. A single value for every object, or a per-object vector
@@ -39,7 +39,7 @@ added as a shared Landmark object (the \code{inc_tracts_lmarks} regulariser).}
 \item{data_sigma}{Data-attachment noise sigma. A single value applied to every
 object, or a per-object vector (recycled if length 1; matched by name to
 \code{sources} if named, else taken in order). \emph{Smaller sigma weights that object
-more strongly} in the fit — e.g. give homologous neuropils a small sigma and
+more strongly} in the fit - e.g. give homologous neuropils a small sigma and
 the outer hull a larger one so the neuropils drive the internal alignment.}
 
 \item{landmark_sigma}{Data-attachment sigma for the optional shared \code{landmarks}
