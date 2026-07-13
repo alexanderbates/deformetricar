@@ -50,8 +50,11 @@ library(nat.flybrains); library(nat.jrcbrains); library(nat.templatebrains)
 library(fafbseg)
 library(Rvcg); library(Morpho)   # mesh decimation / merging
 
-# Tokens: the maleCNS and BANC data live behind neuPrint / CAVE. Follow the setup in
-# the malecns, bancr and neuprintr READMEs to get your own tokens into ~/.Renviron.
+# Access. The BANC *metadata* used here needs no BANC login: banc_meta() and
+# banc_nuclei() default to the public GCS snapshot (source = "gcs"). Only the neuron
+# *geometry* — banc_read_l2skel()/banc_read_neuron_meshes() — needs a BANC CAVE token,
+# and the maleCNS neuPrint side needs a malecns token. See the bancr, malecns and
+# neuprintr READMEs for getting those into ~/.Renviron.
 #
 # One-time: set up the Deformetrica CLI this package wraps, in a managed conda env.
 # install_deformetrica()      # (skip if find_deformetrica() already resolves)

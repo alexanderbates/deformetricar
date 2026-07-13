@@ -111,8 +111,11 @@ shown as circles.</li>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/natverse/fafbseg" class="external-link">fafbseg</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/zarquon42b/Rvcg" class="external-link">Rvcg</a></span><span class="op">)</span>; <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/zarquon42b/Morpho" class="external-link">Morpho</a></span><span class="op">)</span>   <span class="co"># mesh decimation / merging</span></span>
 <span></span>
-<span><span class="co"># Tokens: the maleCNS and BANC data live behind neuPrint / CAVE. Follow the setup in</span></span>
-<span><span class="co"># the malecns, bancr and neuprintr READMEs to get your own tokens into ~/.Renviron.</span></span>
+<span><span class="co"># Access. The BANC *metadata* used here needs no BANC login: banc_meta() and</span></span>
+<span><span class="co"># banc_nuclei() default to the public GCS snapshot (source = "gcs"). Only the neuron</span></span>
+<span><span class="co"># *geometry* — banc_read_l2skel()/banc_read_neuron_meshes() — needs a BANC CAVE token,</span></span>
+<span><span class="co"># and the maleCNS neuPrint side needs a malecns token. See the bancr, malecns and</span></span>
+<span><span class="co"># neuprintr READMEs for getting those into ~/.Renviron.</span></span>
 <span><span class="co">#</span></span>
 <span><span class="co"># One-time: set up the Deformetrica CLI this package wraps, in a managed conda env.</span></span>
 <span><span class="co"># install_deformetrica()      # (skip if find_deformetrica() already resolves)</span></span></code></pre></div>
