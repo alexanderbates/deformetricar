@@ -14,9 +14,9 @@ Description: Wraps the Deformetrica (>= 4.3) command-line tools so that 3D
 License: GPL (>= 3)
 Encoding: UTF-8
 Language: en-GB
-URL: https://github.com/alexanderbates/deformetricar,
-    https://alexanderbates.github.io/deformetricar/
-BugReports: https://github.com/alexanderbates/deformetricar/issues
+URL: https://github.com/natverse/deformetricar,
+    https://natverse.github.io/deformetricar/
+BugReports: https://github.com/natverse/deformetricar/issues
 Depends: R (>= 4.1)
 Imports: nat, Morpho
 Suggests:

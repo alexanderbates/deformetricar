@@ -1,7 +1,7 @@
 <!-- badges: start -->
 [![natverse](https://img.shields.io/badge/natverse-Part%20of%20the%20natverse-a241b6)](https://natverse.github.io)
-[![Docs](https://img.shields.io/badge/docs-experimental-orange.svg)](https://alexanderbates.github.io/deformetricar/reference/)
-[![R-CMD-check](https://github.com/alexanderbates/deformetricar/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/alexanderbates/deformetricar/actions/workflows/R-CMD-check.yaml)
+[![Docs](https://img.shields.io/badge/docs-experimental-orange.svg)](https://natverse.github.io/deformetricar/reference/)
+[![R-CMD-check](https://github.com/natverse/deformetricar/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/natverse/deformetricar/actions/workflows/R-CMD-check.yaml)
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
@@ -25,13 +25,13 @@ interface.
 *Left: the whole **Aedes aegypti** brain surface warped onto the **Drosophila**
 JRC2018F template. Right: just the central complex — the mosquito's CBU/CBL onto the
 fly's fan-shaped and ellipsoid bodies. Both are produced end-to-end by the
-[mosquito-to-fly vignette](https://alexanderbates.github.io/deformetricar/articles/mosquito-to-fly.html).*
+[mosquito-to-fly vignette](https://natverse.github.io/deformetricar/articles/mosquito-to-fly.html).*
 
 ## Installation
 
 ```r
 # install.packages("remotes")
-remotes::install_github("alexanderbates/deformetricar")
+remotes::install_github("natverse/deformetricar")
 ```
 
 ### Installing Deformetrica
@@ -99,14 +99,14 @@ weight; keep `object_kernel_width` ≥ the target mesh's face spacing. Because
 
 ## Articles
 
-- **[Warping a mosquito brain onto the fly](https://alexanderbates.github.io/deformetricar/articles/mosquito-to-fly.html)** —
+- **[Warping a mosquito brain onto the fly](https://natverse.github.io/deformetricar/articles/mosquito-to-fly.html)** —
   register the *Aedes aegypti* brain onto *Drosophila* JRC2018F, driven by cross-identified
   neuropils matched left-to-left and right-to-right, with a nat.ggplot GIF.
-- **[A FAFB left-right brain registration](https://alexanderbates.github.io/deformetricar/articles/fafb-left-right.html)** —
+- **[A FAFB left-right brain registration](https://natverse.github.io/deformetricar/articles/fafb-left-right.html)** —
   register the FAFB brain surface to its mirror image.
-- **[Symmetrising the L1 larval CNS + finding cognates](https://alexanderbates.github.io/deformetricar/articles/l1-symmetrise-cognates.html)** —
+- **[Symmetrising the L1 larval CNS + finding cognates](https://natverse.github.io/deformetricar/articles/l1-symmetrise-cognates.html)** —
   build a left-right symmetrising warp from L1 larval VFB CATMAID neurons and find cognate pairs.
-- **[Warping maleCNS DA1 PNs onto the BANC](https://alexanderbates.github.io/deformetricar/articles/malecns-to-banc.html)** —
+- **[Warping maleCNS DA1 PNs onto the BANC](https://natverse.github.io/deformetricar/articles/malecns-to-banc.html)** —
   bridge the DA1 projection neurons from the maleCNS connectome into BANC space, then fit a
   per-side diffeomorphism (with an ordered soma correspondence) to warp them onto their BANC counterparts.
 
