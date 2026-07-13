@@ -56,7 +56,14 @@ The GIF path if written (needs \code{gifski}, or falls back to \code{magick}), e
 the vector of frame PNGs.
 }
 \description{
-Renders a set of warping objects across the timepoints of a geodesic flow (as
-returned by \code{\link[=deformetrica_shoot]{deformetrica_shoot()}} with \code{flow = TRUE}) to a ping-pong GIF, each
-object in its own colour over a translucent reference volume.
+A thin convenience wrapper around \code{\link[nat.ggplot:ggneuron_gif]{nat.ggplot::ggneuron_gif()}} (where the general
+"animate a sequence of nat objects to a GIF" machinery now lives). It renders a set
+of warping objects across the timepoints of a geodesic flow (as returned by
+\code{\link[=deformetrica_shoot]{deformetrica_shoot()}} with \code{flow = TRUE}) to a ping-pong GIF, each object in its
+own colour over an optional reference volume and static greyscale targets. Kept for
+convenience/back-compatibility; new code can call \code{\link[nat.ggplot:ggneuron_gif]{nat.ggplot::ggneuron_gif()}}
+directly.
+}
+\seealso{
+\code{\link[nat.ggplot:ggneuron_gif]{nat.ggplot::ggneuron_gif()}} for the underlying, general animation function.
 }

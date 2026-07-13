@@ -358,7 +358,12 @@ write_neuron_vtk <- function(x, file) {
 #' @param sources,targets Named, equal-length lists of matched objects. `sources`
 #'   are templates (moving), `targets` the subject (fixed). Names become object ids.
 #' @param kernel_width Deformation kernel width.
-#' @param object_kernel_width Per-object data kernel width (defaults to `kernel_width`).
+#' @param object_kernel_width Data-attachment kernel width — the spatial scale at which
+#'   each object's surface/curve mismatch is measured (Current/Varifold). *Smaller =
+#'   finer, more local matching*, which pulls small structures (galls, noduli) onto
+#'   their target more tightly. A single value for every object, or a per-object vector
+#'   (recycled if length 1; matched by name to `sources` if named, else in order).
+#'   Defaults to `kernel_width`.
 #' @param landmarks Optional `list(source=, target=)` of anchoring point matrices,
 #'   added as a shared Landmark object (the `inc_tracts_lmarks` regulariser).
 #' @param data_sigma Data-attachment noise sigma. A single value applied to every
@@ -391,6 +396,12 @@ deformetrica_register_multi <- function(sources, targets, kernel_width,
     else if (length(data_sigma) == length(sources)) data_sigma
     else stop("data_sigma must be length 1, length(sources), or named by sources.", call. = FALSE)
   if (anyNA(sigma)) stop("named data_sigma is missing an entry for some source object.", call. = FALSE)
+  # Resolve object_kernel_width per object the same way (scalar, named, or in order).
+  okw <- if (length(object_kernel_width) == 1L) rep(object_kernel_width, length(sources))
+    else if (!is.null(names(object_kernel_width))) unname(object_kernel_width[names(sources)])
+    else if (length(object_kernel_width) == length(sources)) object_kernel_width
+    else stop("object_kernel_width must be length 1, length(sources), or named by sources.", call. = FALSE)
+  if (anyNA(okw)) stop("named object_kernel_width is missing an entry for some source object.", call. = FALSE)
   exe <- find_deformetrica(deformetrica)
   dir.create(file.path(workdir, "data"), recursive = TRUE, showWarnings = FALSE)
 
@@ -409,7 +420,7 @@ deformetrica_register_multi <- function(sources, targets, kernel_width,
       <kernel-type>torch</kernel-type>
       <kernel-device>%s</kernel-device>
       <filename>%s</filename>
-    </object>', ids[i], spec$dtype, spec$attach, sigma[i], object_kernel_width, device, sf))
+    </object>', ids[i], spec$dtype, spec$attach, sigma[i], okw[i], device, sf))
     subj_xml <- c(subj_xml, sprintf('      <filename object_id="%s">%s</filename>', ids[i], tf))
   }
   if (!is.null(landmarks)) {

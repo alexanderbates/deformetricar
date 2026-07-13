@@ -146,9 +146,13 @@ mirror_lr_split <- function(x, axis = c("X", "Y", "Z"), mid = NULL, refine = FAL
 
 #' Animate a Deformetrica geodesic flow as a nat.ggplot GIF
 #'
-#' Renders a set of warping objects across the timepoints of a geodesic flow (as
-#' returned by [deformetrica_shoot()] with `flow = TRUE`) to a ping-pong GIF, each
-#' object in its own colour over a translucent reference volume.
+#' A thin convenience wrapper around [nat.ggplot::ggneuron_gif()] (where the general
+#' "animate a sequence of nat objects to a GIF" machinery now lives). It renders a set
+#' of warping objects across the timepoints of a geodesic flow (as returned by
+#' [deformetrica_shoot()] with `flow = TRUE`) to a ping-pong GIF, each object in its
+#' own colour over an optional reference volume and static greyscale targets. Kept for
+#' convenience/back-compatibility; new code can call [nat.ggplot::ggneuron_gif()]
+#' directly.
 #'
 #' @param flows A named list; each element is the per-timepoint list of objects for
 #'   one structure (all lists the same length). Colours are taken per structure.
@@ -170,67 +174,18 @@ mirror_lr_split <- function(x, axis = c("X", "Y", "Z"), mid = NULL, refine = FAL
 #' @param width,height,delay,dpi GIF frame size (px), per-frame delay (s) and dpi.
 #' @return The GIF path if written (needs `gifski`, or falls back to `magick`), else
 #'   the vector of frame PNGs.
+#' @seealso [nat.ggplot::ggneuron_gif()] for the underlying, general animation function.
 #' @export
 ggplot_flow_gif <- function(flows, cols = NULL, volume = NULL, volume_alpha = 0.12,
                             volume_col = "grey80", targets = NULL, target_cols = NULL,
                             target_alpha = 0.18, alpha = 0.6, rotation_matrix = NULL,
                             file = NULL, width = 900, height = 800, delay = 0.14,
                             dpi = 96) {
-  if (!requireNamespace("nat.ggplot", quietly = TRUE) ||
-      !requireNamespace("ggplot2", quietly = TRUE))
-    stop("ggplot_flow_gif() needs 'nat.ggplot' and 'ggplot2'.", call. = FALSE)
-  nstruct <- length(flows)
-  if (is.null(cols)) {
-    pal <- c("#E4572E", "#2E86AB", "#F3A712", "#3B7A57", "#8E44AD",
-             "#17A398", "#C1121F", "#5B8C5A", "#E27396", "#7D4F50")
-    cols <- stats::setNames(rep(pal, length.out = nstruct), names(flows))
-  }
-  # Static target objects (e.g. the fly neuropils each flow lands on) default to a
-  # transparent greyscale ramp so the coloured, moving flow reads clearly on top.
-  if (!is.null(targets) && is.null(target_cols))
-    target_cols <- stats::setNames(
-      grDevices::grey.colors(length(targets), start = 0.4, end = 0.75),
-      names(targets))
-  nt <- length(flows[[1]])
-  frames <- character(nt)
-  fdir <- if (is.null(file)) tempdir() else dirname(file)
-  dir.create(fdir, showWarnings = FALSE, recursive = TRUE)
-  file.remove(list.files(fdir, "^flowframe_[0-9]+\\.png$", full.names = TRUE))  # stale frames
-  for (t in seq_len(nt)) {
-    p <- ggplot2::ggplot()
-    if (!is.null(volume))
-      p <- p + nat.ggplot::geom_neuron(volume, rotation_matrix = rotation_matrix,
-                                       cols = rep(volume_col, 2), alpha = volume_alpha)
-    if (!is.null(targets))
-      for (nm in names(targets))
-        p <- p + nat.ggplot::geom_neuron(targets[[nm]], rotation_matrix = rotation_matrix,
-                                         cols = rep(target_cols[[nm]], 2), alpha = target_alpha)
-    for (nm in names(flows))
-      p <- p + nat.ggplot::geom_neuron(flows[[nm]][[t]], rotation_matrix = rotation_matrix,
-                                       cols = rep(cols[[nm]], 2), alpha = alpha)
-    p <- p + ggplot2::theme_void() + ggplot2::coord_fixed() +
-      ggplot2::theme(legend.position = "none")
-    frames[t] <- file.path(fdir, sprintf("flowframe_%03d.png", t))
-    ggplot2::ggsave(frames[t], p, width = width / dpi, height = height / dpi,
-                    dpi = dpi, bg = "white")
-  }
-  if (!is.null(file)) {
-    seq <- c(frames, rev(frames)[-c(1, nt)])          # ping-pong
-    if (requireNamespace("gifski", quietly = TRUE)) {
-      gifski::gifski(seq, file, width = width, height = height, delay = delay)
-      return(file)
-    }
-    # gifski needs Rust to build; fall back to the magick package if present so the
-    # GIF still assembles (e.g. on machines without a Rust toolchain).
-    if (requireNamespace("magick", quietly = TRUE)) {
-      valid <- c(1, 2, 4, 5, 10, 20, 25, 50, 100)     # magick fps must divide 100
-      fps <- valid[which.min(abs(valid - 1 / delay))]
-      anim <- magick::image_animate(magick::image_read(seq), fps = fps, optimize = TRUE)
-      magick::image_write(anim, file)
-      return(file)
-    }
-    message("ggplot_flow_gif(): install 'gifski' or 'magick' to assemble the GIF; ",
-            "returning frame paths instead.")
-  }
-  frames
+  if (!requireNamespace("nat.ggplot", quietly = TRUE))
+    stop("ggplot_flow_gif() needs 'nat.ggplot' (>= 1.1.0).", call. = FALSE)
+  nat.ggplot::ggneuron_gif(
+    flows, cols = cols, volume = volume, volume_col = volume_col,
+    volume_alpha = volume_alpha, targets = targets, target_cols = target_cols,
+    target_alpha = target_alpha, alpha = alpha, rotation_matrix = rotation_matrix,
+    file = file, width = width, height = height, delay = delay, dpi = dpi)
 }

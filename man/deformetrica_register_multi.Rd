@@ -26,7 +26,12 @@ are templates (moving), \code{targets} the subject (fixed). Names become object 
 
 \item{kernel_width}{Deformation kernel width.}
 
-\item{object_kernel_width}{Per-object data kernel width (defaults to \code{kernel_width}).}
+\item{object_kernel_width}{Data-attachment kernel width — the spatial scale at which
+each object's surface/curve mismatch is measured (Current/Varifold). \emph{Smaller =
+finer, more local matching}, which pulls small structures (galls, noduli) onto
+their target more tightly. A single value for every object, or a per-object vector
+(recycled if length 1; matched by name to \code{sources} if named, else in order).
+Defaults to \code{kernel_width}.}
 
 \item{landmarks}{Optional \code{list(source=, target=)} of anchoring point matrices,
 added as a shared Landmark object (the \code{inc_tracts_lmarks} regulariser).}
