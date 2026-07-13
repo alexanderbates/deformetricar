@@ -221,7 +221,8 @@ over a translucent fly brain, and assembles a GIF.
 
 ```{r animate}
 show  <- setdiff(names(srcs), "outer")            # every cross-identified neuropil
-flows <- lapply(srcs[show], deformetrica_shoot,
+# Shoot the neuropils AND the whole aedes brain hull, so the hull deforms too.
+flows <- lapply(srcs[c("outer", show)], deformetrica_shoot,
                 control_points = fit$control_points, momenta = fit$momenta,
                 kernel_width = fit$kernel_width, timepoints = 15L,
                 device = "auto", flow = TRUE)
@@ -250,7 +251,12 @@ for (g in names(grp_ramp)) { gb <- unique(sb[groups == g]); if (!length(gb)) nex
 # rotation flips Y to the canonical frontal view (dorsal up); the raw X-Y projection
 # is upside down.
 rmat <- diag(c(1, -1, 1, 1))
-ggplot_flow_gif(flows, cols = cols, rotation_matrix = rmat,
+# The aedes hull is drawn first (behind), baby-pink + translucent so we watch it deform
+# behind the coloured neuropils; a slow delay keeps the whole GIF ~5 s so the warp reads.
+cols_all  <- c(list(outer = "#F7C6D0"), as.list(cols))
+alpha_all <- c(outer = 0.08, setNames(rep(0.9, length(show)), show))
+ggplot_flow_gif(flows[c("outer", show)], cols = cols_all, alpha = alpha_all,
+                rotation_matrix = rmat, delay = 0.25,
                 volume = fly, volume_col = "lightpink", volume_alpha = 0.08,
                 targets = tgts[show], target_alpha = 0.18,
                 file = "mosquito_to_fly.gif")   # needs the gifski (or magick) package
