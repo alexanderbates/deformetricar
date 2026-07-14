@@ -76,11 +76,17 @@ deformetrica_register(
 
 ## Value
 
-A list with `control_points` and `momenta` (file paths), `kernel_width`
-and `output_dir`; pass the paths straight to
-[`deformetrica_shoot()`](https://natverse.github.io/deformetricar/reference/deformetrica_shoot.md).
+A `deformetricareg` object (a portable handle on the fitted
+diffeomorphism, storing the control points + momenta inline). Apply it
+with `nat::xform(x, reg)` or
+[`deformetrica_shoot()`](https://natverse.github.io/deformetricar/reference/deformetrica_shoot.md);
+it survives [`saveRDS()`](https://rdrr.io/r/base/readRDS.html). Its
+elements `control_points`, `momenta`, `kernel_width`, `timepoints` and
+`output_dir` are still accessible.
 
 ## See also
 
+[`xformpoints.deformetricareg()`](https://natverse.github.io/deformetricar/reference/xformpoints.deformetricareg.md)
+/
 [`deformetrica_shoot()`](https://natverse.github.io/deformetricar/reference/deformetrica_shoot.md)
-to apply the fitted transform.
+to apply the fit.

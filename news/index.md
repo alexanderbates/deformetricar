@@ -18,6 +18,17 @@ how to compose a symmetrising warp from the general API.
   [`deformetrica_shoot()`](https://natverse.github.io/deformetricar/reference/deformetrica_shoot.md):
   fit and apply diffeomorphisms via the Deformetrica 4 `estimate` /
   `compute` CLI.
+- The fit is now a **`deformetricareg`** object with an
+  [`xformpoints()`](https://rdrr.io/pkg/nat/man/xformpoints.html)
+  method, so a fitted registration is a first-class natverse transform:
+  `nat::xform(x, reg)` warps any points / neuron / neuronlist / mesh,
+  and it composes with other bridging registrations. The control points
+  and momenta are stored inline, so a registration survives
+  [`saveRDS()`](https://rdrr.io/r/base/readRDS.html) and moving to
+  another machine (closes the 2016 issue
+  [\#3](https://github.com/natverse/deformetricar/issues/3) “integrate
+  deformetrica registrations with nat”). `deformetrica_shoot(x, reg)`
+  also accepts the object directly.
 - [`deformetrica_register_multi()`](https://natverse.github.io/deformetricar/reference/deformetrica_register_multi.md):
   fit ONE diffeomorphism to a whole set of matched objects at once (the
   flyconnectome/deformetricaLR recipe), with an optional shared landmark

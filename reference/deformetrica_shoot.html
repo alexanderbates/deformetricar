@@ -51,8 +51,8 @@ registration's control points and initial momenta, by writing a
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">deformetrica_shoot</span><span class="op">(</span></span>
 <span>  <span class="va">x</span>,</span>
 <span>  <span class="va">control_points</span>,</span>
-<span>  <span class="va">momenta</span>,</span>
-<span>  <span class="va">kernel_width</span>,</span>
+<span>  momenta <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  kernel_width <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  timepoints <span class="op">=</span> <span class="fl">10L</span>,</span>
 <span>  object_type <span class="op">=</span> <span class="st">"Landmark"</span>,</span>
 <span>  device <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"cpu"</span>, <span class="st">"cuda"</span><span class="op">)</span>,</span>
@@ -76,7 +76,9 @@ registration's control points and initial momenta, by writing a
 <code>...ControlPoints.txt</code> / <code>...Momenta.txt</code>, or a numeric matrix. Passing the
 files Deformetrica itself wrote is strongly preferred: it writes momenta with
 a leading <code>n_subjects n_cp dim</code> header that its own reader expects, so a bare
-matrix is best-effort only.</p></dd>
+matrix is best-effort only. Alternatively pass a <code>deformetricareg</code> object (from
+<code><a href="deformetrica_register.html">deformetrica_register()</a></code>) as <code>control_points</code> and leave <code>momenta</code>/<code>kernel_width</code>
+unset — they are taken from the registration.</p></dd>
 
 
 <dt id="arg-kernel-width">kernel_width<a class="anchor" aria-label="anchor" href="#arg-kernel-width"></a></dt>

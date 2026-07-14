@@ -275,9 +275,7 @@ show  <- setdiff(names(srcs), "outer")            # every cross-identified neuro
 # ACT 2 (the warp): shoot the neuropils AND the whole aedes brain hull, so the hull
 # deforms too.
 flows <- lapply(srcs[c("outer", show)], deformetrica_shoot,
-                control_points = fit$control_points, momenta = fit$momenta,
-                kernel_width = fit$kernel_width, timepoints = 15L,
-                device = "auto", flow = TRUE)
+                control_points = fit, device = "auto", flow = TRUE)   # `fit` is a deformetricareg
 
 # ACT 1 (the affine): the pre-alignment's linear part (scale + rotation) maps native
 # mosquito coordinates onto the fly; we replay it as motion — each structure revealed in
@@ -366,8 +364,7 @@ dice <- function(a, b) {
   2 * Rvcg::vcgVolume(ov) / (Rvcg::vcgVolume(a) + Rvcg::vcgVolume(b))
 }
 score <- function(nm) {
-  w <- deformetrica_shoot(srcs[[nm]], fit$control_points, fit$momenta,
-                          kernel_width = fit$kernel_width)
+  w <- nat::xform(srcs[[nm]], fit)                 # `fit` is a deformetricareg transform
   data.frame(neuropil = nm, affine = surface_dist(srcs[[nm]], tgts[[nm]]),
              warp = surface_dist(w, tgts[[nm]]), dice = dice(w, tgts[[nm]]))
 }
@@ -391,8 +388,7 @@ brain_native <- as.mesh3d(aedes_brain)
 start <- xyzmatrix(brain_native)
 # ... and where each lands after the FULL pipeline (affine -> centroid refine -> warp):
 carried <- applyM(pre$apply(brain_native))                       # affine + centroid refine
-end     <- xyzmatrix(deformetrica_shoot(carried, fit$control_points, fit$momenta,
-                                        kernel_width = fit$kernel_width))
+end     <- xyzmatrix(nat::xform(carried, fit))                   # the Deformetrica warp
 
 # One reusable mosquito -> fly bridge (affine AND warp), as a thin-plate spline:
 mosquito_to_fly <- function(x) { xyzmatrix(x) <- Morpho::tps3d(xyzmatrix(x), start, end); x }

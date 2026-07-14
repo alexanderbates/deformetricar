@@ -18,6 +18,8 @@ install.
 - [`deformetrica_shoot()`](https://natverse.github.io/deformetricar/reference/deformetrica_shoot.md)
   : Apply a fitted Deformetrica diffeomorphism to 3D points (geodesic
   shooting)
+- [`xformpoints(`*`<deformetricareg>`*`)`](https://natverse.github.io/deformetricar/reference/xformpoints.deformetricareg.md)
+  : Apply a Deformetrica registration as a natverse transform
 
 ## Alignment helpers
 

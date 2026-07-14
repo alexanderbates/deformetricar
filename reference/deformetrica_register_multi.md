@@ -73,7 +73,10 @@ deformetrica_register_multi(
 
 ## Value
 
-A list with `control_points`, `momenta`, `kernel_width`, `output_dir`.
+A `deformetricareg` object; see
+[`deformetrica_register()`](https://natverse.github.io/deformetricar/reference/deformetrica_register.md).
+Apply it with `nat::xform(x, reg)` or
+[`deformetrica_shoot()`](https://natverse.github.io/deformetricar/reference/deformetrica_shoot.md).
 
 ## See also
 

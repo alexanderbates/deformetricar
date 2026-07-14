@@ -225,9 +225,9 @@ match is visible.
 
 ``` r
 
-sh <- function(x) deformetrica_shoot(x, fit$control_points, fit$momenta,
-                                     kernel_width = fit$kernel_width, timepoints = 15L,
-                                     device = "cpu", flow = TRUE)
+# `fit` is a `deformetricareg` — a portable transform. Pass it straight to
+# deformetrica_shoot() (flow = TRUE for the animation) or nat::xform() (below).
+sh <- function(x) deformetrica_shoot(x, fit, device = "cpu", flow = TRUE)
 mn_L <- mn[msd == "L"]; mn_R <- mn[msd == "R"]
 bn_L <- bn[bsd == "L"]; bn_R <- bn[bsd == "R"]
 
@@ -253,8 +253,7 @@ baseline.
 ``` r
 
 nnd  <- function(a, b) median(Rvcg::vcgKDtree(xyzmatrix(b), xyzmatrix(a), k = 1)$distance)
-warp <- function(x) deformetrica_shoot(x, fit$control_points, fit$momenta,
-                                       kernel_width = fit$kernel_width)
+warp <- function(x) nat::xform(x, fit)                 # the fitted diffeomorphism, applied
 data.frame(side = c("L", "R"),
            bridge = c(nnd(mn_L, bn_L),       nnd(mn_R, bn_R)),
            warp   = c(nnd(warp(mn_L), bn_L), nnd(warp(mn_R), bn_R)))

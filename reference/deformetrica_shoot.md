@@ -10,8 +10,8 @@ registration's control points and initial momenta, by writing a
 deformetrica_shoot(
   x,
   control_points,
-  momenta,
-  kernel_width,
+  momenta = NULL,
+  kernel_width = NULL,
   timepoints = 10L,
   object_type = "Landmark",
   device = c("auto", "cpu", "cuda"),
@@ -36,7 +36,11 @@ deformetrica_shoot(
   `...Momenta.txt`, or a numeric matrix. Passing the files Deformetrica
   itself wrote is strongly preferred: it writes momenta with a leading
   `n_subjects n_cp dim` header that its own reader expects, so a bare
-  matrix is best-effort only.
+  matrix is best-effort only. Alternatively pass a `deformetricareg`
+  object (from
+  [`deformetrica_register()`](https://natverse.github.io/deformetricar/reference/deformetrica_register.md))
+  as `control_points` and leave `momenta`/`kernel_width` unset — they
+  are taken from the registration.
 
 - kernel_width:
 

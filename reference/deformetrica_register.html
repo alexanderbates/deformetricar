@@ -121,12 +121,14 @@ then applies to arbitrary new points.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with <code>control_points</code> and <code>momenta</code> (file paths), <code>kernel_width</code>
-and <code>output_dir</code>; pass the paths straight to <code><a href="deformetrica_shoot.html">deformetrica_shoot()</a></code>.</p>
+    <p>A <code>deformetricareg</code> object (a portable handle on the fitted diffeomorphism,
+storing the control points + momenta inline). Apply it with <code>nat::xform(x, reg)</code> or
+<code><a href="deformetrica_shoot.html">deformetrica_shoot()</a></code>; it survives <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">saveRDS()</a></code>. Its elements <code>control_points</code>,
+<code>momenta</code>, <code>kernel_width</code>, <code>timepoints</code> and <code>output_dir</code> are still accessible.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="deformetrica_shoot.html">deformetrica_shoot()</a></code> to apply the fitted transform.</p></div>
+    <div class="dont-index"><p><code><a href="xformpoints.deformetricareg.html">xformpoints.deformetricareg()</a></code> / <code><a href="deformetrica_shoot.html">deformetrica_shoot()</a></code> to apply the fit.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

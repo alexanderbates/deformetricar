@@ -70,8 +70,7 @@ translucent original.
 
 ``` r
 
-flow <- deformetrica_shoot(mir, fit$control_points, fit$momenta,
-                           kernel_width = fit$kernel_width, flow = TRUE)  # list of meshes
+flow <- deformetrica_shoot(mir, fit, flow = TRUE)   # `fit` is a portable deformetricareg
 
 ggplot_flow_gif(list(mirror = flow), cols = c(mirror = "#EE4266"), alpha = 0.45,
                 volume = brain, volume_col = "#2C7FB8", volume_alpha = 0.09,
@@ -87,7 +86,7 @@ distance.
 
 ``` r
 
-final    <- deformetrica_shoot(mir, fit$control_points, fit$momenta, kernel_width = fit$kernel_width)
+final    <- nat::xform(mir, fit)                     # apply the fit as a nat transform
 d_flip   <- Rvcg::vcgClostKD(nat::xyzmatrix(mir),   brain)$quality
 d_warped <- Rvcg::vcgClostKD(nat::xyzmatrix(final), brain)$quality
 c(flip = median(abs(d_flip)), warped = median(abs(d_warped)))   # warped should be smaller
