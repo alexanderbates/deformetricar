@@ -26,6 +26,7 @@ reference:
   - deformetrica_register
   - deformetrica_register_multi
   - deformetrica_shoot
+  - xformpoints.deformetricareg
 - title: Alignment helpers
   desc: Prepare and post-process objects for a cross-brain registration.
   contents:
