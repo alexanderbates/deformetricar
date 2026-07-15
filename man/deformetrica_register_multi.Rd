@@ -31,10 +31,19 @@ each object's surface/curve mismatch is measured (Current/Varifold). \emph{Small
 finer, more local matching}, which pulls small structures (galls, noduli) onto
 their target more tightly. A single value for every object, or a per-object vector
 (recycled if length 1; matched by name to \code{sources} if named, else in order).
-Defaults to \code{kernel_width}.}
+Defaults to \code{kernel_width}. NB there is a working window: it must be \emph{large enough}
+that a source object and its target overlap (Current/Varifold have no gradient
+between non-overlapping shapes, so too-small a value leaves that object un-warped),
+yet \emph{small enough} that many densely-packed objects are not blurred into a single
+current field (which also collapses the gradient). If a fit returns zero momenta
+(an identity warp), the affine pre-alignment left the objects too far apart for the
+chosen \code{object_kernel_width}, or - with many co-located objects - it is too large.}
 
 \item{landmarks}{Optional \code{list(source=, target=)} of anchoring point matrices,
-added as a shared Landmark object (the \code{inc_tracts_lmarks} regulariser).}
+added as a shared Landmark object (the \code{inc_tracts_lmarks} regulariser). NB an
+anchor that the affine pre-alignment already satisfies contributes ~no gradient and
+can dominate the balance, yielding an identity warp; anchor only points that still
+need moving, or omit it and rely on the pre-alignment.}
 
 \item{data_sigma}{Data-attachment noise sigma. A single value applied to every
 object, or a per-object vector (recycled if length 1; matched by name to

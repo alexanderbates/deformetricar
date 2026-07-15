@@ -97,6 +97,27 @@ weight; keep `object_kernel_width` ≥ the target mesh's face spacing. Because
 `data_sigma` and `object_kernel_width` are **per object**, you can tune specific pairings
 (e.g. the central-complex objects) independently of the rest.
 
+**Decouple the two kernels — they do different jobs.** `kernel_width` sets how *smooth/stiff*
+the deformation is; `object_kernel_width` sets the *scale at which mismatch is felt*. Keeping
+them equal (the default) is convenient but often wrong. `object_kernel_width` has a **working
+window** and getting outside it silently yields **zero momenta (an identity warp)**:
+
+- **Too small** → a source object and its target don't overlap, so Current/Varifold have no
+  gradient and that object isn't warped. It must be **large enough to bridge the residual gap
+  left by your affine pre-alignment** (e.g. if the affine leaves cognate arbors ~40 µm apart,
+  `object_kernel_width` well below that will not move them).
+- **Too large** → **many densely co-located objects blur into a single current field** that
+  already overlaps its target, so the gradient again collapses to ~zero. This bites hardest with
+  lots of overlapping neurons in one small region (e.g. central-complex arbors): a value that
+  works for a handful of sparse objects can produce an identity warp for dozens of packed ones.
+
+So set `kernel_width` for the deformation smoothness you want, and set `object_kernel_width`
+*separately* to roughly the post-affine gap between cognate objects — no larger. If a fit returns
+an identity warp, this decoupling (or a tighter affine pre-alignment) is the first thing to check.
+When many arbors are packed into one region and no single `object_kernel_width` both overlaps and
+avoids blurring, fit **each cognate pair independently** and compose the results (e.g. into one
+thin-plate-spline) rather than forcing one over-constrained multi-object diffeomorphism.
+
 ## Articles
 
 - **[Warping a mosquito brain onto the fly](https://natverse.github.io/deformetricar/articles/mosquito-to-fly.html)** —

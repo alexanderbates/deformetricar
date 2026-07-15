@@ -89,6 +89,8 @@ deformetrica_shoot <- function(x, control_points, momenta = NULL, kernel_width =
   pts <- nat::xyzmatrix(x)
   exe <- find_deformetrica(deformetrica)
   dir.create(workdir, recursive = TRUE, showWarnings = FALSE)
+  # absolute so file.path(workdir, ...) still resolves after setwd(workdir) below
+  workdir <- normalizePath(workdir, winslash = "/", mustWork = FALSE)
 
   cp  <- .dfca_as_txt(control_points, file.path(workdir, "control_points.txt"))
   mom <- .dfca_as_txt(momenta,        file.path(workdir, "momenta.txt"))
@@ -298,6 +300,8 @@ deformetrica_register <- function(source, target, kernel_width,
          "for unlabelled surfaces pass mesh3d objects (attachment_type='Current').", call. = FALSE)
   exe <- find_deformetrica(deformetrica)
   dir.create(workdir, recursive = TRUE, showWarnings = FALSE)
+  # absolute so file.path(workdir, "output") still resolves after setwd(workdir) below
+  workdir <- normalizePath(workdir, winslash = "/", mustWork = FALSE)
   write_vtk(src, file.path(workdir, "source.vtk"), polygons = if (src_is_mesh) t(source$it) - 1L else NULL)
   write_vtk(tgt, file.path(workdir, "target.vtk"), polygons = if (tgt_is_mesh) t(target$it) - 1L else NULL)
   # Explicit MATCHING object id in both XMLs ("shape") - never derive it by
@@ -433,9 +437,18 @@ write_neuron_vtk <- function(x, file) {
 #'   finer, more local matching*, which pulls small structures (galls, noduli) onto
 #'   their target more tightly. A single value for every object, or a per-object vector
 #'   (recycled if length 1; matched by name to `sources` if named, else in order).
-#'   Defaults to `kernel_width`.
+#'   Defaults to `kernel_width`. NB there is a working window: it must be *large enough*
+#'   that a source object and its target overlap (Current/Varifold have no gradient
+#'   between non-overlapping shapes, so too-small a value leaves that object un-warped),
+#'   yet *small enough* that many densely-packed objects are not blurred into a single
+#'   current field (which also collapses the gradient). If a fit returns zero momenta
+#'   (an identity warp), the affine pre-alignment left the objects too far apart for the
+#'   chosen `object_kernel_width`, or - with many co-located objects - it is too large.
 #' @param landmarks Optional `list(source=, target=)` of anchoring point matrices,
-#'   added as a shared Landmark object (the `inc_tracts_lmarks` regulariser).
+#'   added as a shared Landmark object (the `inc_tracts_lmarks` regulariser). NB an
+#'   anchor that the affine pre-alignment already satisfies contributes ~no gradient and
+#'   can dominate the balance, yielding an identity warp; anchor only points that still
+#'   need moving, or omit it and rely on the pre-alignment.
 #' @param data_sigma Data-attachment noise sigma. A single value applied to every
 #'   object, or a per-object vector (recycled if length 1; matched by name to
 #'   `sources` if named, else taken in order). *Smaller sigma weights that object
@@ -475,6 +488,8 @@ deformetrica_register_multi <- function(sources, targets, kernel_width,
   if (anyNA(okw)) stop("named object_kernel_width is missing an entry for some source object.", call. = FALSE)
   exe <- find_deformetrica(deformetrica)
   dir.create(file.path(workdir, "data"), recursive = TRUE, showWarnings = FALSE)
+  # absolute so file.path(workdir, "output") still resolves after setwd(workdir) below
+  workdir <- normalizePath(workdir, winslash = "/", mustWork = FALSE)
 
   tmpl <- character(); obj_xml <- character(); subj_xml <- character()
   for (i in seq_along(ids)) {
