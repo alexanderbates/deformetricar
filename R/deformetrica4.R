@@ -264,7 +264,15 @@ print.deformetricareg <- function(x, ...) {
 #'
 #' @param source,target N x 3 matrices of corresponding points (row *i* of
 #'   `source` matches row *i* of `target`). Must have the same number of rows.
-#' @param kernel_width Deformation kernel width (larger = stiffer / more global).
+#' @param kernel_width Deformation kernel width (larger = stiffer / more global). This also
+#'   sets the CONTROL-POINT count: Deformetrica seeds control points on a grid spaced by
+#'   `kernel_width` over the objects' bounding box, so CP count grows as
+#'   (extent / kernel_width)^3. It is the knob for how many control points the warp has.
+#'   Beware a value that is small relative to the object EXTENT (e.g. a compact arbor with a
+#'   long soma tract): it spawns thousands of control points, over-parameterises the fit, and
+#'   the optimiser can collapse to zero momenta (identity warp). Size `kernel_width` to the
+#'   extent (for a sane CP count) and use the per-object `object_kernel_width` to set the
+#'   finer matching scale.
 #' @param timepoints Geodesic integration steps.
 #' @param object_type Deformetrica `deformable-object-type` (default "Landmark").
 #' @param attachment_type "Landmark" (ordered L2, default), "Varifold" or "Current".
