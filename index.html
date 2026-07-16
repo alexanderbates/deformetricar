@@ -125,9 +125,9 @@
 <td><code>kernel_width</code></td>
 <td>global</td>
 <td>you set</td>
-<td>Spatial <strong>stiffness</strong> of the diffeomorphism — the scale over which the deformation is smooth.</td>
-<td>More <strong>local</strong>: small structures deform independently, but elongated ones can tear/leave a distal part behind.</td>
-<td>More <strong>global/stiff</strong>: big structures move coherently, but small peripheral ones get dragged by their neighbours. (Try target-diagonal ÷ 11–15.)</td>
+<td>Spatial <strong>stiffness</strong> of the diffeomorphism, and the <strong>control-point count</strong> (CPs seeded on a grid spaced by <code>kernel_width</code>, so count ≈ (extent/kernel_width)³).</td>
+<td>More <strong>local</strong> + <strong>more control points</strong>: small structures deform independently, but elongated ones can tear, and a value small relative to the object <em>extent</em> spawns thousands of CPs → over-parameterised → can collapse to an identity warp.</td>
+<td>More <strong>global/stiff</strong>, <strong>fewer control points</strong>: big structures move coherently, small peripheral ones get dragged by their neighbours. (Try target-diagonal ÷ 11–15; size to the <em>extent</em>, not the gap.)</td>
 </tr>
 <tr>
 <td>
@@ -187,6 +187,14 @@
 </tbody>
 </table>
 <p>Rules of thumb: give <strong>strong</strong> homologous objects a small <code>data_sigma</code> and a hull a larger one; if a small structure lags, reduce <code>kernel_width</code> (global) before cranking its weight; keep <code>object_kernel_width</code> ≥ the target mesh’s face spacing. Because <code>data_sigma</code> and <code>object_kernel_width</code> are <strong>per object</strong>, you can tune specific pairings (e.g. the central-complex objects) independently of the rest.</p>
+<p><strong>Decouple the two kernels — they do different jobs.</strong> <code>kernel_width</code> sets how <em>smooth/stiff</em> the deformation is; <code>object_kernel_width</code> sets the <em>scale at which mismatch is felt</em>. Keeping them equal (the default) is convenient but often wrong. <code>object_kernel_width</code> has a <strong>working window</strong> and getting outside it silently yields <strong>zero momenta (an identity warp)</strong>:</p>
+<ul>
+<li>
+<strong>Too small</strong> → a source object and its target don’t overlap, so Current/Varifold have no gradient and that object isn’t warped. It must be <strong>large enough to bridge the residual gap left by your affine pre-alignment</strong> (e.g. if the affine leaves cognate arbors ~40 µm apart, <code>object_kernel_width</code> well below that will not move them).</li>
+<li>
+<strong>Too large</strong> → <strong>many densely co-located objects blur into a single current field</strong> that already overlaps its target, so the gradient again collapses to ~zero. This bites hardest with lots of overlapping neurons in one small region (e.g. central-complex arbors): a value that works for a handful of sparse objects can produce an identity warp for dozens of packed ones.</li>
+</ul>
+<p>So set <code>kernel_width</code> for the deformation smoothness you want, and set <code>object_kernel_width</code> <em>separately</em> to roughly the post-affine gap between cognate objects — no larger. If a fit returns an identity warp, this decoupling (or a tighter affine pre-alignment) is the first thing to check. When many arbors are packed into one region and no single <code>object_kernel_width</code> both overlaps and avoids blurring, fit <strong>each cognate pair independently</strong> and compose the results (e.g. into one thin-plate-spline) rather than forcing one over-constrained multi-object diffeomorphism.</p>
 </div>
 <div class="section level2">
 <h2 id="articles">Articles<a class="anchor" aria-label="anchor" href="#articles"></a>

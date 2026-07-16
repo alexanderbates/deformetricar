@@ -36,7 +36,16 @@ deformetrica_register(
 
 - kernel_width:
 
-  Deformation kernel width (larger = stiffer / more global).
+  Deformation kernel width (larger = stiffer / more global). This also
+  sets the CONTROL-POINT count: Deformetrica seeds control points on a
+  grid spaced by `kernel_width` over the objects' bounding box, so CP
+  count grows as (extent / kernel_width)^3. It is the knob for how many
+  control points the warp has. Beware a value that is small relative to
+  the object EXTENT (e.g. a compact arbor with a long soma tract): it
+  spawns thousands of control points, over-parameterises the fit, and
+  the optimiser can collapse to zero momenta (identity warp). Size
+  `kernel_width` to the extent (for a sane CP count) and use the
+  per-object `object_kernel_width` to set the finer matching scale.
 
 - timepoints:
 

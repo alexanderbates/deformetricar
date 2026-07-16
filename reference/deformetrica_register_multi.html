@@ -90,12 +90,21 @@ each object's surface/curve mismatch is measured (Current/Varifold). <em>Smaller
 finer, more local matching</em>, which pulls small structures (galls, noduli) onto
 their target more tightly. A single value for every object, or a per-object vector
 (recycled if length 1; matched by name to <code>sources</code> if named, else in order).
-Defaults to <code>kernel_width</code>.</p></dd>
+Defaults to <code>kernel_width</code>. NB there is a working window: it must be <em>large enough</em>
+that a source object and its target overlap (Current/Varifold have no gradient
+between non-overlapping shapes, so too-small a value leaves that object un-warped),
+yet <em>small enough</em> that many densely-packed objects are not blurred into a single
+current field (which also collapses the gradient). If a fit returns zero momenta
+(an identity warp), the affine pre-alignment left the objects too far apart for the
+chosen <code>object_kernel_width</code>, or - with many co-located objects - it is too large.</p></dd>
 
 
 <dt id="arg-landmarks">landmarks<a class="anchor" aria-label="anchor" href="#arg-landmarks"></a></dt>
 <dd><p>Optional <code>list(source=, target=)</code> of anchoring point matrices,
-added as a shared Landmark object (the <code>inc_tracts_lmarks</code> regulariser).</p></dd>
+added as a shared Landmark object (the <code>inc_tracts_lmarks</code> regulariser). NB an
+anchor that the affine pre-alignment already satisfies contributes ~no gradient and
+can dominate the balance, yielding an identity warp; anchor only points that still
+need moving, or omit it and rely on the pre-alignment.</p></dd>
 
 
 <dt id="arg-data-sigma">data_sigma<a class="anchor" aria-label="anchor" href="#arg-data-sigma"></a></dt>

@@ -89,7 +89,7 @@ identity warp. The most useful knobs, from most to least impactful:
 
 | Parameter | Scope | Default | What it does | Smaller → | Larger → |
 |----|----|----|----|----|----|
-| `kernel_width` | global | you set | Spatial **stiffness** of the diffeomorphism — the scale over which the deformation is smooth. | More **local**: small structures deform independently, but elongated ones can tear/leave a distal part behind. | More **global/stiff**: big structures move coherently, but small peripheral ones get dragged by their neighbours. (Try target-diagonal ÷ 11–15.) |
+| `kernel_width` | global | you set | Spatial **stiffness** of the diffeomorphism, and the **control-point count** (CPs seeded on a grid spaced by `kernel_width`, so count ≈ (extent/kernel_width)³). | More **local** + **more control points**: small structures deform independently, but elongated ones can tear, and a value small relative to the object *extent* spawns thousands of CPs → over-parameterised → can collapse to an identity warp. | More **global/stiff**, **fewer control points**: big structures move coherently, small peripheral ones get dragged by their neighbours. (Try target-diagonal ÷ 11–15; size to the *extent*, not the gap.) |
 | `data_sigma` (noise-std) | per object | 0.5 | **Attachment weight** — how hard each object is pulled onto its target. | **Stronger** pull (a well-matched object drives the fit). | Weaker (e.g. an outer hull as a loose global guide). |
 | `object_kernel_width` | per object | = `kernel_width` | Scale at which each object’s **surface/curve mismatch** is measured (Current/Varifold). | Finer, more local matching — snaps fine detail. **But below the target mesh’s resolution it degrades.** | Coarser matching, robust to noisy meshes. |
 | `attachment_type` | per object | Landmark/Current | How mismatch is scored: `Landmark` (ordered point-to-point L2), `Current` / `Varifold` (unordered surfaces/curves; Varifold ignores orientation). | — | — |
@@ -104,6 +104,35 @@ and a hull a larger one; if a small structure lags, reduce
 `data_sigma` and `object_kernel_width` are **per object**, you can tune
 specific pairings (e.g. the central-complex objects) independently of
 the rest.
+
+**Decouple the two kernels — they do different jobs.** `kernel_width`
+sets how *smooth/stiff* the deformation is; `object_kernel_width` sets
+the *scale at which mismatch is felt*. Keeping them equal (the default)
+is convenient but often wrong. `object_kernel_width` has a **working
+window** and getting outside it silently yields **zero momenta (an
+identity warp)**:
+
+- **Too small** → a source object and its target don’t overlap, so
+  Current/Varifold have no gradient and that object isn’t warped. It
+  must be **large enough to bridge the residual gap left by your affine
+  pre-alignment** (e.g. if the affine leaves cognate arbors ~40 µm
+  apart, `object_kernel_width` well below that will not move them).
+- **Too large** → **many densely co-located objects blur into a single
+  current field** that already overlaps its target, so the gradient
+  again collapses to ~zero. This bites hardest with lots of overlapping
+  neurons in one small region (e.g. central-complex arbors): a value
+  that works for a handful of sparse objects can produce an identity
+  warp for dozens of packed ones.
+
+So set `kernel_width` for the deformation smoothness you want, and set
+`object_kernel_width` *separately* to roughly the post-affine gap
+between cognate objects — no larger. If a fit returns an identity warp,
+this decoupling (or a tighter affine pre-alignment) is the first thing
+to check. When many arbors are packed into one region and no single
+`object_kernel_width` both overlaps and avoids blurring, fit **each
+cognate pair independently** and compose the results (e.g. into one
+thin-plate-spline) rather than forcing one over-constrained multi-object
+diffeomorphism.
 
 ## Articles
 

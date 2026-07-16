@@ -45,12 +45,24 @@ deformetrica_register_multi(
   (galls, noduli) onto their target more tightly. A single value for
   every object, or a per-object vector (recycled if length 1; matched by
   name to `sources` if named, else in order). Defaults to
-  `kernel_width`.
+  `kernel_width`. NB there is a working window: it must be *large
+  enough* that a source object and its target overlap (Current/Varifold
+  have no gradient between non-overlapping shapes, so too-small a value
+  leaves that object un-warped), yet *small enough* that many
+  densely-packed objects are not blurred into a single current field
+  (which also collapses the gradient). If a fit returns zero momenta (an
+  identity warp), the affine pre-alignment left the objects too far
+  apart for the chosen `object_kernel_width`, or - with many co-located
+  objects - it is too large.
 
 - landmarks:
 
   Optional `list(source=, target=)` of anchoring point matrices, added
-  as a shared Landmark object (the `inc_tracts_lmarks` regulariser).
+  as a shared Landmark object (the `inc_tracts_lmarks` regulariser). NB
+  an anchor that the affine pre-alignment already satisfies contributes
+  ~no gradient and can dominate the balance, yielding an identity warp;
+  anchor only points that still need moving, or omit it and rely on the
+  pre-alignment.
 
 - data_sigma:
 
