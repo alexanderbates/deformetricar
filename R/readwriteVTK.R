@@ -32,7 +32,7 @@ read_vtk<-function(filename, item = c("points","triangles", "normals")){
   if(!datasetType%in%validDatasetTypes)
     stop(datasetType," is not a valid VTK dataset type")
   if(datasetType!="POLYDATA")
-    stop("ReadVTKLandmarks can currently only read POLYDATA.",
+    stop("read_vtk() can currently only read POLYDATA.",
          " See http://www.vtk.org/VTK/img/file-formats.pdf for details.")
 
   pointsLine=toupper(readLines(con,1))
@@ -111,10 +111,12 @@ read_vtk<-function(filename, item = c("points","triangles", "normals")){
 #'
 #' @param points 3D coordinates (Nx3 matrix)
 #' @param filename  Path to output file
-#' @param polygons Triangle indices (Mx3 matrix)
+#' @param polygons Triangle indices (Mx3 matrix). VTK is **0-indexed**, so pass
+#'   0-based vertex indices (e.g. `t(mesh$it) - 1L` for a `mesh3d`).
 #' @param normals Normals (Nx3 matrix)
 #' @param datatype .vtk datatype (defaults to float)
-#' @param title Title of the .vtk file (defaults to filename)
+#' @param title Title of the .vtk file. If omitted, a timestamped
+#'   "Data written from R by write_vtk at <time>" string is used.
 #'
 #' @export
 #'
@@ -124,7 +126,7 @@ write_vtk <-function(points, filename, polygons = NULL, normals = NULL,
   if(ncol(points)!=3) stop("Expect N rows x 3 cols of 3d points")
   nummarkers=nrow(points)
   datatype=match.arg(datatype)
-  if(missing(title)) title=paste("Data written from R by WriteVTKLandmarks at",Sys.time())
+  if(missing(title)) title=paste("Data written from R by write_vtk at",Sys.time())
 
   cat("# vtk DataFile Version 2.0",
       title,
@@ -135,7 +137,7 @@ write_vtk <-function(points, filename, polygons = NULL, normals = NULL,
   write.table(points,col.names=F,row.names=F,file=filename,append=TRUE)
   if(!is.null(polygons)){
     if(ncol(polygons)!=3) stop("Expect N rows x 3 cols for polygons")
-    # if(any(0%in%polygons)  == FALSE) { polygons = polygons -1 }# VTK files are 0 indexed
+    # NB polygons must already be 0-indexed (VTK convention); callers pass t(x$it)-1.
     numpoints = rep(3, nrow(polygons))
     mx = cbind(numpoints, polygons)
     cat(paste("POLYGONS",nrow(mx),nrow(mx)*4),sep="\n",file=filename, append = TRUE)
@@ -158,10 +160,12 @@ write_vtk <-function(points, filename, polygons = NULL, normals = NULL,
 #' @keywords internal
 read.points<-function(filename){
   if(!file.exists(filename)) stop("Cannot read: ",filename)
-  con=file(filename,open='rb',encoding='txt')
-  on.exit(close(con))
-  magic=readLines(con,n=0)
-  points=scan(con,what=1.0,quiet=TRUE)
+  # Deformetrica momenta (MOM) files carry a leading "n_subjects n_cp dim" header;
+  # control-point (CPS) files do not. Detect and skip the header when present so both
+  # file kinds read correctly (CPS files are left untouched: skip = 0).
+  hdr <- readLines(filename, n = 1L)
+  skip <- if(length(hdr) && grepl("^\\s*\\d+\\s+\\d+\\s+\\d+\\s*$", hdr)) 1L else 0L
+  points=scan(filename,what=1.0,quiet=TRUE,skip=skip)
   m=matrix(points,ncol=3,byrow=T)
   colnames(m)=c("X","Y","Z")
   attr(m,"file")=filename

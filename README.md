@@ -118,6 +118,59 @@ When many arbors are packed into one region and no single `object_kernel_width` 
 avoids blurring, fit **each cognate pair independently** and compose the results (e.g. into one
 thin-plate-spline) rather than forcing one over-constrained multi-object diffeomorphism.
 
+### Many overlapping objects: per-pair warps → a composite spline
+
+A single multi-object diffeomorphism is the right tool when the matched objects are sparse. When many
+cognate objects are **packed into one small region** (e.g. dozens of central-complex arbors), no single
+`object_kernel_width` can both bridge each pair's gap *and* avoid blurring the neighbours into one
+already-overlapping current field — the fit collapses to a **zero-gradient identity warp** (above). The
+escape hatch, as a first-class alternative:
+
+1. **Fit each cognate pair its own, less-constrained warp** (`deformetrica_register()` per pair), with a
+   kernel sized to that pair alone — roughly `union(source, target)` extent ÷ 4 — and a tight attachment
+   (`noise_std` / `data_sigma` ≈ 0.05).
+2. **Push each source through its own fit** to get its warped endpoint.
+3. **Stitch all the start→end correspondences into one global field** — a thin-plate spline
+   (`nat::tpsreg()`) over the pooled point cloud. The result is one applyable transform that captured each
+   pair locally, without any single fit having to resolve the whole packed region.
+
+**Hull-anchor regulariser.** A composite spline built from cable alone extrapolates wildly away from the
+neurons (sprawling soma tracts fly off). Anchor it: subsample the **target** neuropil hull, map those
+points back through the **inverse affine** to get their source-space partners, and add them as fixed
+correspondences. The spline then equals the affine away from the neurons instead of extrapolating.
+
+**Mesh caveat.** Apply a pooled/composite spline to *skeletons*, not surface **meshes** — where the field
+extrapolates beyond the cognate cable it **tears or explodes** the mesh. Each pair's own diffeomorphic fit
+stays smooth, so morph meshes with the per-pair fit, not the composite spline.
+
+### Tuning by coordinate descent
+
+Tune one knob at a time, scoring each candidate by a shape metric — symmetric, normalised **NBLAST**
+(orientation-aware, density-robust) and/or mean nearest-neighbour distance (µm) between each warped source
+and its target. A workable loop:
+
+1. Sweep the **skeleton** (Varifold) knobs with **meshes off** first — Current attachment on meshes is
+   ~3–5× slower, so don't pay for it while tuning cable.
+2. Then sweep the **mesh** knobs.
+3. Bake each 1-D winner greedily before sweeping the next knob — but keep the fixed **operating point in
+   sync with the shipped params**, or every sweep is conditioned on stale neighbours.
+
+**Params vs. data.** If a subregion refuses to move across a whole `object_kernel_width` / `data_sigma`
+sweep (identical NN distance throughout), it has **no local correspondence** there — **add a landmark or
+cognate pair**, don't keep tuning kernels. Conversely, a `landmarks=` anchor the affine *already* satisfies
+contributes no gradient and can zero the whole warp; anchor only points that still need to move. (An
+all-zero-momenta identity fit is flagged on the returned registration as `$identity = TRUE`, with a warning.)
+
+### Pairing and scoring gotchas
+
+- **Auto-pairing cognates:** optimal 1:1 assignment (e.g. `clue::solve_LSAP`, maximising total NBLAST
+  within a group) beats greedy per-source best-match. Look-alike types make many sources collide on one
+  target, so a strict de-dup afterwards throws away ~half the pairs; the optimal assignment keeps
+  `min(n_source, n_target)` at the best total score.
+- **Scoring pooled (many-to-many) warps:** do **not** score by name-intersecting the source and target
+  neuronlists — different datasets carry different ids, so `intersect()` is empty and the score silently
+  returns `NaN`. Pool the point clouds (or rename both to a shared key) before measuring.
+
 ## Articles
 
 - **[Warping a mosquito brain onto the fly](https://natverse.github.io/deformetricar/articles/mosquito-to-fly.html)** —

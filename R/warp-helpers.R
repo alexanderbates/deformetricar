@@ -144,6 +144,48 @@ mirror_lr_split <- function(x, axis = c("X", "Y", "Z"), mid = NULL, refine = FAL
        side = vside, travel = travel, mid = mid)
 }
 
+#' Linearly interpolate a "flow" between two matched sets of objects
+#'
+#' [deformetrica_shoot()] with `flow = TRUE` returns the true geodesic flow, but that
+#' geodesic no longer exists once several per-pair fits have been stitched into one
+#' composite transform (a thin-plate spline, say): there is only a start and an end.
+#' This helper fabricates a flow for animation by **linear interpolation** between the
+#' pre-warp (`from`) and post-warp (`to`) positions of the same objects, so a
+#' `COMPOSED` / per-pair warp can still be fed to [ggplot_flow_gif()]. Because it needs
+#' only the endpoints, it works for any warp method.
+#'
+#' Objects are matched by name and only those with an **equal vertex count** in `from`
+#' and `to` are interpolated (a per-object guard against mismatched skeletons); others
+#' are dropped with a warning.
+#'
+#' @param from,to Matched, named `neuronlist`s (or lists of objects accepted by
+#'   [nat::xyzmatrix()]) - the start (e.g. affine) and end (warped) positions.
+#' @param n Number of interpolation timepoints (frames), including both endpoints.
+#' @return A list of `n` object-sets (each the same shape as `from`), one per timepoint
+#'   - the input format [ggplot_flow_gif()] / [nat.ggplot::ggneuron_gif()] expect.
+#' @seealso [deformetrica_shoot()] (`flow = TRUE`) for a true geodesic flow.
+#' @export
+interp_flow <- function(from, to, n = 12L) {
+  k <- intersect(names(from), names(to))
+  if (!length(k)) stop("`from` and `to` share no named objects to interpolate.", call. = FALSE)
+  ok <- vapply(k, function(i)
+    nrow(nat::xyzmatrix(from[[i]])) == nrow(nat::xyzmatrix(to[[i]])), logical(1))
+  if (any(!ok))
+    warning("Dropping ", sum(!ok), " object(s) whose `from`/`to` vertex counts differ: ",
+            paste(k[!ok], collapse = ", "), call. = FALSE)
+  k <- k[ok]
+  from <- from[k]; to <- to[k]
+  lapply(seq(0, 1, length.out = n), function(a) {
+    out <- from
+    for (i in k) {
+      nrn <- from[[i]]
+      nat::xyzmatrix(nrn) <- (1 - a) * nat::xyzmatrix(from[[i]]) + a * nat::xyzmatrix(to[[i]])
+      out[[i]] <- nrn
+    }
+    out
+  })
+}
+
 #' Animate a Deformetrica geodesic flow as a nat.ggplot GIF
 #'
 #' A thin convenience wrapper around [nat.ggplot::ggneuron_gif()] (where the general

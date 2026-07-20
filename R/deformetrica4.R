@@ -98,7 +98,9 @@ deformetrica_shoot <- function(x, control_points, momenta = NULL, kernel_width =
   # die with a cryptic "Dimension out of range" IndexError. Catch it here with an
   # actionable message: it means the fit's kernel_width exceeded the object's extent
   # (control points sit on a grid spaced by kernel_width), so too few were laid down.
-  if (nrow(utils::read.table(cp)) < 2L)
+  # Cheap line count (count.fields) instead of parsing the whole CP matrix with
+  # read.table just to test how many control points there are.
+  if (sum(utils::count.fields(cp, comment.char = "") > 0L, na.rm = TRUE) < 2L)
     stop("The fitted diffeomorphism has fewer than 2 control points, which ",
          "Deformetrica cannot shoot. Refit with a smaller `kernel_width` (it must be ",
          "smaller than the object's spatial extent so more than one control point is ",
@@ -148,6 +150,27 @@ deformetrica_shoot <- function(x, control_points, momenta = NULL, kernel_width =
             class = "deformetricareg")
 }
 
+# TRUE if a Deformetrica momenta file is all (near) zero -> the fit is an IDENTITY warp
+# (the optimiser found no deformation). Lets callers drop a degenerate fit deterministically
+# rather than via a hand-tuned minimum-displacement heuristic. The momenta file carries a
+# leading "n_subjects n_cp dim" header, so skip the first line.
+.dfca_momenta_is_zero <- function(momenta_file, tol = 1e-8) {
+  v <- suppressWarnings(scan(momenta_file, what = 0.0, quiet = TRUE, skip = 1L))
+  length(v) == 0L || max(abs(v)) <= tol
+}
+
+# Flag (and warn about) an identity fit, then return the reg.
+.dfca_flag_identity <- function(reg, momenta_file) {
+  reg$identity <- .dfca_momenta_is_zero(momenta_file)
+  if (isTRUE(reg$identity))
+    warning("Deformetrica returned all-zero momenta: this fit is an IDENTITY warp ",
+            "(no deformation). Common causes: object_kernel_width outside its working ",
+            "window (too small -> no overlap; too large -> co-located objects blur), a ",
+            "`landmarks=` anchor the affine already satisfies, or coordinates in nm. ",
+            "The returned reg has $identity = TRUE.", call. = FALSE)
+  reg
+}
+
 # Resolve a reg's control-point / momenta to readable files, rewriting from the stored
 # contents when the original tempfiles are gone (e.g. after saveRDS + reload).
 .dfca_reg_files <- function(reg) {
@@ -188,6 +211,8 @@ print.deformetricareg <- function(x, ...) {
   cat("<deformetricareg> a fitted Deformetrica diffeomorphism\n")
   cat(sprintf("  ~%d control points | kernel width %g | %d timepoints\n",
               length(x$cp_text), x$kernel_width, x$timepoints))
+  if (isTRUE(x$identity))
+    cat("  ** IDENTITY warp (all-zero momenta): applying it is a no-op **\n")
   cat("  apply with nat::xform(object, reg) or deformetrica_shoot(object, reg)\n")
   invisible(x)
 }
@@ -286,6 +311,8 @@ print.deformetricareg <- function(x, ...) {
 #'   storing the control points + momenta inline). Apply it with `nat::xform(x, reg)` or
 #'   [deformetrica_shoot()]; it survives `saveRDS()`. Its elements `control_points`,
 #'   `momenta`, `kernel_width`, `timepoints` and `output_dir` are still accessible.
+#'   `$identity` is `TRUE` when the fit produced all-zero momenta (an identity warp,
+#'   also warned about) so degenerate fits can be dropped deterministically.
 #' @seealso [xformpoints.deformetricareg()] / [deformetrica_shoot()] to apply the fit.
 #' @export
 deformetrica_register <- function(source, target, kernel_width,
@@ -369,7 +396,7 @@ deformetrica_register <- function(source, target, kernel_width,
   mom <- list.files(od, pattern = "Momenta\\.txt$", full.names = TRUE)
   if (!length(cp) || !length(mom))
     stop("estimate produced no ControlPoints/Momenta in ", od, call. = FALSE)
-  .dfca_reg(cp[[1]], mom[[1]], kernel_width, timepoints, od)
+  .dfca_flag_identity(.dfca_reg(cp[[1]], mom[[1]], kernel_width, timepoints, od), mom[[1]])
 }
 
 #' Write a neuron as a VTK NonOrientedPolyLine
@@ -404,14 +431,18 @@ write_neuron_vtk <- function(x, file) {
   }
   # Deformetrica 4 reads VTK LINES as 2-point segments ([2 i j], reshaped to (-1,3)),
   # so split each backbone path into consecutive edges rather than one long polyline.
-  ne <- nrow(edges)
+  # A neuron (or neuronlist) with no >=2-node segment yields NULL edges; write the
+  # points-only POLYDATA (omit the LINES block) rather than erroring on nrow(NULL).
+  ne <- if (is.null(edges)) 0L else nrow(edges)
   con <- file(file, "w"); on.exit(close(con))
   writeLines(c("# vtk DataFile Version 2.0", "deformetricar polyline", "ASCII",
                "DATASET POLYDATA", paste("POINTS", nrow(pts), "float")), con)
   utils::write.table(pts, con, row.names = FALSE, col.names = FALSE)
-  writeLines(paste("LINES", ne, ne * 3L), con)
-  utils::write.table(cbind(2L, edges[, 1] - 1L, edges[, 2] - 1L), con,
-                     row.names = FALSE, col.names = FALSE)
+  if (ne > 0L) {
+    writeLines(paste("LINES", ne, ne * 3L), con)
+    utils::write.table(cbind(2L, edges[, 1] - 1L, edges[, 2] - 1L), con,
+                       row.names = FALSE, col.names = FALSE)
+  }
   "complete"
 }
 
@@ -420,6 +451,12 @@ write_neuron_vtk <- function(x, file) {
   if (inherits(x, "mesh3d")) {
     write_vtk(nat::xyzmatrix(x), file, polygons = t(x$it) - 1L)   # 0-indexed faces for Deformetrica
     list(dtype = "SurfaceMesh", attach = "Current")
+  } else if (inherits(x, "dfca_pointcloud")) {
+    # UNORDERED point cloud (e.g. a synapse cloud): Deformetrica's PointCloud object matches point
+    # SETS by the kernel (current) metric -- no row correspondence, unlike Landmark. Needs a tight
+    # noise_std to pull (weak noise -> ~identity). Tag a matrix with as_pointcloud() to route here.
+    write_vtk(nat::xyzmatrix(x), file)
+    list(dtype = "PointCloud", attach = "Current")
   } else if (inherits(x, c("neuron", "neuronlist"))) {
     write_neuron_vtk(x, file)
     list(dtype = "PolyLine", attach = "Varifold")   # Deformetrica 4.x name (was NonOrientedPolyLine in 2.1)
@@ -428,6 +465,18 @@ write_neuron_vtk <- function(x, file) {
     list(dtype = "Landmark", attach = "Landmark")
   }
 }
+
+#' Tag a point matrix as an unordered PointCloud object for Deformetrica
+#'
+#' Deformetrica can register unordered point SETS (e.g. synapse clouds) via its `PointCloud`
+#' deformable-object type, matched by the kernel/current metric with no row correspondence. A bare
+#' matrix would otherwise be written as an ordered `Landmark` (requiring equal, corresponding rows).
+#' Wrap it with `as_pointcloud()` so [deformetrica_register_multi()] writes it as `PointCloud`.
+#' Use a TIGHT `data_sigma`/`noise_std` (~0.01) or the attachment is too weak to pull.
+#' @param x an N x 3 matrix (or anything `nat::xyzmatrix()` accepts) of point positions.
+#' @return `x` with class `"dfca_pointcloud"` prepended.
+#' @export
+as_pointcloud <- function(x) { class(x) <- c("dfca_pointcloud", setdiff(class(x), "dfca_pointcloud")); x }
 
 #' Fit ONE diffeomorphism to many matched objects (multi-object registration)
 #'
@@ -529,7 +578,7 @@ deformetrica_register_multi <- function(sources, targets, kernel_width,
       <kernel-type>torch</kernel-type>
       <kernel-device>%s</kernel-device>
       <filename>data/landmarks_src.vtk</filename>
-    </object>', landmark_sigma, object_kernel_width, device))
+    </object>', landmark_sigma, mean(okw), device))
     subj_xml <- c(subj_xml, '      <filename object_id="landmarks">data/landmarks_tgt.vtk</filename>')
   }
   writeLines(c('<?xml version="1.0" encoding="UTF-8"?>', '<model>',
@@ -563,5 +612,5 @@ deformetrica_register_multi <- function(sources, targets, kernel_width,
   cp  <- list.files(od, pattern = "ControlPoints\\.txt$", full.names = TRUE)
   mom <- list.files(od, pattern = "Momenta\\.txt$", full.names = TRUE)
   if (!length(cp) || !length(mom)) stop("multi-object estimate produced no CP/Momenta.", call. = FALSE)
-  .dfca_reg(cp[[1]], mom[[1]], kernel_width, timepoints, od)
+  .dfca_flag_identity(.dfca_reg(cp[[1]], mom[[1]], kernel_width, timepoints, od), mom[[1]])
 }
