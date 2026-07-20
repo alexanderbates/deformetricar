@@ -195,6 +195,42 @@
 <strong>Too large</strong> → <strong>many densely co-located objects blur into a single current field</strong> that already overlaps its target, so the gradient again collapses to ~zero. This bites hardest with lots of overlapping neurons in one small region (e.g. central-complex arbors): a value that works for a handful of sparse objects can produce an identity warp for dozens of packed ones.</li>
 </ul>
 <p>So set <code>kernel_width</code> for the deformation smoothness you want, and set <code>object_kernel_width</code> <em>separately</em> to roughly the post-affine gap between cognate objects — no larger. If a fit returns an identity warp, this decoupling (or a tighter affine pre-alignment) is the first thing to check. When many arbors are packed into one region and no single <code>object_kernel_width</code> both overlaps and avoids blurring, fit <strong>each cognate pair independently</strong> and compose the results (e.g. into one thin-plate-spline) rather than forcing one over-constrained multi-object diffeomorphism.</p>
+<div class="section level3">
+<h3 id="many-overlapping-objects-per-pair-warps--a-composite-spline">Many overlapping objects: per-pair warps → a composite spline<a class="anchor" aria-label="anchor" href="#many-overlapping-objects-per-pair-warps--a-composite-spline"></a>
+</h3>
+<p>A single multi-object diffeomorphism is the right tool when the matched objects are sparse. When many cognate objects are <strong>packed into one small region</strong> (e.g. dozens of central-complex arbors), no single <code>object_kernel_width</code> can both bridge each pair’s gap <em>and</em> avoid blurring the neighbours into one already-overlapping current field — the fit collapses to a <strong>zero-gradient identity warp</strong> (above). The escape hatch, as a first-class alternative:</p>
+<ol style="list-style-type: decimal">
+<li>
+<strong>Fit each cognate pair its own, less-constrained warp</strong> (<code><a href="reference/deformetrica_register.html">deformetrica_register()</a></code> per pair), with a kernel sized to that pair alone — roughly <code>union(source, target)</code> extent ÷ 4 — and a tight attachment (<code>noise_std</code> / <code>data_sigma</code> ≈ 0.05).</li>
+<li>
+<strong>Push each source through its own fit</strong> to get its warped endpoint.</li>
+<li>
+<strong>Stitch all the start→end correspondences into one global field</strong> — a thin-plate spline (<code><a href="https://rdrr.io/pkg/nat/man/tpsreg.html" class="external-link">nat::tpsreg()</a></code>) over the pooled point cloud. The result is one applyable transform that captured each pair locally, without any single fit having to resolve the whole packed region.</li>
+</ol>
+<p><strong>Hull-anchor regulariser.</strong> A composite spline built from cable alone extrapolates wildly away from the neurons (sprawling soma tracts fly off). Anchor it: subsample the <strong>target</strong> neuropil hull, map those points back through the <strong>inverse affine</strong> to get their source-space partners, and add them as fixed correspondences. The spline then equals the affine away from the neurons instead of extrapolating.</p>
+<p><strong>Mesh caveat.</strong> Apply a pooled/composite spline to <em>skeletons</em>, not surface <strong>meshes</strong> — where the field extrapolates beyond the cognate cable it <strong>tears or explodes</strong> the mesh. Each pair’s own diffeomorphic fit stays smooth, so morph meshes with the per-pair fit, not the composite spline.</p>
+</div>
+<div class="section level3">
+<h3 id="tuning-by-coordinate-descent">Tuning by coordinate descent<a class="anchor" aria-label="anchor" href="#tuning-by-coordinate-descent"></a>
+</h3>
+<p>Tune one knob at a time, scoring each candidate by a shape metric — symmetric, normalised <strong>NBLAST</strong> (orientation-aware, density-robust) and/or mean nearest-neighbour distance (µm) between each warped source and its target. A workable loop:</p>
+<ol style="list-style-type: decimal">
+<li>Sweep the <strong>skeleton</strong> (Varifold) knobs with <strong>meshes off</strong> first — Current attachment on meshes is ~3–5× slower, so don’t pay for it while tuning cable.</li>
+<li>Then sweep the <strong>mesh</strong> knobs.</li>
+<li>Bake each 1-D winner greedily before sweeping the next knob — but keep the fixed <strong>operating point in sync with the shipped params</strong>, or every sweep is conditioned on stale neighbours.</li>
+</ol>
+<p><strong>Params vs. data.</strong> If a subregion refuses to move across a whole <code>object_kernel_width</code> / <code>data_sigma</code> sweep (identical NN distance throughout), it has <strong>no local correspondence</strong> there — <strong>add a landmark or cognate pair</strong>, don’t keep tuning kernels. Conversely, a <code>landmarks=</code> anchor the affine <em>already</em> satisfies contributes no gradient and can zero the whole warp; anchor only points that still need to move. (An all-zero-momenta identity fit is flagged on the returned registration as <code>$identity = TRUE</code>, with a warning.)</p>
+</div>
+<div class="section level3">
+<h3 id="pairing-and-scoring-gotchas">Pairing and scoring gotchas<a class="anchor" aria-label="anchor" href="#pairing-and-scoring-gotchas"></a>
+</h3>
+<ul>
+<li>
+<strong>Auto-pairing cognates:</strong> optimal 1:1 assignment (e.g. <code>clue::solve_LSAP</code>, maximising total NBLAST within a group) beats greedy per-source best-match. Look-alike types make many sources collide on one target, so a strict de-dup afterwards throws away ~half the pairs; the optimal assignment keeps <code>min(n_source, n_target)</code> at the best total score.</li>
+<li>
+<strong>Scoring pooled (many-to-many) warps:</strong> do <strong>not</strong> score by name-intersecting the source and target neuronlists — different datasets carry different ids, so <code><a href="https://rdrr.io/r/base/sets.html" class="external-link">intersect()</a></code> is empty and the score silently returns <code>NaN</code>. Pool the point clouds (or rename both to a shared key) before measuring.</li>
+</ul>
+</div>
 </div>
 <div class="section level2">
 <h2 id="articles">Articles<a class="anchor" aria-label="anchor" href="#articles"></a>
