@@ -231,6 +231,14 @@
 <strong>Scoring pooled (many-to-many) warps:</strong> do <strong>not</strong> score by name-intersecting the source and target neuronlists — different datasets carry different ids, so <code><a href="https://rdrr.io/r/base/sets.html" class="external-link">intersect()</a></code> is empty and the score silently returns <code>NaN</code>. Pool the point clouds (or rename both to a shared key) before measuring.</li>
 </ul>
 </div>
+<div class="section level3">
+<h3 id="objects-of-very-different-size-in-one-fit">Objects of very different size in one fit<a class="anchor" aria-label="anchor" href="#objects-of-very-different-size-in-one-fit"></a>
+</h3>
+<p><code>object_kernel_width</code> and <code>data_sigma</code> are independent knobs and should be set independently: the kernel is the <strong>scale</strong> at which a mismatch is felt, the sigma is the <strong>strength</strong> of the pull. This matters most when one object is much larger than the others — a whole-brain envelope fitted alongside individual neuropils, say.</p>
+<p>Tuning sigma alone leaves only two bad states. Make the large object’s sigma tight and it dominates the shared deformation, dragging the small objects off their targets (the joint fit can end up <em>worse</em> than the affine initialisation). Loosen it enough to stop interfering and it stops moving.</p>
+<p>Instead give the large object a <strong>large <code>object_kernel_width</code> and a tight <code>data_sigma</code></strong>. It then pulls strongly, but only at a coarse scale, and is structurally unable to compete for the fine detail the smaller objects should own. In one real case a brain envelope at <code>object_kernel_width</code> 150 with <code>data_sigma</code> 0.1 — against 40 / 0.1 for the neuropils — improved the envelope by 31% while the neuropils simultaneously reached their best alignment.</p>
+<p>A useful diagnostic: if a large guide object either bullies its neighbours or refuses to move, reach for its kernel before its sigma.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="articles">Articles<a class="anchor" aria-label="anchor" href="#articles"></a>
