@@ -171,6 +171,27 @@ all-zero-momenta identity fit is flagged on the returned registration as `$ident
   neuronlists — different datasets carry different ids, so `intersect()` is empty and the score silently
   returns `NaN`. Pool the point clouds (or rename both to a shared key) before measuring.
 
+
+### Objects of very different size in one fit
+
+`object_kernel_width` and `data_sigma` are independent knobs and should be set independently:
+the kernel is the **scale** at which a mismatch is felt, the sigma is the **strength** of the pull.
+This matters most when one object is much larger than the others — a whole-brain envelope fitted
+alongside individual neuropils, say.
+
+Tuning sigma alone leaves only two bad states. Make the large object's sigma tight and it dominates
+the shared deformation, dragging the small objects off their targets (the joint fit can end up
+*worse* than the affine initialisation). Loosen it enough to stop interfering and it stops moving.
+
+Instead give the large object a **large `object_kernel_width` and a tight `data_sigma`**. It then
+pulls strongly, but only at a coarse scale, and is structurally unable to compete for the fine detail
+the smaller objects should own. In one real case a brain envelope at `object_kernel_width` 150 with
+`data_sigma` 0.1 — against 40 / 0.1 for the neuropils — improved the envelope by 31% while the
+neuropils simultaneously reached their best alignment.
+
+A useful diagnostic: if a large guide object either bullies its neighbours or refuses to move, reach
+for its kernel before its sigma.
+
 ## Articles
 
 - **[Warping a mosquito brain onto the fly](https://natverse.github.io/deformetricar/articles/mosquito-to-fly.html)** —
